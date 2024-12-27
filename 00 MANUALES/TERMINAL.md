@@ -1,11 +1,11 @@
+# Crear entorno virtual
+    ' python -m venv venv '
 # Activar entorno virtual
     ' ./venv/Scripts/activate ' 
 # Desactivar entorno
     ' ./venv/Scripts/deactivate '
 # Eliminar entorno virtual llamado "venv"
     ' Remove-Item -Recurse -Force venv '
-# Crear entorno virtual
-    'python -m venv venv '
 # Instalar dependencias
     ' pip install Flask Flask-Migrate python-dotenv '
 # Instalar requirements.txt 

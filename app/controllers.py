@@ -8,8 +8,8 @@ controllers_bp = Blueprint('controllers', __name__)
 @controllers_bp.route('/recintos', endpoint='ruta_recintos')
 def recintos():
     recintos = Recinto.query.all()
-    tiporecintos = TipoRecinto.query.all()
-    return render_template('tiposrecintos.html', recintos=recintos, tiposrecintos=tiposrecintos)  # Cambiar a recintos.html
+    tiposrecintos = TipoRecinto.query.all()
+    return render_template('recintos.html', recintos=recintos, tiposrecintos=tiposrecintos)  # Cambiar a recintos.html
 
 # Agregar endpoint para obtener etapas N1 en formato JSON
 @controllers_bp.route('/get_recintos', methods=['GET'])
@@ -20,7 +20,7 @@ def get_recintos():
 @controllers_bp.route('/add_recinto', methods=['POST'], endpoint='add_recinto')
 def add_recinto():
     try:
-        nombre = request.form['name']
+        nombre = request.form['nombre']
         descripcion = request.form.get('descripcion', '')  # valor por defecto vacío
         id_tiporecinto = request.form.get('id_tiporecinto', '1')  # valor por defecto 1
         
@@ -41,7 +41,7 @@ def add_recinto():
 def update_recinto(id):
     try:
         recinto = Recinto.query.get_or_404(id)
-        recinto.nombre = request.form['name']
+        recinto.nombre = request.form['nombre']
         recinto.descripcion = request.form['descripcion']
         recinto.id_tiporecinto = request.form['id_tiporecinto']
         db.session.commit()

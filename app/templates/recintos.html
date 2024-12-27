@@ -1,20 +1,20 @@
 {% extends 'bases/base.html' %}
 
-{% block title %}Tipo de Recinto{% endblock %}
+{% block title %}Recinto{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="well text-center">
-        <h1>Tipo de Recinto - Crud</h1>
+        <h1>Recinto - Crud</h1>
     </div>
     <div class="container">
         <div class="row">
             <div class="col md-12">
                 <h2>
-                    Lista de Tipo de Recinto
+                    Lista de Recinto
                     <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
                             type="button">
-                        Nuevo Tipo de Recinto
+                        Nuevo Recinto
                     </button>
                 </h2>
                 
@@ -32,9 +32,9 @@
                     {%for recinto in recintos%}
                     <tr>
                         <td>{{recinto.id}}</td>
-                        <td>{{recinto.descripcion}}</td>
-                        <td>{{recinto.sector.nombre}}</td>
                         <td>{{recinto.nombre}}</td>
+                        <td>{{recinto.descripcion}}</td>
+                        <td>{{recinto.tiporecinto.nombre}}</td>
 
                         <td>
                             <a class="btn p-1 btn-primary btn-sm" 
@@ -61,12 +61,13 @@
                                             <div class="form-group">
                                                 <label>Nombre:</label>
                                                 <input type="hidden" name="id" value="{{recinto.id}}">
-                                                <input class="form-control" name="name" value="{{recinto.nombre}}" required="1" type="text">
+                                                <input class="form-control" name="nombre" value="{{recinto.nombre}}" required="1" type="text">
+                                                <label>Descripción:</label>
                                                 <input class="form-control" name="descripcion" value="{{recinto.descripcion}}" required="1" type="text">
-                                                <label>Etapa N1:</label>
-                                                <select class="form-control" name="id_sector" required="1">
+                                                <label>Tipo de Recinto:</label>
+                                                <select class="form-control" name="id_tiporecinto" required="1">
                                                     {% for tiporecinto in tiposrecintos %}
-                                                    <option value="{{ tiporecinto.id }}" {% if recinto.id_tiporecinto == recinto.id %}selected{% endif %}>
+                                                    <option value="{{ tiporecinto.id }}" {% if tiporecinto.id == recinto.id_tiporecinto %}selected{% endif %}>
                                                         {{ tiporecinto.nombre }}
                                                     </option>
                                                     {% endfor %}
@@ -103,11 +104,11 @@
                     <form action="{{ url_for('controllers.add_recinto') }}" method="POST"> 
                         <div class="form-group">
                             <label>Nombre:</label>
-                            <input class="form-control" name="name" required="1" type="text">  <!-- Cambiar name a nombre -->
+                            <input class="form-control" name="nombre" required="1" type="text">
                             <label>Descripción:</label>
                             <input class="form-control" name="descripcion" required="1" type="text">
-                            <label>Tipos de Recintos :</label>
-                            <select class="form-control" name="id_sector" required="1">
+                            <label>Tipo de Recinto:</label>
+                            <select class="form-control" name="id_tiporecinto" required="1">
                                 <option value="">Seleccione un Tipo de Recinto</option>
                                 {% for tiporecinto in tiposrecintos %}
                                 <option value="{{ tiporecinto.id }}">{{ tiporecinto.nombre }}</option>

@@ -164,34 +164,7 @@ def seed_data():
         db.session.add_all(tipologias)
         db.session.commit()
 
-        # Luego crear las etapas
-        # etapas_data = [
-        #     # Etapas para Estudios Básicos
-        #     {'nombre': 'Idea','financiamiento': False,'id_tipologia': 1},
-        #     {'nombre': 'Perfil', 'financiamiento': False, 'id_tipologia': 1},
-        #     # Etapas para Programas de Inversión
-        #     {'nombre': 'Idea','financiamiento': False, 'id_tipologia': 2},
-        #     { 'nombre': 'Perfil', 'financiamiento': False, 'id_tipologia': 2},
-        #     # Etapas para Proyectos de Inversión
-        #     { 'nombre': 'Idea', 'financiamiento': False, 'id_tipologia': 3 },
-        #     { 'nombre': 'Perfil', 'financiamiento': False, 'id_tipologia': 3 },
-        #     { 'nombre': 'Prefactibilidad', 'financiamiento': True, 'id_tipologia': 3 },
-        #     { 'nombre': 'Factibilidad', 'financiamiento': True, 'id_tipologia': 3 },
-        #     # Etapas para Estudios Básicos
-        #     { 'nombre': 'Ejecución', 'financiamiento': True, 'id_tipologia': 1 },
-        #     # Etapas para Programas de Inversión
-        #     { 'nombre': 'Diseño', 'financiamiento': True, 'id_tipologia': 2 },
-        #     { 'nombre': 'Ejecución', 'financiamiento': False, 'id_tipologia': 2 },
-        #     # Etapas para Proyectos de Inversión
-        #     { 'nombre': 'Diseño', 'financiamiento': True, 'id_tipologia': 3 },
-        #     { 'nombre': 'Ejecución', 'financiamiento': True, 'id_tipologia': 3 },
-        #     { 'nombre': 'Operación', 'financiamiento': False, 'id_tipologia': 3 }
-        # ]
-        # 
-        # etapas = [Etapa(**data) for data in etapas_data]
-        # db.session.add_all(etapas)
-        # db.session.commit()
-        # Datos iniciales para Sectores
+        # Datos iniciales para los sectores
         sector_data = [
             {'nombre': 'MUNICIPAL'},
             {'nombre': 'SALUD'},
@@ -216,6 +189,22 @@ def seed_data():
         ]
         tiposrecintos = [TipoRecinto(**data) for data in tiposrecintos_data]
         db.session.add_all(tiposrecintos)
+        db.session.commit()
+        
+        # Datos iniciales para Recintos
+        recintos_data = [
+            {'nombre': 'La Tortuga', 'descripcion': 'Centro de ...', 'id_tiporecinto': 2},
+            {'nombre': 'El Boro', 'descripcion': 'Centro de ...', 'id_tiporecinto': 2},
+            {'nombre': 'Dr. Héctor Reyno Gutiérre', 'descripcion': 'Servicio de ...', 'id_tiporecinto': 3},
+            {'nombre': 'El Boro', 'descripcion': 'Servicio de ...', 'id_tiporecinto': 3},
+            {'nombre': 'CCR', 'descripcion': 'Edificio Consistorial', 'id_tiporecinto': 7},
+            {'nombre': 'CESCO', 'descripcion': 'Recintos ...', 'id_tiporecinto': 7},
+            {'nombre': 'CAAPS', 'descripcion': 'Recintos ...', 'id_tiporecinto': 7},
+            {'nombre': 'Oficinas DEPSA', 'descripcion': 'Recintos ...', 'id_tiporecinto': 5},
+            {'nombre': 'Recintos Varios', 'descripcion': 'Recintos varios ...', 'id_tiporecinto': 7},
+        ]
+        recintos = [Recinto(**data) for data in recintos_data]
+        db.session.add_all(recintos)
         db.session.commit()
         
 
