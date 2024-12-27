@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{% endblock %} :: Flask Project Base Template 🚀</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    {% include 'bases/base_css.html' %}
+  </head>
+  <body>
+  {% include 'bases/nav.html' %}
+
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+          <!--Inicio del bloque body-->
+           {% block content %}{% endblock %}
+      </div>
+    </div>
+
+
+    {% include 'bases/base_js.html' %}	
+  </body>
+</html>

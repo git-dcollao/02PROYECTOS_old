@@ -1,0 +1,143 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Tipo de Recinto{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="well text-center">
+        <h1>Tipo de Recinto - Crud</h1>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col md-12">
+                <h2>
+                    Lista de Tipo de Recinto
+                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
+                            type="button">
+                        Nuevo Tipo de Recinto
+                    </button>
+                </h2>
+                
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Tipo de Recinto</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {%for recinto in recintos%}
+                    <tr>
+                        <td>{{recinto.id}}</td>
+                        <td>{{recinto.descripcion}}</td>
+                        <td>{{recinto.sector.nombre}}</td>
+                        <td>{{recinto.nombre}}</td>
+
+                        <td>
+                            <a class="btn p-1 btn-primary btn-sm" 
+                               data-bs-target="#exampleModal1{{recinto.id}}"
+                               data-bs-toggle="modal"
+                               href="#">Editar</a> 
+                            <form action="{{ url_for('controllers.eliminar_recinto', id=recinto.id) }}"
+                                method="POST" style="display:inline;">
+                                <button class="btn p-1 btn-danger btn-sm" 
+                                type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
+                             id="exampleModal1{{recinto.id}}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del recinto {{recinto.nombre}}</h1>
+                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
+                                                type="button"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{{ url_for('controllers.update_recinto', id=recinto.id) }}" method="POST">   
+                                            <div class="form-group">
+                                                <label>Nombre:</label>
+                                                <input type="hidden" name="id" value="{{recinto.id}}">
+                                                <input class="form-control" name="name" value="{{recinto.nombre}}" required="1" type="text">
+                                                <input class="form-control" name="descripcion" value="{{recinto.descripcion}}" required="1" type="text">
+                                                <label>Etapa N1:</label>
+                                                <select class="form-control" name="id_sector" required="1">
+                                                    {% for tiporecinto in tiposrecintos %}
+                                                    <option value="{{ tiporecinto.id }}" {% if recinto.id_tiporecinto == recinto.id %}selected{% endif %}>
+                                                        {{ tiporecinto.nombre }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
+                                            Cerrar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </tr>
+                    {%endfor%}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nuevo estado -->
+    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Recinto</h1>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('controllers.add_recinto') }}" method="POST"> 
+                        <div class="form-group">
+                            <label>Nombre:</label>
+                            <input class="form-control" name="name" required="1" type="text">  <!-- Cambiar name a nombre -->
+                            <label>Descripción:</label>
+                            <input class="form-control" name="descripcion" required="1" type="text">
+                            <label>Tipos de Recintos :</label>
+                            <select class="form-control" name="id_sector" required="1">
+                                <option value="">Seleccione un Tipo de Recinto</option>
+                                {% for tiporecinto in tiposrecintos %}
+                                <option value="{{ tiporecinto.id }}">{{ tiporecinto.nombre }}</option>
+                                {% endfor %}
+                            </select>                        
+                        </div>
+                        <button type="submit" class="btn btn-primary">Agregar</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="well container">
+    
+</div>
+
+<!-- Agregar al final del archivo -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Si necesitas alguna funcionalidad JavaScript adicional para el combo
+        const tiporecintoSelect = document.querySelector('select[name="id_tiporecinto"]');
+        
+        tiporecintoSelect.addEventListener('change', function() {
+            const selectedTipoRecinto = this.value;
+            console.log('Tipo de Recinto seleccionado:', selectedTipoRecinto);
+        });
+    });
+    </script>
+{% endblock %}

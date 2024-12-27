@@ -1,0 +1,161 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Etapas (SNI){% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="well text-center">
+        <h1>Etapa (SNI) - Crud</h1>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col md-12">
+                <h2>
+                    Lista de Etapas
+                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
+                            type="button">
+                        Nueva Etapa
+                    </button>
+                </h2>
+                
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nombre</th>
+                        <th>Tipologia (SNI)</th>
+                        <th>Financiamiento</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {%for etapa in etapas%}
+                    <tr>
+                        <td>{{etapa.id}}</td>
+                        <td>{{etapa.nombre}}</td>
+                        <td>{{etapa.tipologia.nombre}}</td>
+                        <td>{{ "Sí" if etapa.financiamiento else "No" }}
+                            <!--{% if etapa.financiamiento %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% else %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% endif %}-->
+                        </td>
+
+                        <td>
+                            <a class="btn p-1 btn-primary btn-sm" 
+                               data-bs-target="#exampleModal1{{etapa.id}}"
+                               data-bs-toggle="modal"
+                               href="#">Editar</a> 
+                            <form action="{{ url_for('controllers.eliminar_etapa', id=etapa.id) }}"
+                                method="POST" style="display:inline;">
+                                <button class="btn p-1 btn-danger btn-sm" 
+                                type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
+                             id="exampleModal1{{etapa.id}}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información de la etapa {{etapa.nombre}}</h1>
+                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
+                                                type="button"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{{ url_for('controllers.update_etapa', id=etapa.id) }}" method="POST">   
+                                            <div class="form-group">
+                                                <label>Nombre:</label>
+                                                <input type="hidden" name="id" value="{{etapa.id}}">
+                                                <input class="form-control" name="name" value="{{etapa.nombre}}"
+                                                       required="1" type="text">
+                                                <label>Tipología (SNI) :</label>
+                                                <select class="form-control" name="id_tipologia" required="1">
+                                                    {% for tipologia in tipologias %}
+                                                    <option value="{{ tipologia.id }}" {% if etapa.id_tipologia == tipologia.id %}selected{% endif %}>
+                                                        {{ tipologia.nombre }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <label>Financiamiento:</label>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="financiamiento" value="true" id="financiamientoCheck{{etapa.id}}" {% if etapa.financiamiento %}checked{% endif %}>
+                                                    <label class="form-check-label" for="financiamientoCheck{{etapa.id}}">
+                                                        Financiamiento
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
+                                            Cerrar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </tr>
+                    {%endfor%}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nuevo etapa -->
+    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Tipología</h1>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('controllers.add_etapa') }}" method="POST"> 
+                        <div class="form-group">
+                            <label>Nombre:</label>
+                            <input class="form-control" name="name" required="1" type="text">
+                            <label>Tipologia:</label>
+                            <select class="form-control" name="id_tipologia" required="1">
+                                <option value="">Seleccione una Tipologia</option>
+                                {% for tipologia in tipologias %}
+                                <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <label>Financiamiento:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="financiamiento" value="true" id="financiamientoCheck">
+                                <label class="form-check-label" for="financiamientoCheck">
+                                    Financiamiento
+                                </label>
+                            </div> 
+                        </div>
+                        <button type="submit" class="btn btn-primary">Agregar</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="well container">
+    
+</div>
+
+<!-- Agregar al final del archivo -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Si necesitas alguna funcionalidad JavaScript adicional para el combo
+        const tipologiaSelect = document.querySelector('select[name="id_tipologia"]');
+        
+        tipologiaSelect.addEventListener('change', function() {
+            const selectedTipologia = this.value;
+            console.log('Fase seleccionada:', selectedTipologia);
+        });
+    });
+    </script>
+{% endblock %}

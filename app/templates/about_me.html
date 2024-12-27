@@ -1,0 +1,109 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Acerca de mí{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="well text-center">
+        <h1>Estados - Crud</h1>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col md-12">
+                <h2>
+                    Lista de Estados
+                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
+                            type="button">
+                        Nuevo Estado
+                    </button>
+                </h2>
+                
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {%for estado in estados%}
+                    <tr>
+                        <td>{{estado.id}}</td>
+                        <td>{{estado.nombre}}</td>
+
+                        <td>
+                            <a class="btn p-1 btn-primary btn-sm" 
+                               data-bs-target="#exampleModal1{{estado.id}}"
+                               data-bs-toggle="modal"
+                               href="#">Editar</a> 
+                            <form action="{{ url_for('controllers.eliminar_aboutme', id=estado.id) }}"
+                                method="POST" style="display:inline;">
+                                <button class="btn p-1 btn-danger btn-sm" 
+                                type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
+                             id="exampleModal1{{estado.id}}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del Estado {{estado.nombre}}</h1>
+                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
+                                                type="button"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{{ url_for('controllers.update_aboutme', id=estado.id) }}" method="POST">   
+                                            <div class="form-group">
+                                                <label>Nombre:</label>
+                                                <input type="hidden" name="id" value="{{estado.id}}">
+                                                <input class="form-control" name="name" value="{{estado.nombre}}"
+                                                       required="1" type="text">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
+                                            Cerrar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </tr>
+                    {%endfor%}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nuevo estado -->
+    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Estado</h1>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('controllers.add_aboutme') }}" method="POST"> 
+                        <div class="form-group">
+                            <label>Nombre:</label>
+                            <input class="form-control" name="name" required="1" type="text">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Agregar</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="well container">
+    <a class="nav-link" href="{{ url_for('controllers.ruta_estados') }}">Estados</a>
+</div>
+{% endblock %}

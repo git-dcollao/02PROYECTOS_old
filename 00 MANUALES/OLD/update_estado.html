@@ -1,0 +1,16 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Actualizar Estado{% endblock %}
+
+{% block content %}
+  <div class="col-md-12">
+    <h1 class="text-center fw-bold">Actualizar Estado<hr></h1>
+    <form method="POST" action="/estados/update/{{ estado.id }}">
+      <div class="form-group">
+        <label for="nombre">Nombre del Estado:</label>
+        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ estado.nombre }}" required>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">Actualizar Estado</button>
+    </form>
+  </div>
+{% endblock %}

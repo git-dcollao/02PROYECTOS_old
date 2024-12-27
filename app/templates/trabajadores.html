@@ -1,0 +1,123 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}trabajador {% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="well text-center">
+        <h1>Trabajador - Crud</h1>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col md-12">
+                <h2>
+                    Lista de trabajadores
+                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
+                            type="button">
+                        Nuevo trabajador
+                    </button>
+                </h2>
+                
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nombre</th>
+                        <th>Profesión</th>
+                        <th>Nombre Corto</th>
+                        <th>Password</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {%for trabajador in trabajadores%}
+                    <tr>
+                        <td>{{trabajador.id}}</td>
+                        <td>{{trabajador.nombre}}</td>
+                        <td>{{trabajador.profesion}}</td>
+                        <td>{{trabajador.nombrecorto}}</td>
+                        <td>{{trabajador.password}}</td>
+
+                        <td>
+                            <a class="btn p-1 btn-primary btn-sm" 
+                               data-bs-target="#exampleModal1{{trabajador.id}}"
+                               data-bs-toggle="modal"
+                               href="#">Editar</a> 
+                            <form action="{{ url_for('controllers.eliminar_trabajador', id=trabajador.id) }}"
+                                method="POST" style="display:inline;">
+                                <button class="btn p-1 btn-danger btn-sm" 
+                                type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
+                             id="exampleModal1{{trabajador.id}}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del Trabajador {{trabajador.nombre}}</h1>
+                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
+                                                type="button"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{{ url_for('controllers.update_trabajador', id=trabajador.id) }}" method="POST">   
+                                            <div class="form-group">
+                                                <label>Nombre:</label>
+                                                <input type="hidden" name="id" value="{{trabajador.id}}">
+                                                <input class="form-control" name="name" value="{{trabajador.nombre}}" required="1" type="text">
+                                                <input class="form-control" name="profesion" value="{{trabajador.profesion}}" required="1" type="text">
+                                                <input class="form-control" name="nombrecorto" value="{{trabajador.nombrecorto}}" required="1" type="text">
+                                                <input class="form-control" name="password" value="{{trabajador.password}}" required="1" type="text">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
+                                            Cerrar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </tr>
+                    {%endfor%}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nuevo estado -->
+    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Trabajador</h1>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('controllers.add_trabajador') }}" method="POST"> 
+                        <div class="form-group">
+                            <label>Nombre:</label>
+                            <input class="form-control" name="name" required="1" type="text">
+                            <label>Profesión:</label>
+                            <input class="form-control" name="profesion" required="1" type="text">
+                            <label>Nombre corto:</label>
+                            <input class="form-control" name="nombrecorto" required="1" type="text">
+                            <label>Password:</label>
+                            <input class="form-control" name="passsword" required="1" type="text">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Agregar</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="well container">
+    
+</div>
+{% endblock %}
