@@ -1,4 +1,4 @@
-from .models import db, TipoRecinto, Recinto, Sector, Etapa, Trabajador, EtapaN1, EtapaN2, EtapaN3, EtapaN4, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, User
+from .models import db, TipoRecinto, Recinto, Sector, Trabajador, EtapaN1, EtapaN2, EtapaN3, EtapaN4, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, User
 
 def seed_data():
     """Función para crear datos iniciales en la base de datos"""
