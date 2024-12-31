@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "02proyectos",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"github.copilot.chat.localeOverride": "es",
+		"github.copilot.chat.runCommand.enabled": true,
+		"python.envFile": "${workspaceFolder}/.env" // Asegúrate de que el archivo .env se cargue
+	}
+}
