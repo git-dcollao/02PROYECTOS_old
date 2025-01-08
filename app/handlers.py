@@ -2,15 +2,20 @@ from flask import Blueprint, render_template, jsonify
 
 handlers_bp = Blueprint('handlers', __name__)
 
+# Ruta para la página "Ingreso de Requerimientos"
+@handlers_bp.route('/requerimientos')
+def requerimiento():
+    return render_template('requerimiento.html')
+
 # Ruta para la página "Tipo de Recinto"
 @handlers_bp.route('/recintos')
 def recinto():
-    return render_template('recinto.html')  # Ahora coincide con el nombre del template
+    return render_template('recinto.html')
 
 # Ruta para la página "Tipo de Recinto"
-@handlers_bp.route('/tiposrecintos')  # Cambiado de '/recinto' a '/recintos'
+@handlers_bp.route('/tiposrecintos')
 def tiporecinto():
-    return render_template('tiporecinto.html')  # Ahora coincide con el nombre del template
+    return render_template('tiporecinto.html')
 
 # Ruta para la página "Sector"
 @handlers_bp.route('/sectores')
@@ -82,10 +87,10 @@ def tipo_de_proyecto():
 def estado():
     return render_template('estado.html')
 
-# Ruta para la página "Acerca de mí"
-@handlers_bp.route('/acerca-de-mi', endpoint='ruta_acerca_de_mi')
-def acerca_de_mi():
-    return render_template('about_me.html')
+# # Ruta para la página "Acerca de mí"
+# @handlers_bp.route('/acerca-de-mi', endpoint='ruta_acerca_de_mi')
+# def acerca_de_mi():
+#     return render_template('about_me.html')
 
 # # Ruta para la página de proyectos
 # @handlers_bp.route('/proyectos')
@@ -98,9 +103,9 @@ def acerca_de_mi():
 #     return render_template('pages/portafolio.html', nombre=nombre)
 
 # Ruta para la página de contacto
-@handlers_bp.route('/contacto')
-def contacto():
-    return render_template('pages/contacto.html')
+# @handlers_bp.route('/contacto')
+# def contacto():
+#     return render_template('pages/contacto.html')
 
 # Ruta para la página de inicio
 @handlers_bp.route('/')

@@ -1,7 +1,15 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from app.models import TipoRecinto, Recinto, Sector, Etapa, Trabajador, EtapaN4, EtapaN3, EtapaN2, EtapaN1, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, db
+from app.models import Requerimiento, TipoRecinto, Recinto, Sector, Etapa, Trabajador, EtapaN4, EtapaN3, EtapaN2, EtapaN1, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, db
 
 controllers_bp = Blueprint('controllers', __name__)
+
+# ==================================================================================
+# Rutas CRUD para Requerimientos
+@controllers_bp.route('/reqquerimientos', endpoint='ruta_requerimientos')
+def requerimientos():
+    requerimientos = Requerimiento.query.all()
+    tiposrecintos = TipoRecinto.query.all()
+    return render_template('recintos.html', recintos=recintos, tiposrecintos=tiposrecintos)  # Cambiar a recintos.html
 
 # ==================================================================================
 # Rutas CRUD para Recintos
