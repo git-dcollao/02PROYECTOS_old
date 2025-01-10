@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models import Requerimiento, TipoRecinto, Recinto, Sector, Etapa, Trabajador, EtapaN4, EtapaN3, EtapaN2, EtapaN1, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, db
+from datetime import datetime
 
 controllers_bp = Blueprint('controllers', __name__)
 
@@ -16,6 +17,15 @@ def recintos():
 def get_recintos():
     recintos = Recinto.query.all()
     return jsonify([{'id': e.id, 'nombre': e.nombre} for e in recintos])
+
+# Agregar esta nueva ruta para obtener recintos por tipo de recinto
+@controllers_bp.route('/get_recintos_by_tipo/<int:tiporecinto_id>')
+def get_recintos_by_tipo(tiporecinto_id):
+    recintos = Recinto.query.filter_by(id_tiporecinto=tiporecinto_id).all()
+    return jsonify([{
+        'id': recinto.id,
+        'nombre': recinto.nombre
+    } for recinto in recintos])
 
 @controllers_bp.route('/add_recinto', methods=['POST'], endpoint='add_recinto')
 def add_recinto():
@@ -76,6 +86,15 @@ def tiposrecintos():
 def get_tiposrecintos():
     tiposrecintos = TipoRecinto.query.all()
     return jsonify([{'id': e.id, 'nombre': e.nombre} for e in tiposrecintos])
+
+# Agregar esta nueva ruta para obtener tipos de recinto por sector
+@controllers_bp.route('/get_tiposrecintos_by_sector/<int:sector_id>')
+def get_tiposrecintos_by_sector(sector_id):
+    tipos_recinto = TipoRecinto.query.filter_by(id_sector=sector_id).all()
+    return jsonify([{
+        'id': tipo.id,
+        'nombre': tipo.nombre
+    } for tipo in tipos_recinto])
 
 @controllers_bp.route('/add_tiporecinto', methods=['POST'], endpoint='add_tiporecinto')
 def add_tiporecinto():
@@ -909,9 +928,18 @@ def add_requerimiento():
     try:
         nombre = request.form['nombre']
         descripcion = request.form.get('descripcion', '')
+        fecha = request.form.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+        id_sector = request.form.get('id_sector')
+        id_tiporecinto = request.form.get('id_tiporecinto')
+        id_recinto = request.form.get('id_recinto')  # Agregar esto
+        
         nuevo_requerimiento = Requerimiento(
             nombre=nombre,
-            descripcion=descripcion
+            descripcion=descripcion,
+            fecha=fecha,
+            id_sector=id_sector,
+            id_tiporecinto=id_tiporecinto,
+            id_recinto=id_recinto  # Agregar esto
         )
         db.session.add(nuevo_requerimiento)
         db.session.commit()
@@ -927,6 +955,8 @@ def update_requerimiento(id):
         requerimiento = Requerimiento.query.get_or_404(id)
         requerimiento.nombre = request.form['nombre']
         requerimiento.descripcion = request.form['descripcion']
+        requerimiento.fecha = request.form.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+        requerimiento.id_sector = request.form['id_sector']
         db.session.commit()
         flash('Requerimiento actualizado exitosamente')
     except Exception as e:

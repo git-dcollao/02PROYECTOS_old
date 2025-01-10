@@ -124,10 +124,12 @@ class Requerimiento(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     fecha = db.Column(db.String(20), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
-    id_sector= db.Column(db.Integer, db.ForeignKey('sector.id', ondelete='CASCADE'), nullable=False)
-    sector = db.relationship('Sector', backref=db.backref('requerimiento', lazy=True, cascade='all, delete-orphan'))
-
-
+    id_sector = db.Column(db.Integer, db.ForeignKey('sector.id', ondelete='CASCADE'), nullable=False)
+    id_tiporecinto = db.Column(db.Integer, db.ForeignKey('tiporecinto.id', ondelete='CASCADE'), nullable=False)  # Agregar esto
+    id_recinto = db.Column(db.Integer, db.ForeignKey('recinto.id', ondelete='CASCADE'), nullable=False)  # Agregar esto
+    sector = db.relationship('Sector', backref=db.backref('requerimiento', lazy=True))
+    tiporecinto = db.relationship('TipoRecinto', backref=db.backref('requerimiento', lazy=True))  # Agregar esto
+    recinto = db.relationship('Recinto', backref=db.backref('requerimiento', lazy=True))  # Agregar esto
 
 def init_db():
     """Crear todas las tablas en la base de datos"""

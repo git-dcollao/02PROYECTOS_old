@@ -112,17 +112,29 @@
               <div class="form-group">
                 <label>Nombre:</label>
                 <input class="form-control" name="name" required="1" type="text">
-                <label>Fecha Ingreso:</label>
-                <input class="form-control" name="fecha" required="1" type="text">
+                
+                  <label>Fecha:</label>
+                  <input class="form-control" name="fecha" id="fecha" required="1" type="text" placeholder="Seleccione fecha">
+                <div class="form-group"></div>
                 <label>Descripción:</label>
                 <input class="form-control" name="descripcion" required="1" type="text">
                 <label>sector:</label>
-                <select class="form-control" name="id_secto" required="1">
+                <select class="form-control" name="id_sector" id="sector-select" required="1">
                   <option value="">Seleccione un Sector</option>
                   {% for sector in sectores %}
                   <option value="{{ sector.id }}">{{ sector.nombre }}</option>
                   {% endfor %}
+                </select>
+
+                <label>Tipo de Recinto:</label>
+                <select class="form-control" name="id_tiporecinto" id="tiporecinto-select" required="1" disabled>
+                  <option value="">Primero seleccione un sector</option>
                 </select>                        
+
+                <label>Recinto:</label>
+                <select class="form-control" name="id_recinto" id="recinto-select" required="1" disabled>
+                  <option value="">Primero seleccione un tipo de recinto</option>
+                </select>
               </div>
               <button type="submit" class="btn btn-primary">Agregar</button>
             </form>
@@ -138,15 +150,20 @@
   
 </div>
 
+<!-- Agregar en el head del template o antes de cerrar </body> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
 <!-- Agregar al final del archivo -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // Si necesitas alguna funcionalidad JavaScript adicional para el combo
-    const etapaN1Select = document.querySelector('select[name="id_etapaN1"]');
+    const sectorSelect = document.querySelector('select[name="id_sector"]');
     
-    etapaN1Select.addEventListener('change', function() {
-        const selectedEtapaN1 = this.value;
-        console.log('Etapa N1 seleccionada:', selectedEtapaN1);
+    sectorSelect.addEventListener('change', function() {
+        const selectedSector = this.value;
+        console.log('Sector seleccionado:', selectedSector);
     });
   });
 </script>
@@ -156,6 +173,79 @@
   flatpickr("#fecha", {
     dateFormat: "d/m/Y",
   });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Configuración del calendario
+    flatpickr("#fecha", {
+      locale: "es",
+      dateFormat: "Y-m-d",
+      defaultDate: new Date(),
+      altInput: true,
+      altFormat: "d/m/Y",
+    });
+  });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sectorSelect = document.getElementById('sector-select');
+    const tipoRecintoSelect = document.getElementById('tiporecinto-select');
+    const recintoSelect = document.getElementById('recinto-select');
+
+    sectorSelect.addEventListener('change', function() {
+        const sectorId = this.value;
+        if (sectorId) {
+            tipoRecintoSelect.disabled = false;
+            
+            fetch(`/get_tiposrecintos_by_sector/${sectorId}`)
+                .then(response => response.json())
+                .then(data => {
+                    tipoRecintoSelect.innerHTML = '<option value="">Seleccione un Tipo de Recinto</option>';
+                    data.forEach(tipo => {
+                        const option = document.createElement('option');
+                        option.value = tipo.id;
+                        option.textContent = tipo.nombre;
+                        tipoRecintoSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+                
+            // Resetear y deshabilitar el select de recintos
+            recintoSelect.disabled = true;
+            recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+        } else {
+            tipoRecintoSelect.disabled = true;
+            tipoRecintoSelect.innerHTML = '<option value="">Primero seleccione un sector</option>';
+            recintoSelect.disabled = true;
+            recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+        }
+    });
+
+    tipoRecintoSelect.addEventListener('change', function() {
+        const tipoRecintoId = this.value;
+        if (tipoRecintoId) {
+            recintoSelect.disabled = false;
+            
+            fetch(`/get_recintos_by_tipo/${tipoRecintoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    recintoSelect.innerHTML = '<option value="">Seleccione un Recinto</option>';
+                    data.forEach(recinto => {
+                        const option = document.createElement('option');
+                        option.value = recinto.id;
+                        option.textContent = recinto.nombre;
+                        recintoSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            recintoSelect.disabled = true;
+            recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+        }
+    });
+});
 </script>
 {% endblock %}
 
