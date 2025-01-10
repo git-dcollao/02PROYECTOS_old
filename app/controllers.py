@@ -4,15 +4,6 @@ from app.models import Requerimiento, TipoRecinto, Recinto, Sector, Etapa, Traba
 controllers_bp = Blueprint('controllers', __name__)
 
 # ==================================================================================
-# 
-# Rutas CRUD para Requerimientos
-# @controllers_bp.route('/reqquerimientos', endpoint='ruta_requerimientos')
-# def requerimientos():
-#     requerimientos = Requerimiento.query.all()
-#     tiposrecintos = TipoRecinto.query.all()
-#     return render_template('recintos.html', recintos=recintos, tiposrecintos=tiposrecintos)  # Cambiar a recintos.html
-
-# ==================================================================================
 # Rutas CRUD para Recintos
 @controllers_bp.route('/recintos', endpoint='ruta_recintos')
 def recintos():
@@ -910,7 +901,8 @@ def ruta_inicio():
 @controllers_bp.route('/requerimientos', endpoint='ruta_requerimientos')
 def requerimientos():
     requerimientos = Requerimiento.query.all()
-    return render_template('requerimientos.html', requerimientos=requerimientos)
+    sectores = Sector.query.all()  # Agregamos sectores
+    return render_template('requerimineto.html', requerimientos=requerimientos, sectores=sectores)
 
 @controllers_bp.route('/add_requerimiento', methods=['POST'], endpoint='add_requerimiento')
 def add_requerimiento():

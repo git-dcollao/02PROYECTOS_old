@@ -112,17 +112,21 @@ class Estado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
 
-class Requerimiento(db.Model):
-    __tablename__ = 'requerimiento'
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    descripcion = db.Column(db.Text, nullable=True)
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+
+class Requerimiento(db.Model):
+    __tablename__ = 'requerimiento'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    fecha = db.Column(db.String(20), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+    id_sector= db.Column(db.Integer, db.ForeignKey('sector.id', ondelete='CASCADE'), nullable=False)
+    sector = db.relationship('Sector', backref=db.backref('requerimiento', lazy=True, cascade='all, delete-orphan'))
+
 
 
 def init_db():
