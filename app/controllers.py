@@ -4,12 +4,13 @@ from app.models import Requerimiento, TipoRecinto, Recinto, Sector, Etapa, Traba
 controllers_bp = Blueprint('controllers', __name__)
 
 # ==================================================================================
+# 
 # Rutas CRUD para Requerimientos
-@controllers_bp.route('/reqquerimientos', endpoint='ruta_requerimientos')
-def requerimientos():
-    requerimientos = Requerimiento.query.all()
-    tiposrecintos = TipoRecinto.query.all()
-    return render_template('recintos.html', recintos=recintos, tiposrecintos=tiposrecintos)  # Cambiar a recintos.html
+# @controllers_bp.route('/reqquerimientos', endpoint='ruta_requerimientos')
+# def requerimientos():
+#     requerimientos = Requerimiento.query.all()
+#     tiposrecintos = TipoRecinto.query.all()
+#     return render_template('recintos.html', recintos=recintos, tiposrecintos=tiposrecintos)  # Cambiar a recintos.html
 
 # ==================================================================================
 # Rutas CRUD para Recintos
@@ -903,4 +904,53 @@ def contact():
 @controllers_bp.route('/', endpoint='ruta_inicio')
 def ruta_inicio():
     return render_template('index.html')
+
+# ==================================================================================
+# Rutas CRUD para Requerimientos 
+@controllers_bp.route('/requerimientos', endpoint='ruta_requerimientos')
+def requerimientos():
+    requerimientos = Requerimiento.query.all()
+    return render_template('requerimientos.html', requerimientos=requerimientos)
+
+@controllers_bp.route('/add_requerimiento', methods=['POST'], endpoint='add_requerimiento')
+def add_requerimiento():
+    try:
+        nombre = request.form['nombre']
+        descripcion = request.form.get('descripcion', '')
+        nuevo_requerimiento = Requerimiento(
+            nombre=nombre,
+            descripcion=descripcion
+        )
+        db.session.add(nuevo_requerimiento)
+        db.session.commit()
+        flash('Requerimiento agregado exitosamente')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al agregar requerimiento: {e}')
+    return redirect(url_for('controllers.ruta_requerimientos'))
+
+@controllers_bp.route('/update_requerimiento/<int:id>', methods=['POST'], endpoint='update_requerimiento')
+def update_requerimiento(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        requerimiento.nombre = request.form['nombre']
+        requerimiento.descripcion = request.form['descripcion']
+        db.session.commit()
+        flash('Requerimiento actualizado exitosamente')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar requerimiento: {e}')
+    return redirect(url_for('controllers.ruta_requerimientos'))
+
+@controllers_bp.route('/eliminar_requerimiento/<int:id>', methods=['POST'], endpoint='eliminar_requerimiento')
+def eliminar_requerimiento(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        db.session.delete(requerimiento)
+        db.session.commit()
+        flash('Requerimiento eliminado exitosamente')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar requerimiento: {e}')
+    return redirect(url_for('controllers.ruta_requerimientos'))
 # ==================================================================================
