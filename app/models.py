@@ -7,7 +7,6 @@ class Sector(db.Model):
     __tablename__ = 'sector'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    # Eliminar el backref aquí ya que está definido en las otras clases
 
 class TipoRecinto(db.Model):
     __tablename__ = 'tiporecinto'
