@@ -978,6 +978,8 @@ def update_requerimiento(id):
         requerimiento.descripcion = request.form['descripcion']
         requerimiento.fecha = request.form.get('fecha', datetime.now().strftime('%Y-%m-%d'))
         requerimiento.id_sector = request.form['id_sector']
+        requerimiento.id_tiporecinto = request.form['id_tiporecinto']  # Agregar esto
+        requerimiento.id_recinto = request.form['id_recinto'] 
         db.session.commit()
         flash('Requerimiento actualizado exitosamente')
     except Exception as e:

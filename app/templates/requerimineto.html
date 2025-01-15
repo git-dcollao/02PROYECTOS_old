@@ -67,27 +67,26 @@
                         <form action="{{ url_for('controllers.update_requerimiento', id=requerimiento.id) }}" method="POST">   
                           <div class="form-group">
                             <label>Nombre:</label>
-                            <input class="form-control" name="nombre" required="1" type="text">
+                            <input type="hidden" name="id" value="{{requerimiento.id}}">
+                            <input class="form-control" name="nombre" value="{{requerimiento.nombre}}" required="1" type="text">
                             <label>Fecha:</label>
-                            <input class="form-control" name="fecha" id="fecha" required="1" type="text" placeholder="Seleccione fecha">
+                            <input class="form-control" name="fecha" value="{{requerimiento.fecha}}" id="fecha" required="1" type="text" placeholder="Seleccione fecha">
                             <div class="form-group"></div>
                             <label>Descripción:</label>
                             <input class="form-control" name="descripcion" required="1" type="text">
                             <label>sector:</label>
-                            <select class="form-control" name="id_sector" id="sector-select" required="1">
+                            <select class="form-control sector-select" name="id_sector" id="sector-select" required="1">
                               <option value="">Seleccione un Sector</option>
                               {% for sector in sectores %}
                               <option value="{{ sector.id }}">{{ sector.nombre }}</option>
                               {% endfor %}
                             </select>
-                          
                             <label>Tipo de Recinto:</label>
-                            <select class="form-control" name="id_tiporecinto" id="tiporecinto-select" required="1" disabled>
+                            <select class="form-control tiporecinto-select" name="id_tiporecinto" id="tiporecinto-select" required="1" disabled>
                               <option value="">Primero seleccione un sector</option>
-                            </select>                        
-                          
+                            </select>
                             <label>Recinto:</label>
-                            <select class="form-control" name="id_recinto" id="recinto-select" required="1" disabled>
+                            <select class="form-control recinto-select" name="id_recinto" id="recinto-select" required="1" disabled>
                               <option value="">Primero seleccione un tipo de recinto</option>
                             </select>
                           </div>
@@ -130,7 +129,7 @@
                 <label>Descripción:</label>
                 <input class="form-control" name="descripcion" required="1" type="text">
                 <label>sector:</label>
-                <select class="form-control" name="id_sector" id="sector-select" required="1">
+                <select class="form-control sector-select" name="id_sector" id="sector-select" required="1">
                   <option value="">Seleccione un Sector</option>
                   {% for sector in sectores %}
                   <option value="{{ sector.id }}">{{ sector.nombre }}</option>
@@ -138,12 +137,12 @@
                 </select>
 
                 <label>Tipo de Recinto:</label>
-                <select class="form-control" name="id_tiporecinto" id="tiporecinto-select" required="1" disabled>
+                <select class="form-control tiporecinto-select" name="id_tiporecinto" id="tiporecinto-select" required="1" disabled>
                   <option value="">Primero seleccione un sector</option>
                 </select>                        
 
                 <label>Recinto:</label>
-                <select class="form-control" name="id_recinto" id="recinto-select" required="1" disabled>
+                <select class="form-control recinto-select" name="id_recinto" id="recinto-select" required="1" disabled>
                   <option value="">Primero seleccione un tipo de recinto</option>
                 </select>
               </div>
@@ -258,5 +257,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %}
 
+<script>
+function initializeSelects(formElement) {
+    const sectorSelect = formElement.querySelector('.sector-select');
+    const tipoRecintoSelect = formElement.querySelector('.tiporecinto-select');
+    const recintoSelect = formElement.querySelector('.recinto-select');
+
+    if (!sectorSelect || !tipoRecintoSelect || !recintoSelect) return;
+
+    // Mantener valores actuales al editar
+    const currentTipoRecinto = tipoRecintoSelect.getAttribute('data-current');
+    const currentRecinto = recintoSelect.getAttribute('data-current');
+
+    sectorSelect.addEventListener('change', async function() {
+        // ... código existente
+    });
+
+    // Si hay sector seleccionado, cargar tipos de recinto inicialmente
+    if (sectorSelect.value) {
+        sectorSelect.dispatchEvent(new Event('change'));
+    }
+}
+</script>
+{% endblock %}
