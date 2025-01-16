@@ -1,11 +1,13 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template
+from .models import Sector, Requerimiento
 
 handlers_bp = Blueprint('handlers', __name__)
 
-# Ruta para la página "Ingreso de Requerimientos"
 @handlers_bp.route('/requerimientos')
-def requerimiento():
-    return render_template('requerimiento.html')
+def requerimientos():  # El nombre de la función coincide con la redirección
+    requerimientos = Requerimiento.query.all()
+    sectores = Sector.query.all()
+    return render_template('requerimiento.html', requerimientos=requerimientos, sectores=sectores)
 
 # Ruta para la página "Tipo de Recinto"
 @handlers_bp.route('/recintos')
@@ -86,26 +88,6 @@ def tipo_de_proyecto():
 @handlers_bp.route('/estado', endpoint='ruta_estado')
 def estado():
     return render_template('estado.html')
-
-# # Ruta para la página "Acerca de mí"
-# @handlers_bp.route('/acerca-de-mi', endpoint='ruta_acerca_de_mi')
-# def acerca_de_mi():
-#     return render_template('about_me.html')
-
-# # Ruta para la página de proyectos
-# @handlers_bp.route('/proyectos')
-# def proyectos():
-#     return render_template('pages/proyectos.html')
-
-# # Ruta para la página de portafolio
-# @handlers_bp.route('/portafolio/<nombre>')
-# def portafolio(nombre):
-#     return render_template('pages/portafolio.html', nombre=nombre)
-
-# Ruta para la página de contacto
-# @handlers_bp.route('/contacto')
-# def contacto():
-#     return render_template('pages/contacto.html')
 
 # Ruta para la página de inicio
 @handlers_bp.route('/')

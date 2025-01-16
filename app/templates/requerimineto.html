@@ -25,7 +25,7 @@
                 <th>Id</th>
                 <th>Nombre</th>
                 <th>Fecha Ingreso</th>
-                <th>ver Descripción</th>
+                <th>Ver Descripción</th>
                 <th>Estado</th>
                 <th>Sector</th>
                 <th>Tipo Recinto</th>
@@ -40,7 +40,7 @@
                 <td>{{requerimiento.nombre}}</td>
                 <td>{{requerimiento.fecha}}</td>
                 <td>{{requerimiento.descripcion}}</td>
-                <td>{{requerimiento.estado}}</td>
+                <td>{{requerimiento.estado.nombre}}</td>
                 <td>{{requerimiento.sector.nombre}}</td>
                 <td>{{requerimiento.tiporecinto.nombre}}</td>
                 <td>{{requerimiento.recinto.nombre}}</td>
@@ -73,21 +73,39 @@
                             <input class="form-control" name="fecha" value="{{requerimiento.fecha}}" id="fecha" required="1" type="text" placeholder="Seleccione fecha">
                             <div class="form-group"></div>
                             <label>Descripción:</label>
-                            <input class="form-control" name="descripcion" required="1" type="text">
+                            <input class="form-control" name="descripcion" value="{{requerimiento.descripcion}}" required="1" type="text">
                             <label>sector:</label>
-                            <select class="form-control sector-select" name="id_sector" id="sector-select" required="1">
+                            <select class="form-control sector-select" name="id_sector" id="sector-select{{requerimiento.id}}" required="1">
                               <option value="">Seleccione un Sector</option>
                               {% for sector in sectores %}
-                              <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                              <option value="{{ sector.id }}" {% if sector.id == requerimiento.id_sector %}selected{% endif %}>
+                                {{ sector.nombre }}
+                              </option>
                               {% endfor %}
                             </select>
+
                             <label>Tipo de Recinto:</label>
-                            <select class="form-control tiporecinto-select" name="id_tiporecinto" id="tiporecinto-select" required="1" disabled>
-                              <option value="">Primero seleccione un sector</option>
+                            <select class="form-control tiporecinto-select" name="id_tiporecinto" 
+                                    id="tiporecinto-select{{requerimiento.id}}" required="1"
+                                    data-current="{{requerimiento.id_tiporecinto}}">
+                              <option value="">Seleccione un Tipo de Recinto</option>
+                              {% if requerimiento.tiporecinto %}
+                              <option value="{{ requerimiento.tiporecinto.id }}" selected>
+                                {{ requerimiento.tiporecinto.nombre }}
+                              </option>
+                              {% endif %}
                             </select>
+
                             <label>Recinto:</label>
-                            <select class="form-control recinto-select" name="id_recinto" id="recinto-select" required="1" disabled>
-                              <option value="">Primero seleccione un tipo de recinto</option>
+                            <select class="form-control recinto-select" name="id_recinto" 
+                                    id="recinto-select{{requerimiento.id}}" required="1"
+                                    data-current="{{requerimiento.id_recinto}}">
+                              <option value="">Seleccione un Recinto</option>
+                              {% if requerimiento.recinto %}
+                              <option value="{{ requerimiento.recinto.id }}" selected>
+                                {{ requerimiento.recinto.nombre }}
+                              </option>
+                              {% endif %}
                             </select>
                           </div>
                           <button type="submit" class="btn btn-primary">Actualizar</button>
@@ -258,6 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
 <script>
 function initializeSelects(formElement) {
     const sectorSelect = formElement.querySelector('.sector-select');
@@ -279,5 +298,77 @@ function initializeSelects(formElement) {
         sectorSelect.dispatchEvent(new Event('change'));
     }
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Para cada modal de edición
+    document.querySelectorAll('[id^="exampleModal1"]').forEach(modal => {
+        const sectorSelect = modal.querySelector('.sector-select');
+        const tipoRecintoSelect = modal.querySelector('.tiporecinto-select');
+        const recintoSelect = modal.querySelector('.recinto-select');
+
+        if (sectorSelect && tipoRecintoSelect && recintoSelect) {
+            // Habilitar los selects
+            tipoRecintoSelect.disabled = false;
+            recintoSelect.disabled = false;
+
+            // Configurar el evento change del sector
+            sectorSelect.addEventListener('change', function() {
+                const sectorId = this.value;
+                if (sectorId) {
+                    tipoRecintoSelect.disabled = false;
+                    fetch(`/get_tiposrecintos_by_sector/${sectorId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const currentTipoRecinto = tipoRecintoSelect.getAttribute('data-current');
+                            tipoRecintoSelect.innerHTML = '<option value="">Seleccione un Tipo de Recinto</option>';
+                            data.forEach(tipo => {
+                                const option = document.createElement('option');
+                                option.value = tipo.id;
+                                option.textContent = tipo.nombre;
+                                if (tipo.id == currentTipoRecinto) {
+                                    option.selected = true;
+                                }
+                                tipoRecintoSelect.appendChild(option);
+                            });
+                            // Disparar el evento change en tipoRecintoSelect si hay un valor seleccionado
+                            if (currentTipoRecinto) {
+                                tipoRecintoSelect.dispatchEvent(new Event('change'));
+                            }
+                        });
+                }
+            });
+
+            // Configurar el evento change del tipo de recinto
+            tipoRecintoSelect.addEventListener('change', function() {
+                const tipoRecintoId = this.value;
+                if (tipoRecintoId) {
+                    recintoSelect.disabled = false;
+                    fetch(`/get_recintos_by_tipo/${tipoRecintoId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const currentRecinto = recintoSelect.getAttribute('data-current');
+                            recintoSelect.innerHTML = '<option value="">Seleccione un Recinto</option>';
+                            data.forEach(recinto => {
+                                const option = document.createElement('option');
+                                option.value = recinto.id;
+                                option.textContent = recinto.nombre;
+                                if (recinto.id == currentRecinto) {
+                                    option.selected = true;
+                                }
+                                recintoSelect.appendChild(option);
+                            });
+                        });
+                }
+            });
+
+            // Disparar el evento change inicial para cargar los datos
+            if (sectorSelect.value) {
+                sectorSelect.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+});
 </script>
 {% endblock %}

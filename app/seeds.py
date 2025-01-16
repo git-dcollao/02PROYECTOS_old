@@ -3,6 +3,62 @@ from .models import db, TipoRecinto, Recinto, Sector, Trabajador, EtapaN1, Etapa
 def seed_data():
     """Función para crear datos iniciales en la base de datos"""
     try:
+        # Datos iniciales para los sectores
+        sector_data = [
+            {'nombre': 'MUNICIPAL'},
+            {'nombre': 'SALUD'},
+            {'nombre': 'CEMENTERIO'},
+            {'nombre': 'EDUCACION'},
+            {'nombre': 'OTRO'},
+        ]
+        sectores = [Sector(**data) for data in sector_data]
+        db.session.add_all(sectores)
+        db.session.commit()
+
+        # Datos iniciales para Tipo de Recintos
+        tiposrecintos_data = [
+            {'nombre': 'CESFAM', 'descripcion': 'Centro de ...', 'id_sector': 2},
+            {'nombre': 'CECOSF', 'descripcion': 'Centro de ...', 'id_sector': 2},
+            {'nombre': 'SAPU', 'descripcion': 'Servicio de ...', 'id_sector': 2},
+            {'nombre': 'SAR', 'descripcion': 'Servicio de ...', 'id_sector': 2},
+            {'nombre': 'ED. CONSISTORIAL', 'descripcion': 'Edificio Consistorial', 'id_sector': 1},
+            {'nombre': 'CENTRO DE APOYO', 'descripcion': 'Ejecuciónde  estudio', 'id_sector': 4},
+            {'nombre': 'RECINTOS VARIOS', 'descripcion': 'Ejecuciónde  estudio', 'id_sector': 4},
+            {'nombre': 'CEMENTERIO', 'descripcion': 'Ejecuciónde  estudio', 'id_sector': 3},
+        ]
+        tiposrecintos = [TipoRecinto(**data) for data in tiposrecintos_data]
+        db.session.add_all(tiposrecintos)
+        db.session.commit()
+        
+        # Datos iniciales para Recintos
+        recintos_data = [
+            {'nombre': 'La Tortuga', 'descripcion': 'Centro de ...', 'id_tiporecinto': 2},
+            {'nombre': 'El Boro', 'descripcion': 'Centro de ...', 'id_tiporecinto': 2},
+            {'nombre': 'Dr. Héctor Reyno Gutiérre', 'descripcion': 'Servicio de ...', 'id_tiporecinto': 3},
+            {'nombre': 'El Boro', 'descripcion': 'Servicio de ...', 'id_tiporecinto': 3},
+            {'nombre': 'CCR', 'descripcion': 'Edificio Consistorial', 'id_tiporecinto': 7},
+            {'nombre': 'CESCO', 'descripcion': 'Recintos ...', 'id_tiporecinto': 7},
+            {'nombre': 'CAAPS', 'descripcion': 'Recintos ...', 'id_tiporecinto': 7},
+            {'nombre': 'Oficinas DEPSA', 'descripcion': 'Recintos ...', 'id_tiporecinto': 5},
+            {'nombre': 'Recintos Varios', 'descripcion': 'Recintos varios ...', 'id_tiporecinto': 7},
+        ]
+        recintos = [Recinto(**data) for data in recintos_data]
+        db.session.add_all(recintos)
+        db.session.commit()
+        
+        # Agregar estados base
+        estados_data = [
+            {'nombre': 'En Solicitud'},
+            {'nombre': 'En Desarrollo - Preparación'},
+            {'nombre': 'En Desarrollo - Ejecución'},
+            {'nombre': 'Finalizado'},
+            {'nombre': 'Rechazado'},
+            {'nombre': 'Cancelado'}
+        ]
+        estados = [Estado(**data) for data in estados_data]
+        db.session.add_all(estados)
+        db.session.commit()
+
         # Datos iniciales para EtapaN1
         etapas_n1_data = [
             {'nombre': 'Preparación', 'descripcion': 'Etapa de preparación del proyecto'},
@@ -164,50 +220,6 @@ def seed_data():
         db.session.add_all(tipologias)
         db.session.commit()
 
-        # Datos iniciales para los sectores
-        sector_data = [
-            {'nombre': 'MUNICIPAL'},
-            {'nombre': 'SALUD'},
-            {'nombre': 'CEMENTERIO'},
-            {'nombre': 'EDUCACION'},
-            {'nombre': 'OTRO'},
-            ]
-        sectores = [Sector(**data) for data in sector_data]
-        db.session.add_all(sectores)
-        db.session.commit()
-
-        # Datos iniciales para Tipo de Recintos
-        tiposrecintos_data = [
-            {'nombre': 'CESFAM', 'descripcion': 'Centro de ...', 'id_sector': 2},
-            {'nombre': 'CECOSF', 'descripcion': 'Centro de ...', 'id_sector': 2},
-            {'nombre': 'SAPU', 'descripcion': 'Servicio de ...', 'id_sector': 2},
-            {'nombre': 'SAR', 'descripcion': 'Servicio de ...', 'id_sector': 2},
-            {'nombre': 'ED. CONSISTORIAL', 'descripcion': 'Edificio Consistorial', 'id_sector': 1},
-            {'nombre': 'CENTRO DE APOYO', 'descripcion': 'Ejecuciónde  estudio', 'id_sector': 4},
-            {'nombre': 'RECINTOS VARIOS', 'descripcion': 'Ejecuciónde  estudio', 'id_sector': 4},
-            {'nombre': 'CEMENTERIO', 'descripcion': 'Ejecuciónde  estudio', 'id_sector': 3},
-        ]
-        tiposrecintos = [TipoRecinto(**data) for data in tiposrecintos_data]
-        db.session.add_all(tiposrecintos)
-        db.session.commit()
-        
-        # Datos iniciales para Recintos
-        recintos_data = [
-            {'nombre': 'La Tortuga', 'descripcion': 'Centro de ...', 'id_tiporecinto': 2},
-            {'nombre': 'El Boro', 'descripcion': 'Centro de ...', 'id_tiporecinto': 2},
-            {'nombre': 'Dr. Héctor Reyno Gutiérre', 'descripcion': 'Servicio de ...', 'id_tiporecinto': 3},
-            {'nombre': 'El Boro', 'descripcion': 'Servicio de ...', 'id_tiporecinto': 3},
-            {'nombre': 'CCR', 'descripcion': 'Edificio Consistorial', 'id_tiporecinto': 7},
-            {'nombre': 'CESCO', 'descripcion': 'Recintos ...', 'id_tiporecinto': 7},
-            {'nombre': 'CAAPS', 'descripcion': 'Recintos ...', 'id_tiporecinto': 7},
-            {'nombre': 'Oficinas DEPSA', 'descripcion': 'Recintos ...', 'id_tiporecinto': 5},
-            {'nombre': 'Recintos Varios', 'descripcion': 'Recintos varios ...', 'id_tiporecinto': 7},
-        ]
-        recintos = [Recinto(**data) for data in recintos_data]
-        db.session.add_all(recintos)
-        db.session.commit()
-        
-
         # Datos iniciales para otras tablas
         datos_iniciales = {
             Especialidad: [
@@ -234,15 +246,7 @@ def seed_data():
                 {'nombre': 'Municipal', 'nombrecorto': 'MUNICIPAL', 'descripcion': 'Fondo municipal'},
                 {'nombre': 'Por Definir', 'nombrecorto': 'FNDR-C33', 'descripcion': 'Fondos por definir'},
             ],
-            Estado: [
-                {'nombre': 'En Solicitud'},
-                {'nombre': 'En Desarrollo - Preparación'},
-                {'nombre': 'En Desarrollo - Ejecución'},
-                {'nombre': 'Finalizado'},
-                {'nombre': 'Cancelado'},
-            ],
-
-           Trabajador : [
+            Trabajador : [
             {
                 'nombre': 'Admin',
                 'profesion': 'Admin',

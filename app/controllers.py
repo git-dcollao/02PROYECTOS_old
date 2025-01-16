@@ -926,49 +926,32 @@ def requerimientos():
 @controllers_bp.route('/add_requerimiento', methods=['POST'], endpoint='add_requerimiento')
 def add_requerimiento():
     try:
-        # Agregar prints para debug
-        print("Form data:", request.form)
-        
-        # Obtener los datos del formulario
-        nombre = request.form.get('nombre')
-        descripcion = request.form.get('descripcion', '')
-        fecha = request.form.get('fecha')
-        id_sector = request.form.get('id_sector')
-        id_tiporecinto = request.form.get('id_tiporecinto')
-        id_recinto = request.form.get('id_recinto')
-        
-        # Validar datos requeridos
-        if not all([nombre, fecha, id_sector, id_tiporecinto, id_recinto]):
-            raise ValueError("Todos los campos son requeridos")
-        
-        # Debug print
-        print(f"Datos a guardar: nombre={nombre}, fecha={fecha}, descripcion={descripcion}, "
-              f"sector={id_sector}, tipo={id_tiporecinto}, recinto={id_recinto}")
-        
-        nuevo_requerimiento = Requerimiento(
-            nombre=nombre,
-            descripcion=descripcion,
-            fecha=fecha,
-            id_sector=id_sector,
-            id_tiporecinto=id_tiporecinto,
-            id_recinto=id_recinto
-        )
-        
-        db.session.add(nuevo_requerimiento)
-        db.session.commit()
-        flash('Requerimiento agregado exitosamente')
-        
-    except ValueError as e:
-        db.session.rollback()
-        flash(f'Error de validación: {str(e)}')
-        print(f"Error de validación: {str(e)}")
-        
+        if request.method == 'POST':
+            nombre = request.form['nombre']
+            fecha = datetime.strptime(request.form['fecha'], '%Y-%m-%d')
+            descripcion = request.form['descripcion']
+            id_sector = request.form['id_sector']
+            id_tiporecinto = request.form['id_tiporecinto']
+            id_recinto = request.form['id_recinto']
+            
+            nuevo_requerimiento = Requerimiento(
+                nombre=nombre,
+                fecha=fecha,
+                descripcion=descripcion,
+                id_sector=id_sector,
+                id_tiporecinto=id_tiporecinto,
+                id_recinto=id_recinto,
+                id_estado=1  # Estado inicial por defecto
+            )
+            
+            db.session.add(nuevo_requerimiento)
+            db.session.commit()
+            flash('Requerimiento agregado exitosamente', 'success')
+            return redirect(url_for('controllers.ruta_requerimientos'))
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al agregar requerimiento: {str(e)}')
-        print(f"Error completo: {str(e)}")
-        
-    return redirect(url_for('controllers.ruta_requerimientos'))
+        flash(f'Error al agregar requerimiento: {str(e)}', 'error')
+        return redirect(url_for('controllers.ruta_requerimientos'))
 
 @controllers_bp.route('/update_requerimiento/<int:id>', methods=['POST'], endpoint='update_requerimiento')
 def update_requerimiento(id):
@@ -976,15 +959,16 @@ def update_requerimiento(id):
         requerimiento = Requerimiento.query.get_or_404(id)
         requerimiento.nombre = request.form['nombre']
         requerimiento.descripcion = request.form['descripcion']
-        requerimiento.fecha = request.form.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+        requerimiento.fecha = datetime.strptime(request.form['fecha'], '%Y-%m-%d')
         requerimiento.id_sector = request.form['id_sector']
-        requerimiento.id_tiporecinto = request.form['id_tiporecinto']  # Agregar esto
-        requerimiento.id_recinto = request.form['id_recinto'] 
+        requerimiento.id_tiporecinto = request.form['id_tiporecinto']
+        requerimiento.id_recinto = request.form['id_recinto']
+
         db.session.commit()
-        flash('Requerimiento actualizado exitosamente')
+        flash('Requerimiento actualizado exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al actualizar requerimiento: {e}')
+        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
     return redirect(url_for('controllers.ruta_requerimientos'))
 
 @controllers_bp.route('/eliminar_requerimiento/<int:id>', methods=['POST'], endpoint='eliminar_requerimiento')

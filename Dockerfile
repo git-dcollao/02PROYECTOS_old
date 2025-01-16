@@ -11,8 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia el resto de la aplicación
 COPY . .
 
-# ENV FLASK_APP=app:create_app
-# ENV FLASK_ENV=development
+# Establece las variables de entorno para Flask
+ENV FLASK_APP=app:create_app
+ENV FLASK_ENV=development
 
 # Comando para ejecutar la aplicación
-CMD ["flask", "run", "--host=0.0.0.0", "--reload"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

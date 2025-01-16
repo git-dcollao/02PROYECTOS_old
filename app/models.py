@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 # from app import db
 
 db = SQLAlchemy()
@@ -98,7 +99,7 @@ class Fase(db.Model):
     __tablename__ = 'fase'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-
+ 
 class TipoProyecto(db.Model):
     __tablename__ = 'tipoproyecto'
     id = db.Column(db.Integer, primary_key=True)
@@ -117,18 +118,22 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
 
-class Requerimiento(db.Model):
+class Requerimiento(db.Model): 
     __tablename__ = 'requerimiento'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    fecha = db.Column(db.String(20), nullable=False)
-    descripcion = db.Column(db.Text, nullable=True)
-    id_sector = db.Column(db.Integer, db.ForeignKey('sector.id', ondelete='CASCADE'), nullable=False)
-    id_tiporecinto = db.Column(db.Integer, db.ForeignKey('tiporecinto.id', ondelete='CASCADE'), nullable=False)  # Agregar esto
-    id_recinto = db.Column(db.Integer, db.ForeignKey('recinto.id', ondelete='CASCADE'), nullable=False)  # Agregar esto
-    sector = db.relationship('Sector', backref=db.backref('requerimiento', lazy=True))
-    tiporecinto = db.relationship('TipoRecinto', backref=db.backref('requerimiento', lazy=True))  # Agregar esto
-    recinto = db.relationship('Recinto', backref=db.backref('requerimiento', lazy=True))  # Agregar esto
+    fecha = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    descripcion = db.Column(db.Text)
+    id_sector = db.Column(db.Integer, db.ForeignKey('sector.id'), nullable=False)
+    id_tiporecinto = db.Column(db.Integer, db.ForeignKey('tiporecinto.id'), nullable=False)
+    id_recinto = db.Column(db.Integer, db.ForeignKey('recinto.id'), nullable=False)
+    id_estado = db.Column(db.Integer, db.ForeignKey('estado.id'), nullable=False)
+
+    # Relaciones
+    sector = db.relationship('Sector', backref='requerimientos')
+    tiporecinto = db.relationship('TipoRecinto', backref='requerimientos')
+    recinto = db.relationship('Recinto', backref='requerimientos')
+    estado = db.relationship('Estado', backref='requerimientos')
 
 def init_db():
     """Crear todas las tablas en la base de datos"""
