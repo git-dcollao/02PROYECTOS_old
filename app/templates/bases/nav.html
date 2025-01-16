@@ -48,8 +48,27 @@
             <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_sectores') }}">Sectores</a></li>
             <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_tiposrecintos') }}">Tipos de Recintos</a></li>
             <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_recintos') }}">Recintos</a></li>
-          
+          </ul>
+        <li>
+        <!-- Dropdown para Requerimientos -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="requerimientosDropdown" role="button" 
+             data-bs-toggle="dropdown" aria-expanded="false">
+            Requerimientos
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="requerimientosDropdown">
             <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_requerimientos') }}">Requerimientos</a></li>
+            <li><hr></li>
+            <li><a class="dropdown-item" href="#">Solicitud -> Proyecto</a></li>
+            <li><a class="dropdown-item" href="#">Proyecto -> Agregar información</a></li>
+            <li><hr></li>
+            <li><a class="dropdown-item" href="#">Proyecto -> Fase Intermedia</a></li>
+            <li><a class="dropdown-item" href="#">Fase Intermedia -> Agregar información</a></li>
+            <li><hr></li>
+            <li><a class="dropdown-item" href="#">Proyecto -> Proyecto en Curso</a></li>
+            <li><a class="dropdown-item" href="#">Proyecto en Curso -> Agregar información</a></li>
+            <li><hr></li>
+            <li><a class="dropdown-item" href="#">Proyecto en Curso -> Finalizado</a></li>
           </ul>
         <li>
       </ul>
