@@ -995,22 +995,36 @@ def requerimientos_aceptar():
 def update_requerimiento_aceptar(id):
     try:
         requerimiento = Requerimiento.query.get_or_404(id)
+        observacion = request.form.get('observacion')
+        
+        if not observacion:
+            flash('La observación es requerida', 'error')
+            return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
+            
         requerimiento.id_estado = 2  # Estado: En Desarrollo - Preparación
+        requerimiento.observacion = observacion
         db.session.commit()
-        flash('Requerimiento aceptado exitosamente', 'success')
+        flash('Requerimiento aceptado exitosamente. Observación guardada.', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
-    return redirect(url_for('controllers.ruta_requerimientos_aceptar'))  # Corregido aquí
+    return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
 
 @controllers_bp.route('/update_requerimiento_rechazar/<int:id>', methods=['POST'])
 def update_requerimiento_rechazar(id):
     try:
         requerimiento = Requerimiento.query.get_or_404(id)
+        observacion = request.form.get('observacion')
+        
+        if not observacion:
+            flash('La observación es requerida', 'error')
+            return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
+            
         requerimiento.id_estado = 5  # Estado: Rechazado
+        requerimiento.observacion = observacion
         db.session.commit()
-        flash('Requerimiento rechazado exitosamente', 'success')
+        flash('Requerimiento rechazado exitosamente. Observación guardada.', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
-    return redirect(url_for('controllers.ruta_requerimientos_aceptar'))  # Corregido aquí
+    return redirect(url_for('controllers.ruta_requerimientos_aceptar'))

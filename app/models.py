@@ -124,6 +124,7 @@ class Requerimiento(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     fecha = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     descripcion = db.Column(db.Text)
+    observacion = db.Column(db.Text, nullable=True)
     id_sector = db.Column(db.Integer, db.ForeignKey('sector.id'), nullable=False)
     id_tiporecinto = db.Column(db.Integer, db.ForeignKey('tiporecinto.id'), nullable=False)
     id_recinto = db.Column(db.Integer, db.ForeignKey('recinto.id'), nullable=False)

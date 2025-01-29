@@ -74,22 +74,18 @@
                                         <label class="form-label">Recinto:</label>
                                         <input type="text" class="form-control" value="{{requerimiento.recinto.nombre}}" readonly>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Observación:</label>
+                                        <textarea class="form-control" id="observacion{{requerimiento.id}}" required></textarea>
+                                    </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <form action="{{ url_for('controllers.update_requerimiento_aceptar', id=requerimiento.id) }}" 
-                                          method="POST" class="d-inline">
-                                        <button type="submit" class="btn btn-success" 
-                                                onclick="return confirm('¿Está seguro de aceptar este requerimiento?')">
-                                            Aceptar
-                                        </button>
-                                    </form>
-                                    <form action="{{ url_for('controllers.update_requerimiento_rechazar', id=requerimiento.id) }}" 
-                                          method="POST" class="d-inline">
-                                        <button type="submit" class="btn btn-danger" 
-                                                onclick="return confirm('¿Está seguro de rechazar este requerimiento?')">
-                                            Rechazar
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-success" onclick="submitForm({{requerimiento.id}}, 'aceptar')">
+                                        Aceptar
+                                    </button>
+                                    <button type="button" class="btn btn-danger" onclick="submitForm({{requerimiento.id}}, 'rechazar')">
+                                        Rechazar
+                                    </button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                                 </div>
                             </div>
@@ -111,4 +107,32 @@
         {% endfor %}
     {% endif %}
 {% endwith %}
+
+<script>
+function submitForm(id, action) {
+    const observacion = document.getElementById('observacion' + id).value.trim();
+    
+    if (!observacion) {
+        alert('Por favor, ingrese una observación antes de continuar.');
+        return;
+    }
+
+    if (confirm(`¿Está seguro de ${action} este requerimiento?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action === 'aceptar' 
+            ? "{{ url_for('controllers.update_requerimiento_aceptar', id=0) }}".replace('0', id)
+            : "{{ url_for('controllers.update_requerimiento_rechazar', id=0) }}".replace('0', id);
+
+        const observacionInput = document.createElement('input');
+        observacionInput.type = 'hidden';
+        observacionInput.name = 'observacion';
+        observacionInput.value = observacion;
+        
+        form.appendChild(observacionInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}
