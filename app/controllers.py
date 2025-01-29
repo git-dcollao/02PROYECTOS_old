@@ -921,7 +921,7 @@ def ruta_inicio():
 def requerimientos():
     requerimientos = Requerimiento.query.all()
     sectores = Sector.query.all()  # Agregamos sectores
-    return render_template('requerimineto.html', requerimientos=requerimientos, sectores=sectores)
+    return render_template('requerimiento.html', requerimientos=requerimientos, sectores=sectores)
 
 @controllers_bp.route('/add_requerimiento', methods=['POST'], endpoint='add_requerimiento')
 def add_requerimiento():
@@ -982,4 +982,35 @@ def eliminar_requerimiento(id):
         db.session.rollback()
         flash(f'Error al eliminar requerimiento: {e}')
     return redirect(url_for('controllers.ruta_requerimientos'))
+
 # ==================================================================================
+# Rutas CRUD para Requerimientos-aceptar
+@controllers_bp.route('/requerimientos_aceptar', endpoint='ruta_requerimientos_aceptar')
+def requerimientos_aceptar():
+    requerimientos = Requerimiento.query.all()
+    sectores = Sector.query.all()
+    return render_template('requerimiento-aceptar.html', requerimientos=requerimientos, sectores=sectores)
+
+@controllers_bp.route('/update_requerimiento_aceptar/<int:id>', methods=['POST'])
+def update_requerimiento_aceptar(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        requerimiento.id_estado = 2  # Estado: En Desarrollo - Preparación
+        db.session.commit()
+        flash('Requerimiento aceptado exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+    return redirect(url_for('controllers.ruta_requerimientos_aceptar'))  # Corregido aquí
+
+@controllers_bp.route('/update_requerimiento_rechazar/<int:id>', methods=['POST'])
+def update_requerimiento_rechazar(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        requerimiento.id_estado = 5  # Estado: Rechazado
+        db.session.commit()
+        flash('Requerimiento rechazado exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+    return redirect(url_for('controllers.ruta_requerimientos_aceptar'))  # Corregido aquí

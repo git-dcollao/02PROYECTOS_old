@@ -1,0 +1,114 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Gestión de Requerimientos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Aceptar/Rechazar Requerimientos</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Sector</th>
+                    <th>Tipo Recinto</th>
+                    <th>Recinto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for requerimiento in requerimientos %}
+                    {% if requerimiento.id_estado == 1 %}
+                    <tr>
+                        <td>{{requerimiento.id}}</td>
+                        <td>{{requerimiento.nombre}}</td>
+                        <td>{{requerimiento.fecha.strftime('%Y-%m-%d')}}</td>
+                        <td>{{requerimiento.descripcion}}</td>
+                        <td>{{requerimiento.estado.nombre}}</td>
+                        <td>{{requerimiento.sector.nombre}}</td>
+                        <td>{{requerimiento.tiporecinto.nombre}}</td>
+                        <td>{{requerimiento.recinto.nombre}}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
+                                    data-bs-target="#exampleModal{{requerimiento.id}}">
+                                Ver
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Modal para cada requerimiento -->
+                    <div class="modal fade" id="exampleModal{{requerimiento.id}}" tabindex="-1" 
+                         aria-labelledby="exampleModalLabel{{requerimiento.id}}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel{{requerimiento.id}}">
+                                        Detalles del Requerimiento
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Contenido del requerimiento -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre:</label>
+                                        <input type="text" class="form-control" value="{{requerimiento.nombre}}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Descripción:</label>
+                                        <textarea class="form-control" readonly>{{requerimiento.descripcion}}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Sector:</label>
+                                        <input type="text" class="form-control" value="{{requerimiento.sector.nombre}}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo Recinto:</label>
+                                        <input type="text" class="form-control" value="{{requerimiento.tiporecinto.nombre}}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Recinto:</label>
+                                        <input type="text" class="form-control" value="{{requerimiento.recinto.nombre}}" readonly>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <form action="{{ url_for('controllers.update_requerimiento_aceptar', id=requerimiento.id) }}" 
+                                          method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-success" 
+                                                onclick="return confirm('¿Está seguro de aceptar este requerimiento?')">
+                                            Aceptar
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('controllers.update_requerimiento_rechazar', id=requerimiento.id) }}" 
+                                          method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-danger" 
+                                                onclick="return confirm('¿Está seguro de rechazar este requerimiento?')">
+                                            Rechazar
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
