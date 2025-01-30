@@ -129,6 +129,7 @@ class Requerimiento(db.Model):
     id_tiporecinto = db.Column(db.Integer, db.ForeignKey('tiporecinto.id'), nullable=False)
     id_recinto = db.Column(db.Integer, db.ForeignKey('recinto.id'), nullable=False)
     id_estado = db.Column(db.Integer, db.ForeignKey('estado.id'), nullable=False)
+    fecha_aceptacion = db.Column(db.DateTime, nullable=True)
 
     # Relaciones
     sector = db.relationship('Sector', backref='requerimientos')

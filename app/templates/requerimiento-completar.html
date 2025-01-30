@@ -1,14 +1,10 @@
 {% extends 'bases/base.html' %}
 
-{% block title %}Gestión de Requerimientos{% endblock %}
-
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/requerimientos.css') }}">
-{% endblock %}
+{% block title %}Gestión de Proyectos en Fase Inicial{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Aceptar/Rechazar Requerimientos</h2>
+    <h2>Llenado de Datos en Fase Inicial</h2>
     
     <div class="table-responsive">
         <table class="table table-striped">
@@ -16,26 +12,24 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Fecha</th>
+                    <th>Fecha Ingreso</th>
+                    <th>Fecha Aceptación</th>
                     <th>Descripción</th>
                     <th>Estado</th>
-                    <th>Sector</th>
-                    <th>Tipo Recinto</th>
                     <th>Recinto</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for requerimiento in requerimientos %}
-                    {% if requerimiento.id_estado == 1 %}
+                    {% if requerimiento.id_estado == 2 %}
                     <tr>
                         <td>{{requerimiento.id}}</td>
                         <td>{{requerimiento.nombre}}</td>
                         <td>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</td>
+                        <td>{{requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else ''}}</td>
                         <td>{{requerimiento.descripcion}}</td>
                         <td>{{requerimiento.estado.nombre}}</td>
-                        <td>{{requerimiento.sector.nombre}}</td>
-                        <td>{{requerimiento.tiporecinto.nombre}}</td>
                         <td>{{requerimiento.recinto.nombre}}</td>
                         <td>
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
@@ -48,17 +42,18 @@
                     <!-- Modal para cada requerimiento -->
                     <div class="modal fade" id="exampleModal{{requerimiento.id}}" tabindex="-1" 
                          aria-labelledby="exampleModalLabel{{requerimiento.id}}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog"> <!-- Cambiado a modal-xl para máximo ancho -->
+                        <div class="modal-dialog modal-xl"> <!-- Cambiado a modal-xl para máximo ancho -->
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="exampleModalLabel{{requerimiento.id}}">
-                                        Detalles del Requerimiento
+                                        Completar Información del Proyecto
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="row">
-                                        <div class="col-md-12"> <!-- Cambié a col-md-12 ya que ahora solo tendremos una columna -->
+                                        <div class="col-md-6">
+                                            <!-- Columna izquierda - Datos existentes -->
                                             <div class="mb-3">
                                                 <label class="form-label">Nombre:</label>
                                                 <input type="text" class="form-control" value="{{requerimiento.nombre}}" readonly>
@@ -79,6 +74,36 @@
                                                 <label class="form-label">Recinto:</label>
                                                 <input type="text" class="form-control" value="{{requerimiento.recinto.nombre}}" readonly>
                                             </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <!-- Columna derecha - Nuevos campos -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Tipología:</label>
+                                                <select class="form-control" name="id_tipologia" required>
+                                                    <option value="">Seleccione Tipología</option>
+                                                    {% for tipologia in tipologias %}
+                                                    <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Fuente de Financiamiento:</label>
+                                                <select class="form-control" name="id_financiamiento" required>
+                                                    <option value="">Seleccione Fuente</option>
+                                                    {% for financiamiento in financiamientos %}
+                                                    <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Tipo de Proyecto:</label>
+                                                <select class="form-control" name="id_tipoproyecto" required>
+                                                    <option value="">Seleccione Tipo de Proyecto</option>
+                                                    {% for tipoproyecto in tipoproyectos %}
+                                                    <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Observación:</label>
                                                 <textarea class="form-control" id="observacion{{requerimiento.id}}" 
@@ -88,11 +113,8 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-success" onclick="submitForm({{requerimiento.id}}, 'aceptar')">
-                                        Aceptar
-                                    </button>
-                                    <button type="button" class="btn btn-danger" onclick="submitForm({{requerimiento.id}}, 'rechazar')">
-                                        Rechazar
+                                    <button type="button" class="btn btn-success" onclick="submitForm({{requerimiento.id}}, 'completar')">
+                                        Guardar
                                     </button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                                 </div>

@@ -989,7 +989,10 @@ def eliminar_requerimiento(id):
 def requerimientos_aceptar():
     requerimientos = Requerimiento.query.all()
     sectores = Sector.query.all()
-    return render_template('requerimiento-aceptar.html', requerimientos=requerimientos, sectores=sectores)
+    
+    return render_template('requerimiento-aceptar.html',
+                         requerimientos=requerimientos,
+                         sectores=sectores)
 
 @controllers_bp.route('/update_requerimiento_aceptar/<int:id>', methods=['POST'])
 def update_requerimiento_aceptar(id):
@@ -1003,6 +1006,7 @@ def update_requerimiento_aceptar(id):
             
         requerimiento.id_estado = 2  # Estado: En Desarrollo - Preparación
         requerimiento.observacion = observacion
+        requerimiento.fecha_aceptacion = datetime.now()  # Agregamos la fecha de aceptación
         db.session.commit()
         flash('Requerimiento aceptado exitosamente. Observación guardada.', 'success')
     except Exception as e:
@@ -1028,3 +1032,20 @@ def update_requerimiento_rechazar(id):
         db.session.rollback()
         flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
     return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
+
+# ==================================================================================
+# Rutas CRUD para Requerimientos-completar
+@controllers_bp.route('/requerimientos_completar', endpoint='ruta_requerimientos_completar')
+def requerimientos_completar():
+    requerimientos = Requerimiento.query.all()
+    sectores = Sector.query.all()
+    tipologias = Tipologia.query.all()
+    financiamientos = Financiamiento.query.all()
+    tipoproyectos = TipoProyecto.query.all()
+    
+    return render_template('requerimiento-completar.html',
+                         requerimientos=requerimientos,
+                         sectores=sectores,
+                         tipologias=tipologias,
+                         financiamientos=financiamientos,
+                         tipoproyectos=tipoproyectos)

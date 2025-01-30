@@ -185,12 +185,12 @@ def seed_data():
 
         # Datos iniciales para Financiamiento
         financiamientos_data = [
+            {'nombre': 'Por Definir', 'descripcion': 'Aún no se define el financiamiento'},
             {'nombre': 'Gobierno Regional', 'descripcion': 'Gobierno regional financia el proyecto'},
             {'nombre': 'MINSAL', 'descripcion': 'Ministerio de Salud financia el proyecto'},
             {'nombre': 'DEPSA', 'descripcion': 'Departamento de Salud financia el proyecto'},
             {'nombre': 'SUBDERE', 'descripcion': 'Subsecretaría de Desarrollo Regional financia el proyecto'},
             {'nombre': 'MUNICIPAL', 'descripcion': 'Municipalidad financia el proyecto'},
-            {'nombre': 'Por Definir', 'descripcion': 'Aún no se define el financiamiento'},
         ]
         financiamientos = [Financiamiento(**data) for data in financiamientos_data]
         db.session.add_all(financiamientos)
@@ -208,6 +208,8 @@ def seed_data():
 
         # Datos iniciales para Tipologia
         tipologias_data = [
+            
+            {'nombre': 'Por definir','nombrecorto':'Por definir','id_fase':0},
             {'nombre': 'Estudios Básicos','nombrecorto':'EB-PreInv','id_fase':1},
             {'nombre': 'Programa de Inversión','nombrecorto':'Prog_Inv-PreInv','id_fase':1},
             {'nombre': 'Proyecto de Inversión','nombrecorto':'Proy_Inv-PreInv','id_fase':1},
@@ -235,6 +237,8 @@ def seed_data():
                 {'nombre': 'Equipo 3'},
             ],
             TipoProyecto: [
+                
+                {'nombre': 'Por Definir', 'nombrecorto': 'Por Definir', 'descripcion': 'Fondos por definir'},
                 {'nombre': 'PMI', 'nombrecorto': 'PMI', 'descripcion': 'Fondo para Proyectos de Mejoramiento Integral'},
                 {'nombre': 'AGL', 'nombrecorto': 'AGL', 'descripcion': 'Fondo de Ampliación y Generación de Lugares'},
                 {'nombre': 'FNDR - Circular 33', 'nombrecorto': 'FNDR-C33', 'descripcion': 'Fondo Nacional de Desarrollo Regional - Circular 33'},
@@ -244,7 +248,6 @@ def seed_data():
                 {'nombre': 'PMU', 'nombrecorto': 'PMU', 'descripcion': 'Fondos de programas de Mejoramiento Urbano'},
                 {'nombre': 'FRIL', 'nombrecorto': 'FRIL', 'descripcion': 'Fondo Regional de Inversion Local'},
                 {'nombre': 'Municipal', 'nombrecorto': 'MUNICIPAL', 'descripcion': 'Fondo municipal'},
-                {'nombre': 'Por Definir', 'nombrecorto': 'FNDR-C33', 'descripcion': 'Fondos por definir'},
             ],
             Trabajador : [
             {

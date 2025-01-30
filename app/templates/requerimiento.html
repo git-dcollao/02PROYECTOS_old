@@ -38,7 +38,7 @@
               <tr>
                 <td>{{requerimiento.id}}</td>
                 <td>{{requerimiento.nombre}}</td>
-                <td>{{requerimiento.fecha}}</td>
+                <td>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</td>
                 <td>{{requerimiento.descripcion}}</td>
                 <td>{{requerimiento.estado.nombre}}</td>
                 <td>{{requerimiento.sector.nombre}}</td>
