@@ -1038,14 +1038,65 @@ def update_requerimiento_rechazar(id):
 @controllers_bp.route('/requerimientos_completar', endpoint='ruta_requerimientos_completar')
 def requerimientos_completar():
     requerimientos = Requerimiento.query.all()
-    sectores = Sector.query.all()
-    tipologias = Tipologia.query.all()
+    tipologias = Tipologia.query.order_by(Tipologia.id).all()
     financiamientos = Financiamiento.query.all()
     tipoproyectos = TipoProyecto.query.all()
+    trabajadores = Trabajador.query.all()
+    especialidades = Especialidad.query.all()
     
     return render_template('requerimiento-completar.html',
                          requerimientos=requerimientos,
-                         sectores=sectores,
                          tipologias=tipologias,
                          financiamientos=financiamientos,
-                         tipoproyectos=tipoproyectos)
+                         tipoproyectos=tipoproyectos,
+                         trabajadores=trabajadores,
+                         especialidades=especialidades)
+
+# Agregar nueva ruta para manejar la adición de trabajadores
+@controllers_bp.route('/agregar_trabajador_requerimiento', methods=['POST'])
+def agregar_trabajador_requerimiento():
+    try:
+        data = request.get_json()
+        requerimiento = Requerimiento.query.get_or_404(data['id_requerimiento'])
+        
+        if data.get('es_nuevo'):
+            # Crear nuevo trabajador
+            trabajador = Trabajador(
+                nombre=data['nombre'],
+                profesion=data['profesion']
+            )
+            db.session.add(trabajador)
+            db.session.commit()
+        else:
+            trabajador = Trabajador.query.get_or_404(data['trabajador_id'])
+        
+        # Asociar trabajador al requerimiento
+        if trabajador not in requerimiento.trabajadores:
+            requerimiento.trabajadores.append(trabajador)
+            db.session.commit()
+            
+        return jsonify({
+            'success': True, 
+            'message': 'Trabajador agregado exitosamente',
+            'trabajador': {
+                'id': trabajador.id,
+                'nombre': trabajador.nombre,
+                'profesion': trabajador.profesion
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@controllers_bp.route('/quitar_trabajador_requerimiento/<int:id_req>/<int:id_trab>', methods=['POST'])
+def quitar_trabajador_requerimiento(id_req, id_trab):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id_req)
+        trabajador = Trabajador.query.get_or_404(id_trab)
+        
+        if trabajador in requerimiento.trabajadores:
+            requerimiento.trabajadores.remove(trabajador)
+            db.session.commit()
+            
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})

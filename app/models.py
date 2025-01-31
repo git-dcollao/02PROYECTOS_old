@@ -118,6 +118,12 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
 
+# Definir la tabla de asociación antes de la clase Requerimiento
+requerimiento_trabajador = db.Table('requerimiento_trabajador',
+    db.Column('requerimiento_id', db.Integer, db.ForeignKey('requerimiento.id', ondelete='CASCADE')),
+    db.Column('trabajador_id', db.Integer, db.ForeignKey('trabajador.id', ondelete='CASCADE'))
+)
+
 class Requerimiento(db.Model): 
     __tablename__ = 'requerimiento'
     id = db.Column(db.Integer, primary_key=True)
@@ -132,11 +138,26 @@ class Requerimiento(db.Model):
     fecha_aceptacion = db.Column(db.DateTime, nullable=True)
 
     # Relaciones
+    trabajadores = db.relationship('Trabajador', 
+                                 secondary=requerimiento_trabajador,
+                                 backref=db.backref('requerimientos', lazy='dynamic'))
     sector = db.relationship('Sector', backref='requerimientos')
     tiporecinto = db.relationship('TipoRecinto', backref='requerimientos')
     recinto = db.relationship('Recinto', backref='requerimientos')
     estado = db.relationship('Estado', backref='requerimientos')
 
+class equipo_especialidad_trabajador(db.Model):
+    __tablename__ = 'equipo_especialidad_trabajador'
+    id = db.Column(db.Integer, primary_key=True)
+    id_equipo = db.Column(db.Integer, db.ForeignKey('equipo.id'), nullable=False)
+    id_especialidad = db.Column(db.Integer, db.ForeignKey('especialidad.id'), nullable=False)
+    id_trabajador = db.Column(db.Integer, db.ForeignKey('trabajador.id'), nullable=False)
+    
+    # Definir las relaciones correctamente
+    equipo = db.relationship('Equipo', backref='equipo_especialidades')
+    especialidad = db.relationship('Especialidad', backref='especialidad_trabajadores')
+    trabajador = db.relationship('Trabajador', backref='trabajador_especialidades')
+    
 def init_db():
     """Crear todas las tablas en la base de datos"""
     db.drop_all()  # Eliminar todas las tablas existentes

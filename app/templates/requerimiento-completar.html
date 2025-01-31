@@ -55,68 +55,160 @@
                                         <div class="col-md-6">
                                             <!-- Columna izquierda - Datos existentes -->
                                             <div class="mb-3">
+                                                <label class="form-label">Sector:  <br/> <b>{{requerimiento.sector.nombre}}</b></label>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Tipo Recinto:  <br/> <b>{{requerimiento.tiporecinto.nombre}}</b></label>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Recinto:   <br/> <b>{{requerimiento.recinto.nombre}}</b></label>
+                                            </div>
+                                            <div class="mb-12">
                                                 <label class="form-label">Nombre:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Descripción:</label>
-                                                <textarea class="form-control" readonly>{{requerimiento.descripcion}}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Sector:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.sector.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Tipo Recinto:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.tiporecinto.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Recinto:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.recinto.nombre}}" readonly>
+                                                <label class="form-control">{{requerimiento.nombre}}</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <!-- Columna derecha - Nuevos campos -->
                                             <div class="mb-3">
-                                                <label class="form-label">Tipología:</label>
-                                                <select class="form-control" name="id_tipologia" required>
-                                                    <option value="">Seleccione Tipología</option>
-                                                    {% for tipologia in tipologias %}
-                                                    <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
+                                                <label class="form-label">Fch. Ingreso:  <b>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</b></label>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label">Fuente de Financiamiento:</label>
-                                                <select class="form-control" name="id_financiamiento" required>
-                                                    <option value="">Seleccione Fuente</option>
-                                                    {% for financiamiento in financiamientos %}
-                                                    <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Tipo de Proyecto:</label>
-                                                <select class="form-control" name="id_tipoproyecto" required>
-                                                    <option value="">Seleccione Tipo de Proyecto</option>
-                                                    {% for tipoproyecto in tipoproyectos %}
-                                                    <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
+                                                <label class="form-label">Fch. Aceptación:  <b>{{requerimiento.fecha_aceptacion.strftime('%d-%m-%Y')}}</b></label>
+                                            </div>                                       
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Descripción de Solicitud:   <b>{{requerimiento.descripcion}}</b></label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Observación de Aceptación:   <b>{{requerimiento.observacion}}</b></label>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="mb-6">
                                                 <label class="form-label">Observación:</label>
                                                 <textarea class="form-control" id="observacion{{requerimiento.id}}" 
                                                         name="observacion" required rows="4"></textarea>
+                                            </div> 
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Tipología:</label>
+                                            <select class="form-control" id="tipologia{{requerimiento.id}}" name="id_tipologia" required>
+                                                <option value="">Seleccione Tipología</option>
+                                                {% for tipologia in tipologias %}
+                                                    <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Fuente de Financiamiento:</label>
+                                            <select class="form-control" name="id_financiamiento" required>
+                                                <option value="">Seleccione Fuente</option>
+                                                {% for financiamiento in financiamientos %}
+                                                <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Tipo de Proyecto:</label>
+                                            <select class="form-control" name="id_tipoproyecto" required>
+                                                <option value="">Seleccione Tipo de Proyecto</option>
+                                                {% for tipoproyecto in tipoproyectos %}
+                                                <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Equipo de trabajo:</label>
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
+                                                    data-bs-target="#modalTrabajadores{{requerimiento.id}}">
+                                                Agregar Trabajador
+                                            </button>
+                                            <div id="listaTrabajadores{{requerimiento.id}}" class="mt-2">
+                                                <div class="list-group">
+                                                    {% for trabajador in requerimiento.trabajadores %}
+                                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ trabajador.nombre }} - {{ trabajador.profesion.nombre }}
+                                                        <button type="button" class="btn btn-danger btn-sm" 
+                                                                onclick="quitarTrabajador('{{requerimiento.id}}', '{{trabajador.nombre}}')">
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-success" onclick="submitForm({{requerimiento.id}}, 'completar')">
+                                    <button type="button" class="btn btn-success" onclick="submitForm('{{requerimiento.id}}', 'completar')">
                                         Guardar
                                     </button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Modal para trabajadores (fuera del modal principal) -->
+                    <div class="modal fade" id="modalTrabajadores{{requerimiento.id}}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Gestionar Trabajadores</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" data-bs-toggle="tab" href="#seleccionar{{requerimiento.id}}">
+                                                Seleccionar Existente
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#agregar{{requerimiento.id}}">
+                                                Agregar Nuevo
+                                            </a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content mt-3">
+                                        <div class="tab-pane fade show active" id="seleccionar{{requerimiento.id}}">
+                                            <div class="mb-3">
+                                                <label class="form-label">Seleccionar Trabajador:</label>
+                                                <select class="form-control" id="trabajadorExistente{{requerimiento.id}}">
+                                                    <option value="">Seleccione un trabajador</option>
+                                                    {% for trabajador in trabajadores %}
+                                                    <option value="{{ trabajador.id }}">
+                                                        {{ trabajador.nombre }} - {{ trabajador.profesion }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="agregar{{requerimiento.id}}">
+                                            <div class="mb-3">
+                                                <label class="form-label">Nombre:</label>
+                                                <input type="text" class="form-control" id="nombreNuevo{{requerimiento.id}}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Profesión:</label>
+                                                <select class="form-control" id="profesionNuevo{{requerimiento.id}}">
+                                                    <option value="">Seleccione profesión</option>
+                                                    {% for especialidad in especialidades %}
+                                                    <option value="{{ especialidad.id }}">
+                                                        {{ especialidad.nombre }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" onclick="agregarTrabajador({{requerimiento.id}})">
+                                        Agregar
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Cerrar
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -162,6 +254,120 @@ function submitForm(id, action) {
         form.appendChild(observacionInput);
         document.body.appendChild(form);
         form.submit();
+    }
+}
+
+function agregarTrabajador(idRequerimiento) {
+    const tabActivo = document.querySelector(`#modalTrabajadores${idRequerimiento} .nav-link.active`);
+    const esNuevo = tabActivo.getAttribute('href').includes('agregar');
+    let data = {};
+    
+    if (esNuevo) {
+        const nombre = document.getElementById(`nombreNuevo${idRequerimiento}`).value;
+        const profesionId = document.getElementById(`profesionNuevo${idRequerimiento}`).value;
+        
+        if (!nombre || !profesionId) {
+            alert('Por favor complete todos los campos');
+            return;
+        }
+        data = {
+            es_nuevo: true,
+            nombre: nombre,
+            profesion: profesionId,
+            id_requerimiento: idRequerimiento
+        };
+    } else {
+        const trabajadorId = document.getElementById(`trabajadorExistente${idRequerimiento}`).value;
+        if (!trabajadorId) {
+            alert('Por favor seleccione un trabajador');
+            return;
+        }
+        data = {
+            es_nuevo: false,
+            trabajador_id: trabajadorId,
+            id_requerimiento: idRequerimiento
+        };
+    }
+    
+    // Enviar datos al servidor
+    fetch('{{ url_for("controllers.agregar_trabajador_requerimiento") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            actualizarListaTrabajadores(idRequerimiento, data.trabajador);
+            // Limpiar campos
+            if (esNuevo) {
+                document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+                document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+            } else {
+                document.getElementById(`trabajadorExistente${idRequerimiento}`).value = '';
+            }
+            // Solo cerrar el modal de trabajadores
+            const modalTrabajadores = document.getElementById(`modalTrabajadores${idRequerimiento}`);
+            const bsModalTrabajadores = bootstrap.Modal.getInstance(modalTrabajadores);
+            bsModalTrabajadores.hide();
+            
+            // No cerrar el modal principal
+            const modalPrincipal = document.getElementById(`exampleModal${idRequerimiento}`);
+            modalPrincipal.classList.add('show');
+            document.body.classList.add('modal-open');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+function actualizarListaTrabajadores(idRequerimiento, trabajador) {
+    const lista = document.getElementById(`listaTrabajadores${idRequerimiento}`);
+    const nuevoItem = document.createElement('div');
+    nuevoItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+    nuevoItem.innerHTML = `
+        ${trabajador.nombre} - ${trabajador.profesion}
+        <button type="button" class="btn btn-danger btn-sm" 
+                onclick="quitarTrabajador('${idRequerimiento}', '${trabajador.id}')">
+            ✕
+        </button>
+    `;
+    
+    // Obtener o crear el contenedor list-group
+    let listGroup = lista.querySelector('.list-group');
+    if (!listGroup) {
+        listGroup = document.createElement('div');
+        listGroup.className = 'list-group';
+        lista.appendChild(listGroup);
+    }
+    
+    listGroup.appendChild(nuevoItem);
+}
+
+function quitarTrabajador(idRequerimiento, idTrabajador) {
+    if (confirm('¿Está seguro de quitar este trabajador?')) {
+        fetch(`/quitar_trabajador_requerimiento/${idRequerimiento}/${idTrabajador}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const item = event.target.closest('.list-group-item');
+                item.remove();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud');
+        });
     }
 }
 </script>

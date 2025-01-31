@@ -198,6 +198,7 @@ def seed_data():
 
         # Datos iniciales para Fase
         fases_data = [
+            {'nombre': 'Por Definir'},
             {'nombre': 'Preinversión'},
             {'nombre': 'Inversión'},
             {'nombre': 'Operación'}
@@ -208,15 +209,14 @@ def seed_data():
 
         # Datos iniciales para Tipologia
         tipologias_data = [
-            
-            {'nombre': 'Por definir','nombrecorto':'Por definir','id_fase':0},
-            {'nombre': 'Estudios Básicos','nombrecorto':'EB-PreInv','id_fase':1},
-            {'nombre': 'Programa de Inversión','nombrecorto':'Prog_Inv-PreInv','id_fase':1},
-            {'nombre': 'Proyecto de Inversión','nombrecorto':'Proy_Inv-PreInv','id_fase':1},
-            {'nombre': 'Estudios Básicos','nombrecorto':'EB-Inv','id_fase':2},
-            {'nombre': 'Programa de Inversión','nombrecorto':'Prog_Inv-Inv','id_fase':2},
-            {'nombre': 'Proyecto de Inversión','nombrecorto':'Proy_Inv-Inv','id_fase':2},
-            {'nombre': 'Proyecto de Inversión','nombrecorto':'Proy_Inv-Op','id_fase':3}
+            {'nombre': 'Por definir','nombrecorto':'Por definir','id_fase':1},  # Cambiado a id_fase:1
+            {'nombre': 'Estudios Básicos - PreInv','nombrecorto':'EB-PreInv','id_fase':2},
+            {'nombre': 'Programa de Inversión - PreInv','nombrecorto':'Prog_Inv-PreInv','id_fase':2},
+            {'nombre': 'Proyecto de Inversión - PreInv','nombrecorto':'Proy_Inv-PreInv','id_fase':2},
+            {'nombre': 'Estudios Básicos - Inv','nombrecorto':'EB-Inv','id_fase':3},
+            {'nombre': 'Programa de Inversión - Inv','nombrecorto':'Prog_Inv-Inv','id_fase':3},
+            {'nombre': 'Proyecto de Inversión - Inv','nombrecorto':'Proy_Inv-Inv','id_fase':3},
+            {'nombre': 'Proyecto de Inversión - Op','nombrecorto':'Proy_Inv-Op','id_fase':4}
         ]
         tipologias = [Tipologia(**data) for data in tipologias_data]
         db.session.add_all(tipologias)
