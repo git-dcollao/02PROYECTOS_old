@@ -1217,7 +1217,8 @@ def update_requerimiento_completar(id):
         requerimiento.id_financiamiento = int(request.form.get('id_financiamiento'))
         requerimiento.id_tipoproyecto = int(request.form.get('id_tipoproyecto'))
         requerimiento.observacion = request.form.get('observacion')
-        requerimiento.id_estado = 3  # Estado: En Desarrollo - Ejecución
+        # Mantener el estado actual (2)
+        # requerimiento.id_estado = 3  <- Comentamos/eliminamos esta línea
         
         # Obtener todos los miembros del equipo actual
         equipos_trabajo = EquipoTrabajo.query.filter_by(id_requerimiento=id).all()
@@ -1251,6 +1252,7 @@ def update_requerimiento_completar(id):
             Tipología: {requerimiento.id_tipologia}
             Financiamiento: {requerimiento.id_financiamiento}
             Tipo Proyecto: {requerimiento.id_tipoproyecto}
+            Estado: {requerimiento.id_estado}
             Equipo: {len(equipos_trabajo)} miembros""")  # Debug
         
         flash('Requerimiento y equipo de trabajo actualizados exitosamente', 'success')

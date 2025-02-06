@@ -97,7 +97,7 @@
                                     <div class="mb-6">
                                         <label class="form-label">Observación:</label>
                                         <textarea class="form-control" id="observacion{{requerimiento.id}}" 
-                                                name="observacion" required rows="4"></textarea>
+                                                name="observacion" required rows="4">{{requerimiento.observacion}}</textarea>
                                     </div> 
                                 </div>
                                 <div class="col-md-4">
@@ -105,7 +105,10 @@
                                     <select class="form-control" id="tipologia{{requerimiento.id}}" name="id_tipologia" required>
                                         <option value="">Seleccione Tipología</option>
                                         {% for tipologia in tipologias %}
-                                            <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
+                                            <option value="{{ tipologia.id }}" 
+                                                {% if requerimiento.id_tipologia == tipologia.id %}selected{% endif %}>
+                                                {{ tipologia.nombre }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -114,7 +117,10 @@
                                     <select class="form-control" id="id_financiamiento{{requerimiento.id}}" name="id_financiamiento" required>
                                         <option value="">Seleccione Fuente</option>
                                         {% for financiamiento in financiamientos %}
-                                        <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
+                                            <option value="{{ financiamiento.id }}"
+                                                {% if requerimiento.id_financiamiento == financiamiento.id %}selected{% endif %}>
+                                                {{ financiamiento.nombre }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -123,7 +129,10 @@
                                     <select class="form-control" id="id_tipoproyecto{{requerimiento.id}}" name="id_tipoproyecto" required>
                                         <option value="">Seleccione Tipo de Proyecto</option>
                                         {% for tipoproyecto in tipoproyectos %}
-                                        <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
+                                            <option value="{{ tipoproyecto.id }}"
+                                                {% if requerimiento.id_tipoproyecto == tipoproyecto.id %}selected{% endif %}>
+                                                {{ tipoproyecto.nombre }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -429,21 +438,20 @@ function agregarMiembro(idRequerimiento) {
                 selectTrabajador.add(nuevaOpcion);
             }
             
-            // Cerrar el modal de trabajadores y volver al modal principal
-            const modalTrabajadores = bootstrap.Modal.getInstance(document.getElementById(`modalTrabajadores${idRequerimiento}`));
-            modalTrabajadores.hide();
-            
-            // Mostrar el modal principal
-            const modalPrincipal = document.getElementById(`modalAgregarInfoRequerimiento${idRequerimiento}`);
-            if (modalPrincipal) {
-                modalPrincipal.classList.add('show');
-            }
-            
-            // Limpiar formularios
+            // Limpiar formularios pero mantenernos en el modal
             limpiarFormularioMiembro(idRequerimiento, esNuevo);
             
-            // Opcional: Mostrar mensaje de éxito
-            alert('Miembro agregado exitosamente');
+            // Opcional: Mostrar mensaje de éxito sin alert
+            const modalBody = document.querySelector(`#modalTrabajadores${idRequerimiento} .modal-body`);
+            const mensajeExito = document.createElement('div');
+            mensajeExito.className = 'alert alert-success mt-2';
+            mensajeExito.textContent = 'Miembro agregado exitosamente';
+            modalBody.insertBefore(mensajeExito, modalBody.firstChild);
+            
+            // Remover el mensaje después de 3 segundos
+            setTimeout(() => {
+                mensajeExito.remove();
+            }, 3000);
         } else {
             alert('Error: ' + data.error);
         }
