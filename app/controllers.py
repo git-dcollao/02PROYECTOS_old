@@ -1064,7 +1064,10 @@ def update_requerimiento_rechazar(id):
 # Rutas CRUD para Requerimientos-completar
 @controllers_bp.route('/requerimientos_completar', endpoint='ruta_requerimientos_completar')
 def requerimientos_completar():
-    requerimientos = Requerimiento.query.all()
+    # Obtener solo los requerimientos en estado "En Desarrollo - Preparación" (id_estado = 2)
+    requerimientos = Requerimiento.query.filter_by(id_estado=2).\
+        order_by(Requerimiento.fecha_aceptacion.desc()).all()
+        
     tipologias = Tipologia.query.order_by(Tipologia.id).all()
     financiamientos = Financiamiento.query.all()
     tipoproyectos = TipoProyecto.query.all()

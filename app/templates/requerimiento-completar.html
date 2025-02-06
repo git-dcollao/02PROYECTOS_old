@@ -7,7 +7,7 @@
     <h2>Llenado de Datos en Fase Inicial</h2>
     
     <div class="table-responsive">
-        <table class="table table-striped"  id="tablarequerimiento">
+        <table class="table table-striped" id="tablarequerimientosXllenar">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -22,7 +22,6 @@
             </thead>
             <tbody>
                 {% for requerimiento in requerimientos %}
-                    {% if requerimiento.id_estado == 2 %}
                     <tr>
                         <td>{{requerimiento.id}}</td>
                         <td>{{requerimiento.nombre}}</td>
@@ -38,233 +37,234 @@
                             </button>
                         </td>
                     </tr>
-
-                    <!-- Modal para asignar informacion a cada requerimiento -->
-                    <div class="modal fade" id="modalAgregarInfoRequerimiento{{requerimiento.id}}" tabindex="-1" 
-                         aria-labelledby="modalAgregarInfoRequerimiento{{requerimiento.id}}" aria-hidden="true">
-                        <div class="modal-dialog modal-fullscreen-xl-down">
-                            <div class="modal-content">
-                                <!-- Modal header -->
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalAgregarInfoRequerimiento{{requerimiento.id}}">
-                                        Completar Información del Proyecto
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-
-                                <!-- Modal body -->
-                                <div class="modal-body">
-                                    <form id="formCompletarRequerimiento{{requerimiento.id}}" method="POST" 
-                                          action="{{ url_for('controllers.update_requerimiento_completar', id=requerimiento.id) }}">
-                                        <div class="row">
-                                            <!-- Columna izquierda -->
-                                            <div class="col-md-6">
-                                                <!-- Columna izquierda - Datos existentes -->
-                                                <div class="mb-3">
-                                                    <label class="form-label">Sector:  <br/> <b>{{requerimiento.sector.nombre}}</b></label>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Tipo Recinto:  <br/> <b>{{requerimiento.tiporecinto.nombre}}</b></label>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Recinto:   <br/> <b>{{requerimiento.recinto.nombre}}</b></label>
-                                                </div>
-                                                <div class="mb-12">
-                                                    <label class="form-label">Nombre:</label>
-                                                    <label class="form-control">{{requerimiento.nombre}}</label>
-                                                </div>
-                                            </div>
-                                            <!-- Columna derecha -->
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Fch. Ingreso:  <b>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</b></label>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Fch. Aceptación:  <b>{{requerimiento.fecha_aceptacion.strftime('%d-%m-%Y')}}</b></label>
-                                                </div>                                       
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Descripción de Solicitud:   <b>{{requerimiento.descripcion}}</b></label>
-                                            <br>
-                                                <label class="form-label">Observación de Aceptación:   <b>{{requerimiento.observacion}}</b></label>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <div class="mb-6">
-                                                    <label class="form-label">Observación:</label>
-                                                    <textarea class="form-control" id="observacion{{requerimiento.id}}" 
-                                                            name="observacion" required rows="4"></textarea>
-                                                </div> 
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Tipología:</label>
-                                                <select class="form-control" id="tipologia{{requerimiento.id}}" name="id_tipologia" required>
-                                                    <option value="">Seleccione Tipología</option>
-                                                    {% for tipologia in tipologias %}
-                                                        <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Fuente de Financiamiento:</label>
-                                                <select class="form-control" name="id_financiamiento" required>
-                                                    <option value="">Seleccione Fuente</option>
-                                                    {% for financiamiento in financiamientos %}
-                                                    <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Tipo de Proyecto:</label>
-                                                <select class="form-control" name="id_tipoproyecto" required>
-                                                    <option value="">Seleccione Tipo de Proyecto</option>
-                                                    {% for tipoproyecto in tipoproyectos %}
-                                                    <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <!-- Sección de Equipo de Trabajo -->
-                                            <div class="col-md-12 mt-4">
-                                                <div class="card">
-                                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <h5 class="mb-0">Equipo de trabajo</h5>
-                                                        <button type="button" class="btn btn-primary btn-sm" 
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#modalTrabajadores{{requerimiento.id}}">
-                                                            Agregar Trabajador
-                                                        </button>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <div class="table-responsive">
-                                                            <table class="table" id="tablaEquipo{{requerimiento.id}}">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Nombre</th>
-                                                                        <th>Profesión</th>
-                                                                        <th>Especialidad</th>
-                                                                        <th>Acciones</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {% for equipo in requerimiento.equipos_trabajo %}
-                                                                    <tr>
-                                                                        <td>{{ equipo.trabajador.nombre }}</td>
-                                                                        <td>{{ equipo.trabajador.profesion }}</td>
-                                                                        <td>{{ equipo.especialidad.nombre }}</td>
-                                                                        <td>
-                                                                            <button type="button" class="btn btn-danger btn-sm" 
-                                                                                    onclick="quitarMiembro('{{requerimiento.id}}', '{{equipo.id}}')">
-                                                                                ✕
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-
-                                <!-- Modal footer -->
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-success" onclick="submitFormCompletar('{{requerimiento.id}}')">
-                                        Guardar
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modal para agregar trabajadores -->
-                    <div class="modal fade" id="modalTrabajadores{{requerimiento.id}}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Agregar Miembro al Equipo</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <ul class="nav nav-tabs" role="tablist">
-                                        <li class="nav-item">
-                                            <a class="nav-link active" data-bs-toggle="tab" href="#existente{{requerimiento.id}}">
-                                                Trabajador Existente
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" data-bs-toggle="tab" href="#nuevo{{requerimiento.id}}">
-                                                Nuevo Trabajador
-                                            </a>
-                                        </li>
-                                    </ul>
-                                    
-                                    <div class="tab-content mt-3">
-                                        <div class="tab-pane fade show active" id="existente{{requerimiento.id}}">
-                                            <div class="mb-3">
-                                                <label class="form-label">Seleccionar Trabajador:</label>
-                                                <select class="form-control" id="trabajador{{requerimiento.id}}">
-                                                    <option value="">Seleccione un trabajador</option>
-                                                    {% for trabajador in trabajadores %}
-                                                    <option value="{{ trabajador.id }}">
-                                                        {{ trabajador.nombre }} - {{ trabajador.profesion }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Especialidad en el equipo:</label>
-                                                <select class="form-control" id="especialidad{{requerimiento.id}}">
-                                                    <option value="">Seleccione especialidad</option>
-                                                    {% for especialidad in especialidades %}
-                                                    <option value="{{ especialidad.id }}">{{ especialidad.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="tab-pane fade" id="nuevo{{requerimiento.id}}">
-                                            <div class="mb-3">
-                                                <label class="form-label">Nombre Completo:</label>
-                                                <input type="text" class="form-control" id="nombreNuevo{{requerimiento.id}}">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Profesión:</label>
-                                                <input type="text" class="form-control" id="profesionNuevo{{requerimiento.id}}">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Nombre Corto:</label>
-                                                <input type="text" class="form-control" id="nombreCortoNuevo{{requerimiento.id}}">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Especialidad:</label>
-                                                <select class="form-control" id="especialidadNuevo{{requerimiento.id}}">
-                                                    <option value="">Seleccione especialidad</option>
-                                                    {% for especialidad in especialidades %}
-                                                    <option value="{{ especialidad.id }}">{{ especialidad.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-primary" onclick="agregarMiembro('{{requerimiento.id}}')">
-                                        Agregar al Equipo
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {% endif %}
                 {% endfor %}    
             </tbody>
         </table>
     </div>
+
+    <!-- Mover los modales fuera de la tabla -->
+    {% for requerimiento in requerimientos %}
+        <!-- Modal para asignar informacion a cada requerimiento -->
+        <div class="modal fade" id="modalAgregarInfoRequerimiento{{requerimiento.id}}" tabindex="-1" 
+             aria-labelledby="modalAgregarInfoRequerimiento{{requerimiento.id}}" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen-xl-down">
+                <div class="modal-content">
+                    <!-- Modal header -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAgregarInfoRequerimiento{{requerimiento.id}}">
+                            Completar Información del Proyecto
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form id="formCompletarRequerimiento{{requerimiento.id}}" method="POST" 
+                              action="{{ url_for('controllers.update_requerimiento_completar', id=requerimiento.id) }}">
+                            <div class="row">
+                                <!-- Columna izquierda -->
+                                <div class="col-md-6">
+                                    <!-- Columna izquierda - Datos existentes -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Sector:  <br/> <b>{{requerimiento.sector.nombre}}</b></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo Recinto:  <br/> <b>{{requerimiento.tiporecinto.nombre}}</b></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Recinto:   <br/> <b>{{requerimiento.recinto.nombre}}</b></label>
+                                    </div>
+                                    <div class="mb-12">
+                                        <label class="form-label">Nombre:</label>
+                                        <label class="form-control">{{requerimiento.nombre}}</label>
+                                    </div>
+                                </div>
+                                <!-- Columna derecha -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Fch. Ingreso:  <b>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</b></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Fch. Aceptación:  <b>{{requerimiento.fecha_aceptacion.strftime('%d-%m-%Y')}}</b></label>
+                                    </div>                                       
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Descripción de Solicitud:   <b>{{requerimiento.descripcion}}</b></label>
+                                <br>
+                                    <label class="form-label">Observación de Aceptación:   <b>{{requerimiento.observacion}}</b></label>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="mb-6">
+                                        <label class="form-label">Observación:</label>
+                                        <textarea class="form-control" id="observacion{{requerimiento.id}}" 
+                                                name="observacion" required rows="4"></textarea>
+                                    </div> 
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipología:</label>
+                                    <select class="form-control" id="tipologia{{requerimiento.id}}" name="id_tipologia" required>
+                                        <option value="">Seleccione Tipología</option>
+                                        {% for tipologia in tipologias %}
+                                            <option value="{{ tipologia.id }}">{{ tipologia.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Fuente de Financiamiento:</label>
+                                    <select class="form-control" name="id_financiamiento" required>
+                                        <option value="">Seleccione Fuente</option>
+                                        {% for financiamiento in financiamientos %}
+                                        <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo de Proyecto:</label>
+                                    <select class="form-control" name="id_tipoproyecto" required>
+                                        <option value="">Seleccione Tipo de Proyecto</option>
+                                        {% for tipoproyecto in tipoproyectos %}
+                                        <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Sección de Equipo de Trabajo -->
+                                <div class="col-md-12 mt-4">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Equipo de trabajo</h5>
+                                            <button type="button" class="btn btn-primary btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalTrabajadores{{requerimiento.id}}">
+                                                Agregar Trabajador
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table" id="tablaEquipo{{requerimiento.id}}">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Nombre</th>
+                                                            <th>Profesión</th>
+                                                            <th>Especialidad</th>
+                                                            <th>Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for equipo in requerimiento.equipos_trabajo %}
+                                                        <tr>
+                                                            <td>{{ equipo.trabajador.nombre }}</td>
+                                                            <td>{{ equipo.trabajador.profesion }}</td>
+                                                            <td>{{ equipo.especialidad.nombre }}</td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-danger btn-sm" 
+                                                                        onclick="quitarMiembro('{{requerimiento.id}}', '{{equipo.id}}')">
+                                                                    ✕
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="submitFormCompletar('{{requerimiento.id}}')">
+                            Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para agregar trabajadores -->
+        <div class="modal fade" id="modalTrabajadores{{requerimiento.id}}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Agregar Miembro al Equipo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#existente{{requerimiento.id}}">
+                                    Trabajador Existente
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#nuevo{{requerimiento.id}}">
+                                    Nuevo Trabajador
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade show active" id="existente{{requerimiento.id}}">
+                                <div class="mb-3">
+                                    <label class="form-label">Seleccionar Trabajador:</label>
+                                    <select class="form-control" id="trabajador{{requerimiento.id}}">
+                                        <option value="">Seleccione un trabajador</option>
+                                        {% for trabajador in trabajadores %}
+                                        <option value="{{ trabajador.id }}">
+                                            {{ trabajador.nombre }} - {{ trabajador.profesion }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Especialidad en el equipo:</label>
+                                    <select class="form-control" id="especialidad{{requerimiento.id}}">
+                                        <option value="">Seleccione especialidad</option>
+                                        {% for especialidad in especialidades %}
+                                        <option value="{{ especialidad.id }}">{{ especialidad.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="nuevo{{requerimiento.id}}">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre Completo:</label>
+                                    <input type="text" class="form-control" id="nombreNuevo{{requerimiento.id}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Profesión:</label>
+                                    <input type="text" class="form-control" id="profesionNuevo{{requerimiento.id}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre Corto:</label>
+                                    <input type="text" class="form-control" id="nombreCortoNuevo{{requerimiento.id}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Especialidad:</label>
+                                    <select class="form-control" id="especialidadNuevo{{requerimiento.id}}">
+                                        <option value="">Seleccione especialidad</option>
+                                        {% for especialidad in especialidades %}
+                                        <option value="{{ especialidad.id }}">{{ especialidad.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="agregarMiembro('{{requerimiento.id}}')">
+                            Agregar al Equipo
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -407,15 +407,24 @@ function agregarMiembro(idRequerimiento) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Actualizar ambas tablas
+            // Actualizar la tabla
             actualizarTablaTrabajadores(idRequerimiento, data.miembro);
             
-            // Cerrar el modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById(`modalTrabajadores${idRequerimiento}`));
-            modal.hide();
+            // Cerrar el modal de trabajadores
+            const modalTrabajadores = bootstrap.Modal.getInstance(document.getElementById(`modalTrabajadores${idRequerimiento}`));
+            modalTrabajadores.hide();
+            
+            // Mostrar el modal principal
+            const modalPrincipal = document.getElementById(`modalAgregarInfoRequerimiento${idRequerimiento}`);
+            if (modalPrincipal) {
+                modalPrincipal.classList.add('show');
+            }
             
             // Limpiar formularios
             limpiarFormularioMiembro(idRequerimiento, esNuevo);
+            
+            // Opcional: Mostrar mensaje de éxito
+            alert('Miembro agregado exitosamente');
         } else {
             alert('Error: ' + data.error);
         }
@@ -535,5 +544,17 @@ function agregarTrabajador(idRequerimiento) {
         alert('Error al procesar la solicitud');
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si hay un nuevo requerimiento aceptado
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('new_req')) {
+        // Hacer scroll a la tabla
+        const tabla = document.getElementById('tablarequerimiento');
+        if (tabla) {
+            tabla.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
 </script>
 {% endblock %}
