@@ -1207,29 +1207,57 @@ def quitar_miembro_equipo(id_equipo):
 @controllers_bp.route('/update_requerimiento_completar/<int:id>', methods=['POST'])
 def update_requerimiento_completar(id):
     try:
+        # Obtener el requerimiento
         requerimiento = Requerimiento.query.get_or_404(id)
         
-        # 1. Actualizar datos principales del requerimiento
-        requerimiento.id_tipologia = request.form['id_tipologia']
-        requerimiento.id_financiamiento = request.form['id_financiamiento']
-        requerimiento.id_tipoproyecto = request.form['id_tipoproyecto']
-        requerimiento.observacion = request.form['observacion']
+        print("Datos del formulario:", request.form)  # Debug
+        
+        # Actualizar campos básicos
+        requerimiento.id_tipologia = int(request.form.get('id_tipologia'))
+        requerimiento.id_financiamiento = int(request.form.get('id_financiamiento'))
+        requerimiento.id_tipoproyecto = int(request.form.get('id_tipoproyecto'))
+        requerimiento.observacion = request.form.get('observacion')
         requerimiento.id_estado = 3  # Estado: En Desarrollo - Ejecución
         
-        # 2. Asegurarse que el equipo de trabajo ya está guardado
+        # Obtener todos los miembros del equipo actual
         equipos_trabajo = EquipoTrabajo.query.filter_by(id_requerimiento=id).all()
         
         if not equipos_trabajo:
             flash('Debe agregar al menos un miembro al equipo de trabajo', 'error')
             return redirect(url_for('controllers.ruta_requerimientos_completar'))
         
-        # 3. Guardar todos los cambios
+        # Procesar las relaciones trabajador-especialidad
+        for equipo in equipos_trabajo:
+            # Verificar si ya existe la relación en la tabla intermedia
+            exists = db.session.query(requerimiento_trabajador_especialidad).filter_by(
+                requerimiento_id=id,
+                trabajador_id=equipo.id_trabajador,
+                especialidad_id=equipo.id_especialidad
+            ).first()
+            
+            if not exists:
+                # Agregar nueva relación
+                stmt = requerimiento_trabajador_especialidad.insert().values(
+                    requerimiento_id=id,
+                    trabajador_id=equipo.id_trabajador,
+                    especialidad_id=equipo.id_especialidad
+                )
+                db.session.execute(stmt)
+        
+        # Guardar todos los cambios
         db.session.commit()
+        
+        print(f"""Requerimiento actualizado:
+            Tipología: {requerimiento.id_tipologia}
+            Financiamiento: {requerimiento.id_financiamiento}
+            Tipo Proyecto: {requerimiento.id_tipoproyecto}
+            Equipo: {len(equipos_trabajo)} miembros""")  # Debug
         
         flash('Requerimiento y equipo de trabajo actualizados exitosamente', 'success')
         return redirect(url_for('controllers.ruta_requerimientos_completar'))
         
     except Exception as e:
         db.session.rollback()
+        print(f"Error en update_requerimiento_completar: {str(e)}")
         flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
         return redirect(url_for('controllers.ruta_requerimientos_completar'))

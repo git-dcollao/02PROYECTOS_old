@@ -111,7 +111,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Fuente de Financiamiento:</label>
-                                    <select class="form-control" name="id_financiamiento" required>
+                                    <select class="form-control" id="id_financiamiento{{requerimiento.id}}" name="id_financiamiento" required>
                                         <option value="">Seleccione Fuente</option>
                                         {% for financiamiento in financiamientos %}
                                         <option value="{{ financiamiento.id }}">{{ financiamiento.nombre }}</option>
@@ -120,7 +120,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Tipo de Proyecto:</label>
-                                    <select class="form-control" name="id_tipoproyecto" required>
+                                    <select class="form-control" id="id_tipoproyecto{{requerimiento.id}}" name="id_tipoproyecto" required>
                                         <option value="">Seleccione Tipo de Proyecto</option>
                                         {% for tipoproyecto in tipoproyectos %}
                                         <option value="{{ tipoproyecto.id }}">{{ tipoproyecto.nombre }}</option>
@@ -352,8 +352,8 @@ function quitarMiembro(idRequerimiento, idEquipo) {
 function validarFormularioCompletar(idRequerimiento) {
     // Validar campos requeridos
     const tipologia = document.getElementById(`tipologia${idRequerimiento}`).value;
-    const financiamiento = document.getElementById(`financiamiento${idRequerimiento}`).value;
-    const tipoproyecto = document.getElementById(`tipoproyecto${idRequerimiento}`).value;
+    const financiamiento = document.getElementById(`id_financiamiento${idRequerimiento}`).value;
+    const tipoproyecto = document.getElementById(`id_tipoproyecto${idRequerimiento}`).value;
     const observacion = document.getElementById(`observacion${idRequerimiento}`).value;
 
     if (!tipologia || !financiamiento || !tipoproyecto || !observacion.trim()) {
