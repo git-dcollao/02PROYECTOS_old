@@ -1148,8 +1148,7 @@ def quitar_trabajador_requerimiento(id_req, id_trab):
 def agregar_miembro_equipo():
     try:
         data = request.get_json()
-        
-        requerimiento = Requerimiento.query.get_or_404(data['id_requerimiento'])
+        trabajador_nuevo = False
         
         if data.get('es_nuevo'):
             trabajador = Trabajador(
@@ -1159,9 +1158,11 @@ def agregar_miembro_equipo():
             )
             db.session.add(trabajador)
             db.session.flush()
+            trabajador_nuevo = True
         else:
             trabajador = Trabajador.query.get_or_404(data['id_trabajador'])
         
+        requerimiento = Requerimiento.query.get_or_404(data['id_requerimiento'])
         especialidad = Especialidad.query.get_or_404(data['id_especialidad'])
         
         # Crear el equipo de trabajo
@@ -1176,8 +1177,10 @@ def agregar_miembro_equipo():
         
         return jsonify({
             'success': True,
+            'trabajador_nuevo': trabajador_nuevo,
             'miembro': {
                 'id': equipo.id,
+                'trabajador_id': trabajador.id,  # Agregado para el select
                 'trabajador_nombre': trabajador.nombre,
                 'profesion': trabajador.profesion,
                 'especialidad_nombre': especialidad.nombre
@@ -1205,16 +1208,27 @@ def quitar_miembro_equipo(id_equipo):
 def update_requerimiento_completar(id):
     try:
         requerimiento = Requerimiento.query.get_or_404(id)
+        
+        # 1. Actualizar datos principales del requerimiento
         requerimiento.id_tipologia = request.form['id_tipologia']
         requerimiento.id_financiamiento = request.form['id_financiamiento']
         requerimiento.id_tipoproyecto = request.form['id_tipoproyecto']
         requerimiento.observacion = request.form['observacion']
-        # Actualizar el estado si es necesario
-        requerimiento.id_estado = 3  # Estado siguiente
+        requerimiento.id_estado = 3  # Estado: En Desarrollo - Ejecución
         
+        # 2. Asegurarse que el equipo de trabajo ya está guardado
+        equipos_trabajo = EquipoTrabajo.query.filter_by(id_requerimiento=id).all()
+        
+        if not equipos_trabajo:
+            flash('Debe agregar al menos un miembro al equipo de trabajo', 'error')
+            return redirect(url_for('controllers.ruta_requerimientos_completar'))
+        
+        # 3. Guardar todos los cambios
         db.session.commit()
-        flash('Requerimiento actualizado exitosamente', 'success')
+        
+        flash('Requerimiento y equipo de trabajo actualizados exitosamente', 'success')
         return redirect(url_for('controllers.ruta_requerimientos_completar'))
+        
     except Exception as e:
         db.session.rollback()
         flash(f'Error al actualizar requerimiento: {str(e)}', 'error')

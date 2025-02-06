@@ -350,6 +350,7 @@ function quitarMiembro(idRequerimiento, idEquipo) {
 
 // Función para validar el formulario antes de enviar
 function validarFormularioCompletar(idRequerimiento) {
+    // Validar campos requeridos
     const tipologia = document.getElementById(`tipologia${idRequerimiento}`).value;
     const financiamiento = document.getElementById(`financiamiento${idRequerimiento}`).value;
     const tipoproyecto = document.getElementById(`tipoproyecto${idRequerimiento}`).value;
@@ -359,6 +360,14 @@ function validarFormularioCompletar(idRequerimiento) {
         alert('Por favor complete todos los campos obligatorios');
         return false;
     }
+
+    // Validar que exista al menos un miembro en el equipo
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla || tabla.children.length === 0) {
+        alert('Debe agregar al menos un miembro al equipo de trabajo');
+        return false;
+    }
+
     return true;
 }
 
@@ -410,7 +419,17 @@ function agregarMiembro(idRequerimiento) {
             // Actualizar la tabla
             actualizarTablaTrabajadores(idRequerimiento, data.miembro);
             
-            // Cerrar el modal de trabajadores
+            if (data.trabajador_nuevo) {
+                // Actualizar el select de trabajadores existentes
+                const selectTrabajador = document.getElementById(`trabajador${idRequerimiento}`);
+                const nuevaOpcion = new Option(
+                    `${data.miembro.trabajador_nombre} - ${data.miembro.profesion}`, 
+                    data.miembro.trabajador_id
+                );
+                selectTrabajador.add(nuevaOpcion);
+            }
+            
+            // Cerrar el modal de trabajadores y volver al modal principal
             const modalTrabajadores = bootstrap.Modal.getInstance(document.getElementById(`modalTrabajadores${idRequerimiento}`));
             modalTrabajadores.hide();
             
