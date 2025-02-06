@@ -19,7 +19,7 @@
             </button>
           </h2>
 
-          <table class="table table-striped">
+          <table class="table table-striped" id="tablarequerimiento">
             <thead>
               <tr>
                 <th>Id</th>
@@ -136,7 +136,7 @@
             <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
           </div>
           <div class="modal-body">
-            <form action="{{ url_for('controllers.add_requerimiento') }}" method="POST"> 
+            <form id="formNuevoRequerimiento" action="{{ url_for('controllers.add_requerimiento') }}" method="POST"> 
               <div class="form-group">
                 <label>Nombre:</label>
                 <input class="form-control" name="nombre" required="1" type="text">
@@ -370,5 +370,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+document.getElementById('formNuevoRequerimiento').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('/add_requerimiento', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tabla = document.getElementById('tablarequerimiento').getElementsByTagName('tbody')[0];
+            const newRow = tabla.insertRow();
+            
+            // Crear nueva fila con todos los campos necesarios
+            newRow.innerHTML = `
+                <td>${data.requerimiento.id}</td>
+                <td>${data.requerimiento.nombre}</td>
+                <td>${data.requerimiento.fecha}</td>
+                <td>${data.requerimiento.descripcion}</td>
+                <td>${data.requerimiento.estado_nombre}</td>
+                <td>${data.requerimiento.sector_nombre}</td>
+                <td>${data.requerimiento.tiporecinto_nombre}</td>
+                <td>${data.requerimiento.recinto_nombre}</td>
+                <td>
+                    <a class="btn p-1 btn-primary btn-sm" 
+                       data-bs-target="#exampleModal1${data.requerimiento.id}"
+                       data-bs-toggle="modal"
+                       href="#">Editar</a> 
+                    <form action="/eliminar_requerimiento/${data.requerimiento.id}"
+                        method="POST" style="display:inline;">
+                        <button class="btn p-1 btn-danger btn-sm" 
+                        type="submit">Eliminar</button>
+                    </form>
+                </td>
+            `;
+            
+            // Cerrar el modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+            modal.hide();
+            
+            // Limpiar el formulario
+            this.reset();
+            
+            // Deshabilitar los selects de tipo recinto y recinto
+            document.getElementById('tiporecinto-select').disabled = true;
+            document.getElementById('recinto-select').disabled = true;
+            
+            // Mostrar mensaje de éxito
+            alert('Requerimiento agregado exitosamente');
+        } else {
+            console.error('Error:', data.error);
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+});
+
 </script>
 {% endblock %}

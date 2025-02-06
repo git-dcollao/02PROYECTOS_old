@@ -4,6 +4,13 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+# Agregar la tabla de asociación antes de las definiciones de clase
+requerimiento_trabajador_especialidad = db.Table('requerimiento_trabajador_especialidad',
+    db.Column('requerimiento_id', db.Integer, db.ForeignKey('requerimiento.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('trabajador_id', db.Integer, db.ForeignKey('trabajador.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('especialidad_id', db.Integer, db.ForeignKey('especialidad.id', ondelete='CASCADE'), primary_key=True)
+)
+
 class Sector(db.Model):
     __tablename__ = 'sector'
     id = db.Column(db.Integer, primary_key=True)
@@ -37,7 +44,7 @@ class Trabajador(db.Model):
     __tablename__ = 'trabajador'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    profesion = db.Column(db.String(100), nullable=False)
+    profesion = db.Column(db.String(100), nullable=True)  # Cambiado a nullable=True
     nombrecorto = db.Column(db.String(50), nullable=True)
     password = db.Column(db.Text, nullable=True)
 
@@ -118,12 +125,6 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
 
-# Definir la tabla de asociación antes de la clase Requerimiento
-requerimiento_trabajador = db.Table('requerimiento_trabajador',
-    db.Column('requerimiento_id', db.Integer, db.ForeignKey('requerimiento.id', ondelete='CASCADE')),
-    db.Column('trabajador_id', db.Integer, db.ForeignKey('trabajador.id', ondelete='CASCADE'))
-)
-
 class Requerimiento(db.Model): 
     __tablename__ = 'requerimiento'
     id = db.Column(db.Integer, primary_key=True)
@@ -136,28 +137,62 @@ class Requerimiento(db.Model):
     id_recinto = db.Column(db.Integer, db.ForeignKey('recinto.id'), nullable=False)
     id_estado = db.Column(db.Integer, db.ForeignKey('estado.id'), nullable=False)
     fecha_aceptacion = db.Column(db.DateTime, nullable=True)
+    id_tipologia = db.Column(db.Integer, db.ForeignKey('tipologia.id'), nullable=True)
+    id_financiamiento = db.Column(db.Integer, db.ForeignKey('financiamiento.id'), nullable=True)
+    id_tipoproyecto = db.Column(db.Integer, db.ForeignKey('tipoproyecto.id'), nullable=True)
 
     # Relaciones
-    trabajadores = db.relationship('Trabajador', 
-                                 secondary=requerimiento_trabajador,
-                                 backref=db.backref('requerimientos', lazy='dynamic'))
+    trabajadores = db.relationship(
+        'Trabajador',
+        secondary=requerimiento_trabajador_especialidad,
+        backref=db.backref('requerimientos', lazy='dynamic'),
+        overlaps="trabajadores_especialidades,requerimientos_con_especialidad"
+    )
+    
+    trabajadores_especialidades = db.relationship(
+        'Trabajador',
+        secondary=requerimiento_trabajador_especialidad,
+        primaryjoin=(id == requerimiento_trabajador_especialidad.c.requerimiento_id),
+        secondaryjoin=(Trabajador.id == requerimiento_trabajador_especialidad.c.trabajador_id),
+        backref=db.backref('requerimientos_con_especialidad', lazy='dynamic'),
+        overlaps="trabajadores,requerimientos",
+        viewonly=True  # Hacer esta relación de solo lectura
+    )
     sector = db.relationship('Sector', backref='requerimientos')
     tiporecinto = db.relationship('TipoRecinto', backref='requerimientos')
     recinto = db.relationship('Recinto', backref='requerimientos')
     estado = db.relationship('Estado', backref='requerimientos')
+    equipos_trabajo = db.relationship(
+        'EquipoTrabajo',
+        backref=db.backref('requerimiento_padre', lazy=True),  # Cambiado de 'requerimiento' a 'requerimiento_padre'
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
+    tipologia = db.relationship('Tipologia', backref='requerimientos')
+    financiamiento = db.relationship('Financiamiento', backref='requerimientos')
+    tipoproyecto = db.relationship('TipoProyecto', backref='requerimientos')
 
-class equipo_especialidad_trabajador(db.Model):
-    __tablename__ = 'equipo_especialidad_trabajador'
+    def agregar_trabajador_especialidad(self, trabajador, especialidad):
+        """Método para agregar un trabajador con su especialidad"""
+        stmt = requerimiento_trabajador_especialidad.insert().values(
+            requerimiento_id=self.id,
+            trabajador_id=trabajador.id,
+            especialidad_id=especialidad.id
+        )
+        db.session.execute(stmt)
+        db.session.commit()
+
+class EquipoTrabajo(db.Model):
+    __tablename__ = 'equipo_trabajo'
     id = db.Column(db.Integer, primary_key=True)
-    id_equipo = db.Column(db.Integer, db.ForeignKey('equipo.id'), nullable=False)
-    id_especialidad = db.Column(db.Integer, db.ForeignKey('especialidad.id'), nullable=False)
+    id_requerimiento = db.Column(db.Integer, db.ForeignKey('requerimiento.id', ondelete='CASCADE'), nullable=False)
     id_trabajador = db.Column(db.Integer, db.ForeignKey('trabajador.id'), nullable=False)
+    id_especialidad = db.Column(db.Integer, db.ForeignKey('especialidad.id'), nullable=False)
     
-    # Definir las relaciones correctamente
-    equipo = db.relationship('Equipo', backref='equipo_especialidades')
-    especialidad = db.relationship('Especialidad', backref='especialidad_trabajadores')
-    trabajador = db.relationship('Trabajador', backref='trabajador_especialidades')
-    
+    # Relaciones
+    trabajador = db.relationship('Trabajador', backref='equipos_trabajo')
+    especialidad = db.relationship('Especialidad', backref='equipos_trabajo')
+
 def init_db():
     """Crear todas las tablas en la base de datos"""
     db.drop_all()  # Eliminar todas las tablas existentes

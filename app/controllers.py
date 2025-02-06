@@ -1,5 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from app.models import Requerimiento, TipoRecinto, Recinto, Sector, Etapa, Trabajador, EtapaN4, EtapaN3, EtapaN2, EtapaN1, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, db
+from app.models import (
+    Requerimiento, TipoRecinto, Recinto, Sector, Etapa, Trabajador, 
+    EtapaN4, EtapaN3, EtapaN2, EtapaN1, Financiamiento, Especialidad, 
+    Equipo, Tipologia, Fase, TipoProyecto, Estado, db, 
+    requerimiento_trabajador_especialidad, EquipoTrabajo  # Agregar EquipoTrabajo aquí
+)
 from datetime import datetime
 
 controllers_bp = Blueprint('controllers', __name__)
@@ -927,6 +932,7 @@ def requerimientos():
 def add_requerimiento():
     try:
         if request.method == 'POST':
+            # Obtener todos los campos del formulario
             nombre = request.form['nombre']
             fecha = datetime.strptime(request.form['fecha'], '%Y-%m-%d')
             descripcion = request.form['descripcion']
@@ -941,17 +947,38 @@ def add_requerimiento():
                 id_sector=id_sector,
                 id_tiporecinto=id_tiporecinto,
                 id_recinto=id_recinto,
-                id_estado=1  # Estado inicial por defecto
+                id_estado=1,  # Estado inicial
+                observacion=None,
+                fecha_aceptacion=None,
+                id_tipologia=None,
+                id_financiamiento=None,
+                id_tipoproyecto=None
             )
             
             db.session.add(nuevo_requerimiento)
             db.session.commit()
-            flash('Requerimiento agregado exitosamente', 'success')
-            return redirect(url_for('controllers.ruta_requerimientos'))
+            
+            # Obtener los datos relacionados después del commit
+            fecha_str = fecha.strftime('%d-%m-%Y')
+            
+            return jsonify({
+                'success': True,
+                'requerimiento': {
+                    'id': nuevo_requerimiento.id,
+                    'nombre': nuevo_requerimiento.nombre,
+                    'fecha': fecha_str,
+                    'descripcion': nuevo_requerimiento.descripcion,
+                    'estado_nombre': Estado.query.get(1).nombre,  # En Solicitud
+                    'sector_nombre': Sector.query.get(id_sector).nombre,
+                    'tiporecinto_nombre': TipoRecinto.query.get(id_tiporecinto).nombre,
+                    'recinto_nombre': Recinto.query.get(id_recinto).nombre,
+                }
+            })
+            
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al agregar requerimiento: {str(e)}', 'error')
-        return redirect(url_for('controllers.ruta_requerimientos'))
+        print(f"Error en add_requerimiento: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 @controllers_bp.route('/update_requerimiento/<int:id>', methods=['POST'], endpoint='update_requerimiento')
 def update_requerimiento(id):
@@ -1057,34 +1084,47 @@ def requerimientos_completar():
 def agregar_trabajador_requerimiento():
     try:
         data = request.get_json()
+        print("Datos recibidos:", data)  # Para debug
         requerimiento = Requerimiento.query.get_or_404(data['id_requerimiento'])
         
         if data.get('es_nuevo'):
-            # Crear nuevo trabajador
+            # Crear nuevo trabajador con campos opcionales
             trabajador = Trabajador(
                 nombre=data['nombre'],
-                profesion=data['profesion']
+                profesion=data.get('profesion') or '',  # Si es None o vacío, usar string vacío
+                nombrecorto=data.get('nombre_corto') or ''  # Si es None o vacío, usar string vacío
             )
             db.session.add(trabajador)
-            db.session.commit()
+            db.session.flush()  # Obtener el ID antes del commit
         else:
             trabajador = Trabajador.query.get_or_404(data['trabajador_id'])
         
-        # Asociar trabajador al requerimiento
-        if trabajador not in requerimiento.trabajadores:
-            requerimiento.trabajadores.append(trabajador)
-            db.session.commit()
-            
+        # Crear nuevo equipo de trabajo
+        equipo = EquipoTrabajo(
+            id_requerimiento=data['id_requerimiento'],
+            id_trabajador=trabajador.id,
+            id_especialidad=data['especialidad_id']
+        )
+        
+        db.session.add(equipo)
+        db.session.commit()
+        
+        # Obtener la especialidad para la respuesta
+        especialidad = Especialidad.query.get_or_404(data['especialidad_id'])
+        
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': 'Trabajador agregado exitosamente',
             'trabajador': {
                 'id': trabajador.id,
                 'nombre': trabajador.nombre,
-                'profesion': trabajador.profesion
+                'profesion': trabajador.profesion or '',
+                'especialidad': especialidad.nombre
             }
         })
     except Exception as e:
+        print("Error:", str(e))  # Para debug
+        db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
 @controllers_bp.route('/quitar_trabajador_requerimiento/<int:id_req>/<int:id_trab>', methods=['POST'])
@@ -1100,3 +1140,79 @@ def quitar_trabajador_requerimiento(id_req, id_trab):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+@controllers_bp.route('/agregar_miembro_equipo', methods=['POST'])
+def agregar_miembro_equipo():
+    try:
+        data = request.get_json()
+        
+        requerimiento = Requerimiento.query.get_or_404(data['id_requerimiento'])
+        
+        if data.get('es_nuevo'):
+            trabajador = Trabajador(
+                nombre=data['nombre'],
+                profesion=data.get('profesion', ''),
+                nombrecorto=data.get('nombre_corto', '')
+            )
+            db.session.add(trabajador)
+            db.session.flush()
+        else:
+            trabajador = Trabajador.query.get_or_404(data['id_trabajador'])
+        
+        especialidad = Especialidad.query.get_or_404(data['id_especialidad'])
+        
+        # Crear el equipo de trabajo
+        equipo = EquipoTrabajo(
+            id_requerimiento=requerimiento.id,
+            id_trabajador=trabajador.id,
+            id_especialidad=especialidad.id
+        )
+        
+        db.session.add(equipo)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'miembro': {
+                'id': equipo.id,
+                'trabajador_nombre': trabajador.nombre,
+                'profesion': trabajador.profesion,
+                'especialidad_nombre': especialidad.nombre
+            }
+        })
+        
+    except Exception as e:
+        print("Error:", str(e))
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@controllers_bp.route('/quitar_miembro_equipo/<int:id_equipo>', methods=['POST'])
+def quitar_miembro_equipo(id_equipo):
+    try:
+        equipo = EquipoTrabajo.query.get_or_404(id_equipo)
+        db.session.delete(equipo)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+# Falta la ruta para procesar el formulario de completar requerimiento
+@controllers_bp.route('/update_requerimiento_completar/<int:id>', methods=['POST'])
+def update_requerimiento_completar(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        requerimiento.id_tipologia = request.form['id_tipologia']
+        requerimiento.id_financiamiento = request.form['id_financiamiento']
+        requerimiento.id_tipoproyecto = request.form['id_tipoproyecto']
+        requerimiento.observacion = request.form['observacion']
+        # Actualizar el estado si es necesario
+        requerimiento.id_estado = 3  # Estado siguiente
+        
+        db.session.commit()
+        flash('Requerimiento actualizado exitosamente', 'success')
+        return redirect(url_for('controllers.ruta_requerimientos_completar'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+        return redirect(url_for('controllers.ruta_requerimientos_completar'))

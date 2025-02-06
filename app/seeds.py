@@ -1,4 +1,4 @@
-from .models import db, TipoRecinto, Recinto, Sector, Trabajador, EtapaN1, EtapaN2, EtapaN3, EtapaN4, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, User
+from .models import db, TipoRecinto, Recinto, Sector, Trabajador, EtapaN1, EtapaN2, EtapaN3, EtapaN4, Financiamiento, Especialidad, Equipo, Tipologia, Fase, TipoProyecto, Estado, Requerimiento, User
 
 def seed_data():
     """Función para crear datos iniciales en la base de datos"""
@@ -222,6 +222,26 @@ def seed_data():
         db.session.add_all(tipologias)
         db.session.commit()
 
+        #-----------------------------------------------------------------------------
+        # Datos iniciales para REQUERIMIENTO
+        requerimiento_data = [
+            {'nombre': 'PRUEBA 1',
+            'fecha': '2025-02-03 00:00:00',
+            'descripcion': 'SOLO DESCRIPCIÓN DE PRUEBA 1',
+            'observacion': 'Solo prueba',
+            'id_sector': 1 ,
+            'id_tiporecinto': 5 ,
+            'id_recinto': 8 ,
+            'id_estado': 2 ,
+            'fecha_aceptacion': '2025-02-05 15:53:01'},
+        ]
+
+       
+        requerimientos = [Requerimiento(**data) for data in requerimiento_data]
+        db.session.add_all(requerimientos)
+        db.session.commit()
+        #-----------------------------------------------------------------------------
+        
         # Datos iniciales para otras tablas
         datos_iniciales = {
             Especialidad: [

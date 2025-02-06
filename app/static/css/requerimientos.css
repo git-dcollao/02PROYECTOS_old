@@ -14,8 +14,9 @@
     background-color: #f5f5f5;
 }
 
+/* Agregar este estilo para modales más anchos */
 .modal-dialog {
-    max-width: 600px;
+    max-width: 1000px !important; /* O el ancho que prefieras */
 }
 
 .form-control:read-only {
@@ -27,9 +28,59 @@
     font-size: 0.875rem;
 }
 
+/* Estilo específico para el modal de trabajadores */
+#modalTrabajadores .modal-dialog {
+    max-width: 800px !important;
+}
+
 .description-cell {
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Estilos para modales más anchos */
+.modal-fullscreen-xl-down {
+    max-width: 95% !important;  /* Usar casi todo el ancho de la pantalla */
+    margin: 1.75rem auto;
+}
+
+.modal-fullscreen-xl-down .card {
+    margin-bottom: 1rem;
+}
+
+.modal-fullscreen-xl-down .table {
+    margin-bottom: 0;
+}
+
+.modal-content {
+    height: auto;
+    min-height: 90vh;  /* Altura mínima del 90% de la ventana */
+}
+
+/* Ajustar padding interno */
+.modal-body {
+    padding: 2rem;
+}
+
+/* Ajustes para modales anidados */
+.modal-backdrop + .modal-backdrop {
+    z-index: 1060;
+}
+
+.modal + .modal {
+    z-index: 1070;
+}
+
+/* Mejorar la visualización en pantallas pequeñas */
+@media (max-width: 1199px) {
+    .modal-fullscreen-xl-down {
+        max-width: 100% !important;
+        margin: 0;
+    }
+    
+    .modal-content {
+        min-height: 100vh;
+    }
 }
