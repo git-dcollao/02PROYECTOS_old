@@ -1,0 +1,146 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Gestión de Proyectos{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/requerimientos.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Aceptar/Rechazar Proyectos</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Sector</th>
+                    <th>Tipo Recinto</th>
+                    <th>Recinto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for requerimiento in requerimientos %}
+                    {% if requerimiento.id_estado == 2 %}
+                    <tr>
+                        <td>{{requerimiento.id}}</td>
+                        <td>{{requerimiento.nombre}}</td>
+                        <td>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</td>
+                        <td>{{requerimiento.descripcion}}</td>
+                        <td>{{requerimiento.estado.nombre}}</td>
+                        <td>{{requerimiento.sector.nombre}}</td>
+                        <td>{{requerimiento.tiporecinto.nombre}}</td>
+                        <td>{{requerimiento.recinto.nombre}}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
+                                    data-bs-target="#exampleModal{{requerimiento.id}}">
+                                Ver
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Modal para cada proyecto -->
+                    <div class="modal fade" id="exampleModal{{requerimiento.id}}" tabindex="-1" 
+                         aria-labelledby="exampleModalLabel{{requerimiento.id}}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog"> <!-- Cambiado a modal-xl para máximo ancho -->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel{{requerimiento.id}}">
+                                        Detalles del Proyecto
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-12"> <!-- Cambié a col-md-12 ya que ahora solo tendremos una columna -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Nombre:</label>
+                                                <input type="text" class="form-control" value="{{requerimiento.nombre}}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Descripción:</label>
+                                                <textarea class="form-control" readonly>{{requerimiento.descripcion}}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Sector:</label>
+                                                <input type="text" class="form-control" value="{{requerimiento.sector.nombre}}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Tipo Recinto:</label>
+                                                <input type="text" class="form-control" value="{{requerimiento.tiporecinto.nombre}}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Recinto:</label>
+                                                <input type="text" class="form-control" value="{{requerimiento.recinto.nombre}}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Observación:</label>
+                                                <textarea class="form-control" id="observacion{{requerimiento.id}}" 
+                                                        name="observacion" required rows="4"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-success" onclick="submitForm('{{requerimiento.id}}', 'aceptar')">
+                                        Aceptar
+                                    </button>
+                                    <button type="button" class="btn btn-danger" onclick="submitForm('{{requerimiento.id}}', 'rechazar')">
+                                        Rechazar
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<script>
+function submitForm(id, action) {
+    const observacion = document.getElementById('observacion' + id).value.trim();
+    
+    if (!observacion) {
+        alert('Por favor, ingrese una observación antes de continuar.');
+        return;
+    }
+
+    if (confirm(`¿Está seguro de ${action} este requerimiento?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action === 'aceptar' 
+            ? "{{ url_for('controllers.update_proyecto_aceptar', id=0) }}".replace('0', id)
+            : "{{ url_for('controllers.update_proyecto_rechazar', id=0) }}".replace('0', id);
+
+        const observacionInput = document.createElement('input');
+        observacionInput.type = 'hidden';
+        observacionInput.name = 'observacion';
+        observacionInput.value = observacion;
+        
+        form.appendChild(observacionInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

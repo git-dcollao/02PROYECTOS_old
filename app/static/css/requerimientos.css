@@ -1,13 +1,85 @@
+/* Ajustes generales de fuente y espaciado */
+body {
+    font-size: 0.8125rem;  /* 13px - reducido del tamaño base */
+}
+
+.table td, 
+.table th {
+    font-size: 0.75rem;    /* 12px */
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+}
+
+.form-control {
+    font-size: 0.75rem;    /* 12px */
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+    min-height: 26px;      /* Reducido de 28px */
+}
+
+.form-label {
+    font-size: 0.75rem;    /* 12px */
+    line-height: 1;
+    margin-bottom: 0.15rem;
+}
+
+/* Ajustes para modales */
+.modal-title {
+    font-size: 0.875rem;   /* 14px */
+}
+
+.modal-body {
+    font-size: 0.75rem;    /* 12px */
+}
+
+/* Ajustes para botones */
+.btn-sm {
+    font-size: 0.75rem;    /* 12px */
+    padding: 0.15rem 0.4rem;
+}
+
+/* Ajustes para cards */
+.card-header {
+    font-size: 0.8125rem;  /* 13px */
+    padding: 0.25rem 0.5rem;
+}
+
+.card-body {
+    font-size: 0.75rem;    /* 12px */
+}
+
+/* Ajustes para alerts */
+.alert {
+    font-size: 0.75rem;    /* 12px */
+    padding: 0.25rem 0.75rem;
+}
+
+/* Ajustes para selects y inputs dentro de modales */
+.modal .form-control,
+.modal select.form-control {
+    font-size: 0.75rem;    /* 12px */
+    height: 26px;          /* Altura reducida */
+}
+
+/* Ajustes para textarea */
+textarea.form-control {
+    font-size: 0.75rem;    /* 12px */
+    min-height: 50px;      /* Altura mínima reducida */
+}
+
 .table td {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     vertical-align: middle;
-    padding: 0.5rem;
+    padding: 0.2rem 0.4rem;  /* Reducido de 0.5rem */
+    line-height: 1;        /* Reducido de 1.2 */
 }
 
 .table th {
     vertical-align: middle;
     font-weight: 600;
     background-color: #f8f9fa;
+    line-height: 1;        /* Reducido de 1.2 */
+    padding: 0.2rem 0.4rem; /* Reducido de 0.25rem */
 }
 
 .table tr:hover {
@@ -24,8 +96,8 @@
 }
 
 .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
 }
 
 /* Estilo específico para el modal de trabajadores */
@@ -57,14 +129,74 @@
 .modal-content {
     height: auto;
     min-height: 90vh;  /* Altura mínima del 90% de la ventana */
+    padding: 0;  /* Eliminar padding general */
+}
+
+.modal-header {
+    padding: 0.35rem 0.75rem;  /* Reducido de 1rem 1.5rem */
+    border-bottom: 1px solid #dee2e6;
+    min-height: 40px;     /* Altura mínima reducida */
+}
+
+.modal-body {
+    padding: 0.5rem;     /* Reducido de 1rem/1.5rem */
+    line-height: 1;      /* Añadido para consistencia */
+    font-size: 0.75rem;    /* 12px */
+}
+
+.modal-footer {
+    padding: 0.35rem 0.75rem;      /* Reducido de 1rem */
+    border-top: 1px solid #dee2e6;
+    min-height: 40px;     /* Altura mínima reducida */
+}
+
+/* Ajustes específicos para elementos dentro de modales */
+.modal .form-group {
+    margin-bottom: 0.5rem;  /* Reducido de 1rem */
+}
+
+.modal .form-label {
+    margin-bottom: 0.15rem; /* Reducido de 0.5rem */
+    font-size: 0.75rem;    /* Tamaño de fuente más pequeño */
+}
+
+.modal .form-control {
+    padding: 0.2rem 0.4rem; /* Reducido de 0.375rem 0.75rem */
+    min-height: 26px;        /* Altura mínima reducida */
+    font-size: 0.75rem;    /* 12px */
+}
+
+.modal .nav-tabs {
+    margin-bottom: 0.5rem;  /* Reducido de 1rem */
+}
+
+.modal .tab-content {
+    padding-top: 0.5rem;    /* Reducido de 1rem */
+}
+
+.modal .card {
+    margin-bottom: 0.5rem;  /* Reducido de 1rem */
+}
+
+.modal .card-header {
+    padding: 0.5rem;        /* Reducido de 1rem */
+}
+
+.modal .card-body {
+    padding: 0.5rem;        /* Reducido de 1rem */
+}
+
+.modal .table td,
+.modal .table th {
+    padding: 0.25rem 0.5rem; /* Reducido de 0.75rem */
+    font-size: 0.875rem;     /* Tamaño de fuente más pequeño */
 }
 
 /* Ajustar padding interno */
 .modal-body {
-    padding: 2rem;
+    padding: 1rem;          /* Reducido de 2rem */
 }
 
-/* Ajustes para modales anidados */
 .modal-backdrop + .modal-backdrop {
     z-index: 1060;
 }
@@ -73,7 +205,6 @@
     z-index: 1070;
 }
 
-/* Mejorar la visualización en pantallas pequeñas */
 @media (max-width: 1199px) {
     .modal-fullscreen-xl-down {
         max-width: 100% !important;
@@ -83,4 +214,62 @@
     .modal-content {
         min-height: 100vh;
     }
+}
+
+.mb-3 {
+    margin-bottom: 0.35rem !important;  /* Reducido de 1rem */
+}
+
+.mb-6 {
+    margin-bottom: 0.75rem !important;  /* Reducido de 1.5rem */
+}
+
+.mt-4 {
+    margin-top: 1rem !important;  /* Reducido de 1.5rem */
+}
+
+.form-label {
+    margin-bottom: 0.15rem;  /* Reducido de 0.5rem */
+    line-height: 1;          /* Añadido para reducir altura */
+    font-size: 0.75rem;    /* 12px */
+}
+
+.form-control {
+    padding: 0.2rem 0.4rem;  /* Reducido de 0.375rem 0.75rem */
+    min-height: 26px;        /* Reducido de 38px */
+    line-height: 1;       /* Añadido para reducir altura */
+    font-size: 0.75rem;    /* 12px */
+}
+
+.card-body {
+    padding: 0.5rem;       /* Reducido de 1rem */
+    line-height: 1;         /* Añadido para reducir altura */
+    font-size: 0.75rem;    /* 12px */
+}
+
+.card-header {
+    padding: 0.25rem 0.5rem; /* Reducido de 1rem 1.25rem */
+    line-height: 1;          /* Añadido para reducir altura */
+    font-size: 0.8125rem;  /* 13px */
+}
+
+.col-md-12, 
+.col-md-6, 
+.col-md-4 {
+    margin-bottom: 0.5rem;  /* Añadido para controlar espacio entre columnas */
+}
+
+label + .form-control,
+label + select {
+    margin-top: 0.125rem;   /* Espacio mínimo entre label y control */
+}
+
+.table tr {
+    line-height: 1;      /* Reducido de 1.5 */
+}
+
+.alert {
+    padding: 0.25rem 0.75rem;   /* Reducido de 0.75rem 1.25rem */
+    margin-bottom: 0.5rem;  /* Reducido de 1rem */
+    font-size: 0.75rem;    /* 12px */
 }

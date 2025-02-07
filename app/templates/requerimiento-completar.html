@@ -337,23 +337,78 @@ function limpiarFormularios(idRequerimiento) {
 }
 
 function quitarMiembro(idRequerimiento, idEquipo) {
-    if (confirm('¿Está seguro de quitar este miembro del equipo?')) {
-        fetch(`/quitar_miembro_equipo/${idEquipo}`, {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const row = event.target.closest('tr');
-                row.remove();
-            } else {
-                alert('Error: ' + data.error);
+    const confirmar = confirm('¿Está seguro de quitar este miembro del equipo?');
+    if (!confirmar) return;
+    
+    fetch(`/quitar_miembro_equipo/${idEquipo}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error en la respuesta del servidor');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Encontrar la tabla y la fila específica
+            const tabla = document.querySelector(`#tablaEquipo${idRequerimiento}`);
+            if (!tabla) throw new Error('Tabla no encontrada');
+            
+            // Buscar la fila usando el id del equipo en cualquier elemento dentro de la fila
+            const fila = tabla.querySelector(`tr:has(button[onclick*="${idEquipo}"])`) || 
+                        tabla.querySelector(`tr:has([data-equipo-id="${idEquipo}"])`);
+            
+            if (!fila) {
+                throw new Error('Fila no encontrada');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al procesar la solicitud');
-        });
+
+            // Eliminar la fila
+            fila.remove();
+            
+            // Verificar si quedan filas
+            const tbody = tabla.querySelector('tbody');
+            const filasRestantes = tbody.querySelectorAll('tr:not(.no-data)');
+            
+            if (filasRestantes.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="no-data">
+                        <td colspan="4" class="text-center">No hay miembros en el equipo</td>
+                    </tr>`;
+            }
+
+            // Mostrar mensaje de éxito
+            const cardBody = tabla.closest('.card-body');
+            if (cardBody) {
+                const mensajeExito = document.createElement('div');
+                mensajeExito.className = 'alert alert-success mt-2';
+                mensajeExito.textContent = data.message || 'Miembro eliminado exitosamente';
+                cardBody.insertBefore(mensajeExito, cardBody.firstChild);
+                
+                setTimeout(() => mensajeExito.remove(), 3000);
+            }
+        } else {
+            throw new Error(data.error || 'No se pudo eliminar el miembro');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud: ' + error.message);
+    });
+}
+
+function actualizarTablaEquipo(idRequerimiento) {
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla) return;
+
+    // Verificar si hay filas en la tabla (excluyendo la fila de "no hay datos")
+    const filasValidas = tabla.querySelectorAll('tr:not(.no-data)');
+    if (filasValidas.length === 0) {
+        tabla.innerHTML = `
+            <tr class="no-data">
+                <td colspan="4" class="text-center">No hay miembros en el equipo</td>
+            </tr>`;
     }
 }
 

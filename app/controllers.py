@@ -1195,13 +1195,37 @@ def agregar_miembro_equipo():
 @controllers_bp.route('/quitar_miembro_equipo/<int:id_equipo>', methods=['POST'])
 def quitar_miembro_equipo(id_equipo):
     try:
-        equipo = EquipoTrabajo.query.get_or_404(id_equipo)
+        equipo = EquipoTrabajo.query.get(id_equipo)
+        
+        if equipo is None:
+            return jsonify({
+                'success': True,
+                'message': 'El miembro ya no existe en el equipo'
+            })
+
+        # Guardar el id del requerimiento antes de eliminar
+        id_requerimiento = equipo.id_requerimiento
+        
+        # Eliminar el equipo
         db.session.delete(equipo)
         db.session.commit()
-        return jsonify({'success': True})
+        
+        # Contar miembros restantes
+        miembros_restantes = EquipoTrabajo.query.filter_by(id_requerimiento=id_requerimiento).count()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Miembro eliminado correctamente',
+            'miembros_restantes': miembros_restantes
+        })
+        
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)})
+        print(f"Error al quitar miembro: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Error al eliminar el miembro del equipo'
+        }), 500
 
 # Falta la ruta para procesar el formulario de completar requerimiento
 @controllers_bp.route('/update_requerimiento_completar/<int:id>', methods=['POST'])
@@ -1263,3 +1287,55 @@ def update_requerimiento_completar(id):
         print(f"Error en update_requerimiento_completar: {str(e)}")
         flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
         return redirect(url_for('controllers.ruta_requerimientos_completar'))
+    
+
+# ==================================================================================
+# Rutas CRUD para Proeyctos-aceptar
+@controllers_bp.route('/proyectos_aceptar', endpoint='ruta_proyectos_aceptar')
+def proyectos_aceptar():
+    requerimientos = Requerimiento.query.all()
+    sectores = Sector.query.all()
+    
+    return render_template('proyecto-aceptar.html',
+                         requerimientos=requerimientos,
+                         sectores=sectores)
+
+@controllers_bp.route('/update_proyecto_aceptar/<int:id>', methods=['POST'])
+def update_proyecto_aceptar(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        observacion = request.form.get('observacion')
+        
+        if not observacion:
+            flash('La observación es requerida', 'error')
+            return redirect(url_for('controllers.ruta_proyectos_aceptar'))
+            
+        requerimiento.id_estado = 2  # Estado: En Desarrollo - Preparación
+        requerimiento.observacion = observacion
+        requerimiento.fecha_aceptacion = datetime.now()  # Agregamos la fecha de aceptación
+        db.session.commit()
+        flash('Requerimiento aceptado exitosamente. Observación guardada.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+    return redirect(url_for('controllers.ruta_proyectos_aceptar'))
+
+@controllers_bp.route('/update_proyecto_rechazar/<int:id>', methods=['POST'])
+def update_proyecto_rechazar(id):
+    try:
+        requerimiento = Requerimiento.query.get_or_404(id)
+        observacion = request.form.get('observacion')
+        
+        if not observacion:
+            flash('La observación es requerida', 'error')
+            return redirect(url_for('controllers.ruta_proyectos_aceptar'))
+            
+        requerimiento.id_estado = 5  # Estado: Rechazado
+        requerimiento.observacion = observacion
+        db.session.commit()
+        flash('Requerimiento rechazado exitosamente. Observación guardada.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+    return redirect(url_for('controllers.ruta_proyectos_aceptar'))
+
