@@ -1,0 +1,644 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Gestión de Proyectos en Fase Inicial{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Llenado de Datos en Fase Inicial</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped" id="tablarequerimientosXllenar">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Fecha Ingreso</th>
+                    <th>Fecha Aceptación</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Recinto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for requerimiento in requerimientos %}
+                    {% if requerimiento.id_estado == 3 %}
+                    <tr>
+                        <td>{{requerimiento.id}}</td>
+                        <td>{{requerimiento.nombre}}</td>
+                        <td>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</td>
+                        <td>{{requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else ''}}</td>
+                        <td>{{requerimiento.descripcion}}</td>
+                        <td>{{requerimiento.estado.nombre}}</td>
+                        <td>{{requerimiento.recinto.nombre}}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
+                                    data-bs-target="#modalAgregarInfoRequerimiento{{requerimiento.id}}">
+                                Asignar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}    
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mover los modales fuera de la tabla -->
+    {% for requerimiento in requerimientos %}
+        <!-- Modal para asignar informacion a cada requerimiento -->
+        <div class="modal fade" id="modalAgregarInfoRequerimiento{{requerimiento.id}}" tabindex="-1" 
+             aria-labelledby="modalAgregarInfoRequerimiento{{requerimiento.id}}" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen-xl-down">
+                <div class="modal-content">
+                    <!-- Modal header -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAgregarInfoRequerimiento{{requerimiento.id}}">
+                            Completar Información del Proyecto
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form id="formCompletarRequerimiento{{requerimiento.id}}" method="POST" 
+                              action="{{ url_for('controllers.update_requerimiento_completar', id=requerimiento.id) }}">
+                            <div class="row">
+                                <!-- Columna izquierda -->
+                                <div class="col-md-6">
+                                    <!-- Columna izquierda - Datos existentes -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Sector:  <br/> <b>{{requerimiento.sector.nombre}}</b></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo Recinto:  <br/> <b>{{requerimiento.tiporecinto.nombre}}</b></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Recinto:   <br/> <b>{{requerimiento.recinto.nombre}}</b></label>
+                                    </div>
+                                    <div class="mb-12">
+                                        <label class="form-label">Nombre:</label>
+                                        <label class="form-control">{{requerimiento.nombre}}</label>
+                                    </div>
+                                </div>
+                                <!-- Columna derecha -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Fch. Ingreso:  <b>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</b></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Fch. Aceptación:  <b>{{requerimiento.fecha_aceptacion.strftime('%d-%m-%Y')}}</b></label>
+                                    </div>                                       
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Descripción de Solicitud:   <b>{{requerimiento.descripcion}}</b></label>
+                                <br>
+                                    <label class="form-label">Observación de Aceptación:   <b>{{requerimiento.observacion}}</b></label>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="mb-6">
+                                        <label class="form-label">Observación:</label>
+                                        <textarea class="form-control" id="observacion{{requerimiento.id}}" 
+                                                name="observacion" required rows="4">{{requerimiento.observacion}}</textarea>
+                                    </div> 
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipología:</label>
+                                    <select class="form-control" id="tipologia{{requerimiento.id}}" name="id_tipologia" required>
+                                        <option value="">Seleccione Tipología</option>
+                                        {% for tipologia in tipologias %}
+                                            <option value="{{ tipologia.id }}" 
+                                                {% if requerimiento.id_tipologia == tipologia.id %}selected{% endif %}>
+                                                {{ tipologia.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Fuente de Financiamiento:</label>
+                                    <select class="form-control" id="id_financiamiento{{requerimiento.id}}" name="id_financiamiento" required>
+                                        <option value="">Seleccione Fuente</option>
+                                        {% for financiamiento in financiamientos %}
+                                            <option value="{{ financiamiento.id }}"
+                                                {% if requerimiento.id_financiamiento == financiamiento.id %}selected{% endif %}>
+                                                {{ financiamiento.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo de Proyecto:</label>
+                                    <select class="form-control" id="id_tipoproyecto{{requerimiento.id}}" name="id_tipoproyecto" required>
+                                        <option value="">Seleccione Tipo de Proyecto</option>
+                                        {% for tipoproyecto in tipoproyectos %}
+                                            <option value="{{ tipoproyecto.id }}"
+                                                {% if requerimiento.id_tipoproyecto == tipoproyecto.id %}selected{% endif %}>
+                                                {{ tipoproyecto.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Sección de Equipo de Trabajo -->
+                                <div class="col-md-12 mt-4">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Equipo de trabajo</h5>
+                                            <button type="button" class="btn btn-primary btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalTrabajadores{{requerimiento.id}}">
+                                                Agregar Trabajador
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table" id="tablaEquipo{{requerimiento.id}}">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Nombre</th>
+                                                            <th>Profesión</th>
+                                                            <th>Especialidad</th>
+                                                            <th>Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for equipo in requerimiento.equipos_trabajo %}
+                                                        <tr>
+                                                            <td>{{ equipo.trabajador.nombre }}</td>
+                                                            <td>{{ equipo.trabajador.profesion }}</td>
+                                                            <td>{{ equipo.especialidad.nombre }}</td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-danger btn-sm" 
+                                                                        onclick="quitarMiembro('{{requerimiento.id}}', '{{equipo.id}}')">
+                                                                    ✕
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="submitFormCompletar('{{requerimiento.id}}')">
+                            Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para agregar trabajadores -->
+        <div class="modal fade" id="modalTrabajadores{{requerimiento.id}}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Agregar Miembro al Equipo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#existente{{requerimiento.id}}">
+                                    Trabajador Existente
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#nuevo{{requerimiento.id}}">
+                                    Nuevo Trabajador
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade show active" id="existente{{requerimiento.id}}">
+                                <div class="mb-3">
+                                    <label class="form-label">Seleccionar Trabajador:</label>
+                                    <select class="form-control" id="trabajador{{requerimiento.id}}">
+                                        <option value="">Seleccione un trabajador</option>
+                                        {% for trabajador in trabajadores %}
+                                        <option value="{{ trabajador.id }}">
+                                            {{ trabajador.nombre }} - {{ trabajador.profesion }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Especialidad en el equipo:</label>
+                                    <select class="form-control" id="especialidad{{requerimiento.id}}">
+                                        <option value="">Seleccione especialidad</option>
+                                        {% for especialidad in especialidades %}
+                                        <option value="{{ especialidad.id }}">{{ especialidad.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="nuevo{{requerimiento.id}}">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre Completo:</label>
+                                    <input type="text" class="form-control" id="nombreNuevo{{requerimiento.id}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Profesión:</label>
+                                    <input type="text" class="form-control" id="profesionNuevo{{requerimiento.id}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre Corto:</label>
+                                    <input type="text" class="form-control" id="nombreCortoNuevo{{requerimiento.id}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Especialidad:</label>
+                                    <select class="form-control" id="especialidadNuevo{{requerimiento.id}}">
+                                        <option value="">Seleccione especialidad</option>
+                                        {% for especialidad in especialidades %}
+                                        <option value="{{ especialidad.id }}">{{ especialidad.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="agregarMiembro('{{requerimiento.id}}')">
+                            Agregar al Equipo
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<script>
+ 
+function limpiarCamposFormulario(idRequerimiento, esNuevo) {
+    if (esNuevo) {
+        document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`especialidadNuevo${idRequerimiento}`).value = '';
+    } else {
+        document.getElementById(`trabajadorExistente${idRequerimiento}`).value = '';
+        document.getElementById(`especialidadExistente${idRequerimiento}`).value = '';
+    }
+}
+
+function quitarTrabajador(idRequerimiento, idTrabajador) {
+    if (confirm('¿Está seguro de quitar este trabajador?')) {
+        fetch(`/quitar_trabajador_requerimiento/${idRequerimiento}/${idTrabajador}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const item = event.target.closest('.list-group-item');
+                item.remove();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud');
+        });
+    }
+}
+
+function limpiarFormularios(idRequerimiento) {
+    // Limpiar selects
+    document.getElementById(`trabajador${idRequerimiento}`).value = '';
+    document.getElementById(`especialidad${idRequerimiento}`).value = '';
+    
+    // Limpiar formulario nuevo trabajador
+    document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+    document.getElementById(`especialidadNuevo${idRequerimiento}`).value = '';
+    document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value = '';
+    document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+    
+    // Ocultar formulario nuevo trabajador
+    document.getElementById(`formNuevoTrabajador${idRequerimiento}`).style.display = 'none';
+}
+
+function quitarMiembro(idRequerimiento, idEquipo) {
+    const confirmar = confirm('¿Está seguro de quitar este miembro del equipo?');
+    if (!confirmar) return;
+    
+    fetch(`/quitar_miembro_equipo/${idEquipo}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error en la respuesta del servidor');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Encontrar la tabla y la fila específica
+            const tabla = document.querySelector(`#tablaEquipo${idRequerimiento}`);
+            if (!tabla) throw new Error('Tabla no encontrada');
+            
+            // Buscar la fila usando el id del equipo en cualquier elemento dentro de la fila
+            const fila = tabla.querySelector(`tr:has(button[onclick*="${idEquipo}"])`) || 
+                        tabla.querySelector(`tr:has([data-equipo-id="${idEquipo}"])`);
+            
+            if (!fila) {
+                throw new Error('Fila no encontrada');
+            }
+
+            // Eliminar la fila
+            fila.remove();
+            
+            // Verificar si quedan filas
+            const tbody = tabla.querySelector('tbody');
+            const filasRestantes = tbody.querySelectorAll('tr:not(.no-data)');
+            
+            if (filasRestantes.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="no-data">
+                        <td colspan="4" class="text-center">No hay miembros en el equipo</td>
+                    </tr>`;
+            }
+
+            // Mostrar mensaje de éxito
+            const cardBody = tabla.closest('.card-body');
+            if (cardBody) {
+                const mensajeExito = document.createElement('div');
+                mensajeExito.className = 'alert alert-success mt-2';
+                mensajeExito.textContent = data.message || 'Miembro eliminado exitosamente';
+                cardBody.insertBefore(mensajeExito, cardBody.firstChild);
+                
+                setTimeout(() => mensajeExito.remove(), 3000);
+            }
+        } else {
+            throw new Error(data.error || 'No se pudo eliminar el miembro');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud: ' + error.message);
+    });
+}
+
+function actualizarTablaEquipo(idRequerimiento) {
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla) return;
+
+    // Verificar si hay filas en la tabla (excluyendo la fila de "no hay datos")
+    const filasValidas = tabla.querySelectorAll('tr:not(.no-data)');
+    if (filasValidas.length === 0) {
+        tabla.innerHTML = `
+            <tr class="no-data">
+                <td colspan="4" class="text-center">No hay miembros en el equipo</td>
+            </tr>`;
+    }
+}
+
+// Función para validar el formulario antes de enviar
+function validarFormularioCompletar(idRequerimiento) {
+    // Validar campos requeridos
+    const tipologia = document.getElementById(`tipologia${idRequerimiento}`).value;
+    const financiamiento = document.getElementById(`id_financiamiento${idRequerimiento}`).value;
+    const tipoproyecto = document.getElementById(`id_tipoproyecto${idRequerimiento}`).value;
+    const observacion = document.getElementById(`observacion${idRequerimiento}`).value;
+
+    if (!tipologia || !financiamiento || !tipoproyecto || !observacion.trim()) {
+        alert('Por favor complete todos los campos obligatorios');
+        return false;
+    }
+
+    // Validar que exista al menos un miembro en el equipo
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla || tabla.children.length === 0) {
+        alert('Debe agregar al menos un miembro al equipo de trabajo');
+        return false;
+    }
+
+    return true;
+}
+
+// Función para enviar el formulario
+function submitFormCompletar(idRequerimiento) {
+    if (validarFormularioCompletar(idRequerimiento)) {
+        document.getElementById(`formCompletarRequerimiento${idRequerimiento}`).submit();
+    }
+}
+
+function agregarMiembro(idRequerimiento) {
+    const tabActivo = document.querySelector(`#modalTrabajadores${idRequerimiento} .nav-link.active`);
+    const esNuevo = tabActivo.getAttribute('href').includes('nuevo');
+    let data = {};
+    
+    if (esNuevo) {
+        data = {
+            es_nuevo: true,
+            nombre: document.getElementById(`nombreNuevo${idRequerimiento}`).value,
+            profesion: document.getElementById(`profesionNuevo${idRequerimiento}`).value || '',
+            nombre_corto: document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value || '',
+            id_especialidad: document.getElementById(`especialidadNuevo${idRequerimiento}`).value,
+            id_requerimiento: idRequerimiento
+        };
+    } else {
+        data = {
+            es_nuevo: false,
+            id_trabajador: document.getElementById(`trabajador${idRequerimiento}`).value,
+            id_especialidad: document.getElementById(`especialidad${idRequerimiento}`).value,
+            id_requerimiento: idRequerimiento
+        };
+    }
+    
+    if (!validarDatosMiembro(data)) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    fetch('/agregar_miembro_equipo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la tabla
+            actualizarTablaTrabajadores(idRequerimiento, data.miembro);
+            
+            if (data.trabajador_nuevo) {
+                // Actualizar el select de trabajadores existentes
+                const selectTrabajador = document.getElementById(`trabajador${idRequerimiento}`);
+                const nuevaOpcion = new Option(
+                    `${data.miembro.trabajador_nombre} - ${data.miembro.profesion}`, 
+                    data.miembro.trabajador_id
+                );
+                selectTrabajador.add(nuevaOpcion);
+            }
+            
+            // Limpiar formularios pero mantenernos en el modal
+            limpiarFormularioMiembro(idRequerimiento, esNuevo);
+            
+            // Opcional: Mostrar mensaje de éxito sin alert
+            const modalBody = document.querySelector(`#modalTrabajadores${idRequerimiento} .modal-body`);
+            const mensajeExito = document.createElement('div');
+            mensajeExito.className = 'alert alert-success mt-2';
+            mensajeExito.textContent = 'Miembro agregado exitosamente';
+            modalBody.insertBefore(mensajeExito, modalBody.firstChild);
+            
+            // Remover el mensaje después de 3 segundos
+            setTimeout(() => {
+                mensajeExito.remove();
+            }, 3000);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+function actualizarTablaTrabajadores(idRequerimiento, miembro) {
+    // Obtener la tabla dentro del modal principal
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla) {
+        console.error('Tabla no encontrada');
+        return;
+    }
+    
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>${miembro.trabajador_nombre}</td>
+        <td>${miembro.profesion || ''}</td>
+        <td>${miembro.especialidad_nombre}</td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" 
+                    onclick="quitarMiembro(${idRequerimiento}, ${miembro.id})">
+                ✕
+            </button>
+        </td>
+    `;
+    
+    tabla.appendChild(newRow);
+}
+
+// Agregar esta función de validación
+function validarDatosMiembro(data) {
+    if (data.es_nuevo) {
+        return data.nombre && data.id_especialidad;
+    } else {
+        return data.id_trabajador && data.id_especialidad;
+    }
+}
+
+// Agregar esta función de limpieza
+function limpiarFormularioMiembro(idRequerimiento, esNuevo) {
+    if (esNuevo) {
+        document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`especialidadNuevo${idRequerimiento}`).value = '';
+    } else {
+        document.getElementById(`trabajador${idRequerimiento}`).value = '';
+        document.getElementById(`especialidad${idRequerimiento}`).value = '';
+    }
+}
+
+function agregarTrabajador(idRequerimiento) {
+    const tabActivo = document.querySelector(`#modalTrabajadores${idRequerimiento} .nav-link.active`);
+    const esNuevo = tabActivo.getAttribute('href').includes('agregar');
+    let data = {};
+    
+    if (esNuevo) {
+        const nombre = document.getElementById(`nombreNuevo${idRequerimiento}`).value;
+        const especialidadId = document.getElementById(`profesionNuevo${idRequerimiento}`).value;
+        
+        if (!nombre || !especialidadId) {
+            alert('Por favor complete todos los campos');
+            return;
+        }
+        
+        data = {
+            es_nuevo: true,
+            nombre: nombre,
+            id_requerimiento: idRequerimiento,
+            especialidad_id: especialidadId
+        };
+    } else {
+        const trabajadorId = document.getElementById(`trabajadorExistente${idRequerimiento}`).value;
+        const especialidadId = document.getElementById(`especialidadExistente${idRequerimiento}`).value;
+        
+        if (!trabajadorId || !especialidadId) {
+            alert('Por favor seleccione trabajador y especialidad');
+            return;
+        }
+        
+        data = {
+            es_nuevo: false,
+            trabajador_id: trabajadorId,
+            id_requerimiento: idRequerimiento,
+            especialidad_id: especialidadId
+        };
+    }
+    
+    fetch('/agregar_trabajador_requerimiento', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la tabla
+            actualizarTablaTrabajadores(idRequerimiento, data.trabajador);
+            // Cerrar el modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`modalTrabajadores${idRequerimiento}`));
+            modal.hide();
+            // Limpiar campos
+            limpiarCamposFormulario(idRequerimiento, esNuevo);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si hay un nuevo requerimiento aceptado
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('new_req')) {
+        // Hacer scroll a la tabla
+        const tabla = document.getElementById('tablarequerimiento');
+        if (tabla) {
+            tabla.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
+</script>
+{% endblock %}

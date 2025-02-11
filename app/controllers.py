@@ -468,6 +468,14 @@ def eliminar_etapaN2(id):
         flash(f'Error al eliminar etapa N2: {e}')
     return redirect(url_for('controllers.ruta_etapaN2'))
 
+@controllers_bp.route('/get_etapasN2_by_etapaN1/<int:etapaN1_id>')
+def get_etapasN2_by_etapaN1(etapaN1_id):
+    etapasN2 = EtapaN2.query.filter_by(id_etapaN1=etapaN1_id).all()
+    return jsonify([{
+        'id': etapa.id,
+        'nombre': etapa.nombre
+    } for etapa in etapasN2])
+
 # ==================================================================================
 # Rutas CRUD para EtapaN1 
 @controllers_bp.route('/etapaN1', endpoint='ruta_etapaN1')
@@ -1025,39 +1033,28 @@ def requerimientos_aceptar():
 def update_requerimiento_aceptar(id):
     try:
         requerimiento = Requerimiento.query.get_or_404(id)
-        observacion = request.form.get('observacion')
-        
-        if not observacion:
-            flash('La observación es requerida', 'error')
-            return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
-            
-        requerimiento.id_estado = 2  # Estado: En Desarrollo - Preparación
-        requerimiento.observacion = observacion
-        requerimiento.fecha_aceptacion = datetime.now()  # Agregamos la fecha de aceptación
+        requerimiento.id_estado = 2  # Estado: En Desarrollo - Ejecución
+        requerimiento.observacion = request.form.get('observacion', '')
+        # Si se requiere, se puede actualizar una fecha de aceptación:
+        # requerimiento.fecha_aceptacion = datetime.utcnow()
         db.session.commit()
-        flash('Requerimiento aceptado exitosamente. Observación guardada.', 'success')
+        flash('Requerimiento aceptado y actualizado correctamente')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+        flash(f'Error al aceptar requerimiento: {e}')
     return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
 
 @controllers_bp.route('/update_requerimiento_rechazar/<int:id>', methods=['POST'])
 def update_requerimiento_rechazar(id):
     try:
         requerimiento = Requerimiento.query.get_or_404(id)
-        observacion = request.form.get('observacion')
-        
-        if not observacion:
-            flash('La observación es requerida', 'error')
-            return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
-            
         requerimiento.id_estado = 5  # Estado: Rechazado
-        requerimiento.observacion = observacion
+        requerimiento.observacion = request.form.get('observacion', '')
         db.session.commit()
-        flash('Requerimiento rechazado exitosamente. Observación guardada.', 'success')
+        flash('Requerimiento rechazado y actualizado correctamente')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+        flash(f'Error al rechazar requerimiento: {e}')
     return redirect(url_for('controllers.ruta_requerimientos_aceptar'))
 
 # ==================================================================================
@@ -1290,7 +1287,7 @@ def update_requerimiento_completar(id):
     
 
 # ==================================================================================
-# Rutas CRUD para Proeyctos-aceptar
+# Rutas CRUD para Proyectos-aceptar
 @controllers_bp.route('/proyectos_aceptar', endpoint='ruta_proyectos_aceptar')
 def proyectos_aceptar():
     requerimientos = Requerimiento.query.all()
@@ -1310,14 +1307,13 @@ def update_proyecto_aceptar(id):
             flash('La observación es requerida', 'error')
             return redirect(url_for('controllers.ruta_proyectos_aceptar'))
             
-        requerimiento.id_estado = 2  # Estado: En Desarrollo - Preparación
+        requerimiento.id_estado = 3  # Estado: En Desarrollo - Ejecución
         requerimiento.observacion = observacion
-        requerimiento.fecha_aceptacion = datetime.now()  # Agregamos la fecha de aceptación
         db.session.commit()
-        flash('Requerimiento aceptado exitosamente. Observación guardada.', 'success')
+        flash('Proyecto aceptado y actualizado correctamente', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+        flash(f'Error al aceptar proyecto: {e}', 'error')
     return redirect(url_for('controllers.ruta_proyectos_aceptar'))
 
 @controllers_bp.route('/update_proyecto_rechazar/<int:id>', methods=['POST'])
@@ -1333,9 +1329,52 @@ def update_proyecto_rechazar(id):
         requerimiento.id_estado = 5  # Estado: Rechazado
         requerimiento.observacion = observacion
         db.session.commit()
-        flash('Requerimiento rechazado exitosamente. Observación guardada.', 'success')
+        flash('Proyecto rechazado y actualizado correctamente', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al actualizar requerimiento: {str(e)}', 'error')
+        flash(f'Error al rechazar proyecto: {e}', 'error')
     return redirect(url_for('controllers.ruta_proyectos_aceptar'))
 
+# ==================================================================================
+# Rutas CRUD para Proyectos-completar
+@controllers_bp.route('/proyectos_completar', endpoint='ruta_proyectos_completar')
+def proyectos_completar():
+    # Obtener solo los requerimientos en estado "En Desarrollo - Ejecución" (id_estado = 3)
+    requerimientos = Requerimiento.query.filter_by(id_estado=3).\
+        order_by(Requerimiento.fecha.desc()).all()
+        
+    sectores = Sector.query.all()
+   
+    return render_template('proyecto-completar.html',
+                         requerimientos=requerimientos,  # Cambiado de requerimiento a requerimientos
+                         sectores=sectores)
+
+
+
+# ==================================================================================
+# ==================================================================================
+# Rutas para Proyectos-etapas
+@controllers_bp.route('/proyectos_etapas', endpoint='ruta_proyectos_etapas')
+def proyectos_etapas():
+    # Obtener solo los requerimientos en estado "En Desarrollo - Ejecución" (id_estado = 3)
+    requerimientos = Requerimiento.query.filter_by(id_estado=3).\
+        order_by(Requerimiento.fecha.desc()).all()
+        
+    sectores = Sector.query.all()
+   
+    return render_template('proyecto-completar.html',
+                         requerimientos=requerimientos,  # Cambiado de requerimiento a requerimientos
+                         sectores=sectores)
+
+@controllers_bp.route('/guardar_etapas_proyecto/<int:id_requerimiento>', methods=['POST'])
+def guardar_etapas_proyecto(id_requerimiento):
+    try:
+        etapas = request.get_json()
+        requerimiento = Requerimiento.query.get_or_404(id_requerimiento)
+        
+        # Aquí irá el código para guardar las etapas en la base de datos
+        # Primero necesitarás crear un modelo para almacenar las etapas asignadas
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})

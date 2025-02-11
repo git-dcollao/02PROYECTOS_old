@@ -1,0 +1,220 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Gestión de Etapas del Proyecto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Asignación de Etapas al Proyecto</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped" id="tablaProyectos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Fecha Ingreso</th>
+                    <th>Estado</th>
+                    <th>Recinto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for requerimiento in requerimientos %}
+                    {% if requerimiento.id_estado == 3 %}
+                    <tr>
+                        <td>{{requerimiento.id}}</td>
+                        <td>{{requerimiento.nombre}}</td>
+                        <td>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</td>
+                        <td>{{requerimiento.estado.nombre}}</td>
+                        <td>{{requerimiento.recinto.nombre}}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#modalAsignarEtapas{{requerimiento.id}}">
+                                Asignar Etapas
+                            </button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modales para cada proyecto -->
+    {% for requerimiento in requerimientos %}
+        {% if requerimiento.id_estado == 3 %}
+        <div class="modal fade" id="modalAsignarEtapas{{requerimiento.id}}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Asignación de Etapas - {{requerimiento.nombre}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formAsignarEtapas{{requerimiento.id}}">
+                            <!-- Información del proyecto -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Proyecto:</label>
+                                    <input type="text" class="form-control" value="{{requerimiento.nombre}}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Estado:</label>
+                                    <input type="text" class="form-control" value="{{requerimiento.estado.nombre}}" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Selección de etapas -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Etapa N1:</label>
+                                    <select class="form-control" id="etapaN1_{{requerimiento.id}}" 
+                                            onchange="cargarEtapasN2({{requerimiento.id}})">
+                                        <option value="">Seleccione Etapa N1</option>
+                                        {% for etapaN1 in etapasN1 %}
+                                            <option value="{{etapaN1.id}}">{{etapaN1.nombre}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Etapa N2:</label>
+                                    <select class="form-control" id="etapaN2_{{requerimiento.id}}" disabled>
+                                        <option value="">Primero seleccione Etapa N1</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Tabla de etapas asignadas -->
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm" id="tablaEtapasAsignadas{{requerimiento.id}}">
+                                    <thead>
+                                        <tr>
+                                            <th>Etapa N1</th>
+                                            <th>Etapa N2</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Las etapas asignadas se agregarán aquí dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" 
+                                onclick="agregarEtapa({{requerimiento.id}})">
+                            Agregar Etapa
+                        </button>
+                        <button type="button" class="btn btn-success" 
+                                onclick="guardarEtapas({{requerimiento.id}})">
+                            Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+function cargarEtapasN2(idRequerimiento) {
+    const selectN1 = document.getElementById(`etapaN1_${idRequerimiento}`);
+    const selectN2 = document.getElementById(`etapaN2_${idRequerimiento}`);
+    const idEtapaN1 = selectN1.value;
+
+    // Deshabilitar el select de EtapaN2 si no hay selección en EtapaN1
+    if (!idEtapaN1) {
+        selectN2.disabled = true;
+        selectN2.innerHTML = '<option value="">Primero seleccione Etapa N1</option>';
+        return;
+    }
+
+    // Hacer la petición AJAX para obtener las etapas N2
+    fetch(`/get_etapasN2_by_etapaN1/${idEtapaN1}`)
+        .then(response => response.json())
+        .then(data => {
+            selectN2.innerHTML = '<option value="">Seleccione Etapa N2</option>';
+            data.forEach(etapaN2 => {
+                selectN2.innerHTML += `<option value="${etapaN2.id}">${etapaN2.nombre}</option>`;
+            });
+            selectN2.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            selectN2.disabled = true;
+        });
+}
+
+function agregarEtapa(idRequerimiento) {
+    const selectN1 = document.getElementById(`etapaN1_${idRequerimiento}`);
+    const selectN2 = document.getElementById(`etapaN2_${idRequerimiento}`);
+    
+    if (!selectN1.value || !selectN2.value) {
+        alert('Por favor seleccione ambas etapas');
+        return;
+    }
+
+    const etapaN1Text = selectN1.options[selectN1.selectedIndex].text;
+    const etapaN2Text = selectN2.options[selectN2.selectedIndex].text;
+    
+    const tabla = document.getElementById(`tablaEtapasAsignadas${idRequerimiento}`).getElementsByTagName('tbody')[0];
+    const newRow = tabla.insertRow();
+    newRow.innerHTML = `
+        <td>${etapaN1Text}</td>
+        <td>${etapaN2Text}</td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
+                ✕
+            </button>
+        </td>
+    `;
+}
+
+function guardarEtapas(idRequerimiento) {
+    const tabla = document.getElementById(`tablaEtapasAsignadas${idRequerimiento}`);
+    const filas = tabla.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    if (filas.length === 0) {
+        alert('Debe agregar al menos una etapa');
+        return;
+    }
+
+    const etapasAsignadas = [];
+    for (let fila of filas) {
+        etapasAsignadas.push({
+            etapaN1: fila.cells[0].textContent,
+            etapaN2: fila.cells[1].textContent
+        });
+    }
+
+    // Aquí irá el código para enviar los datos al servidor
+    fetch(`/guardar_etapas_proyecto/${idRequerimiento}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(etapasAsignadas)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Etapas guardadas exitosamente');
+            location.reload();
+        } else {
+            alert('Error al guardar las etapas: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar las etapas');
+    });
+}
+</script>
+{% endblock %}
+

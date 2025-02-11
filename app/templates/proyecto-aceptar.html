@@ -8,8 +8,9 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Aceptar/Rechazar Proyectos</h2>
+    <h2>Conversión a Proyectos</h2>
     
+    <!-- Tabla principal -->
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
@@ -19,8 +20,6 @@
                     <th>Fecha</th>
                     <th>Descripción</th>
                     <th>Estado</th>
-                    <th>Sector</th>
-                    <th>Tipo Recinto</th>
                     <th>Recinto</th>
                     <th>Acciones</th>
                 </tr>
@@ -34,76 +33,142 @@
                         <td>{{requerimiento.fecha.strftime('%d-%m-%Y')}}</td>
                         <td>{{requerimiento.descripcion}}</td>
                         <td>{{requerimiento.estado.nombre}}</td>
-                        <td>{{requerimiento.sector.nombre}}</td>
-                        <td>{{requerimiento.tiporecinto.nombre}}</td>
                         <td>{{requerimiento.recinto.nombre}}</td>
                         <td>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
-                                    data-bs-target="#exampleModal{{requerimiento.id}}">
+                            <button type="button" 
+                                    class="btn btn-primary btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#modalVerProyecto{{requerimiento.id}}">
                                 Ver
                             </button>
                         </td>
                     </tr>
-
-                    <!-- Modal para cada proyecto -->
-                    <div class="modal fade" id="exampleModal{{requerimiento.id}}" tabindex="-1" 
-                         aria-labelledby="exampleModalLabel{{requerimiento.id}}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog"> <!-- Cambiado a modal-xl para máximo ancho -->
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="exampleModalLabel{{requerimiento.id}}">
-                                        Detalles del Proyecto
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-md-12"> <!-- Cambié a col-md-12 ya que ahora solo tendremos una columna -->
-                                            <div class="mb-3">
-                                                <label class="form-label">Nombre:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Descripción:</label>
-                                                <textarea class="form-control" readonly>{{requerimiento.descripcion}}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Sector:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.sector.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Tipo Recinto:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.tiporecinto.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Recinto:</label>
-                                                <input type="text" class="form-control" value="{{requerimiento.recinto.nombre}}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Observación:</label>
-                                                <textarea class="form-control" id="observacion{{requerimiento.id}}" 
-                                                        name="observacion" required rows="4"></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-success" onclick="submitForm('{{requerimiento.id}}', 'aceptar')">
-                                        Aceptar
-                                    </button>
-                                    <button type="button" class="btn btn-danger" onclick="submitForm('{{requerimiento.id}}', 'rechazar')">
-                                        Rechazar
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     {% endif %}
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <!-- Modales -->
+    {% for requerimiento in requerimientos %}
+        {% if requerimiento.id_estado == 2 %}
+        <div class="modal fade" 
+             id="modalVerProyecto{{requerimiento.id}}" 
+             tabindex="-1" 
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Información del Proyecto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Información del proyecto en 2 columnas -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Datos Generales</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-4">ID:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.id}}</dd>
+                                    
+                                    <dt class="col-sm-4">Nombre:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.nombre}}</dd>
+                                    
+                                    <dt class="col-sm-4">Fecha:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.fecha.strftime('%d-%m-%Y')}}</dd>
+                                    
+                                    <dt class="col-sm-4">Estado:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.estado.nombre}}</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Ubicación</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-4">Sector:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.sector.nombre}}</dd>
+                                    
+                                    <dt class="col-sm-4">Tipo Recinto:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.tiporecinto.nombre}}</dd>
+                                    
+                                    <dt class="col-sm-4">Recinto:</dt>
+                                    <dd class="col-sm-8">{{requerimiento.recinto.nombre}}</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <!-- Descripción y otros detalles -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Detalles del Proyecto</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-3">Tipología:</dt>
+                                    <dd class="col-sm-9">{{requerimiento.tipologia.nombre}}</dd>
+                                    
+                                    <dt class="col-sm-3">Financiamiento:</dt>
+                                    <dd class="col-sm-9">{{requerimiento.financiamiento.nombre}}</dd>
+                                    
+                                    <dt class="col-sm-3">Tipo Proyecto:</dt>
+                                    <dd class="col-sm-9">{{requerimiento.tipoproyecto.nombre}}</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <!-- Equipo de trabajo -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Equipo de Trabajo</h6>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Profesión</th>
+                                            <th>Especialidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for equipo in requerimiento.equipos_trabajo %}
+                                        <tr>
+                                            <td>{{ equipo.trabajador.nombre }}</td>
+                                            <td>{{ equipo.trabajador.profesion }}</td>
+                                            <td>{{ equipo.especialidad.nombre }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Sección de observaciones y acciones -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Observaciones</h6>
+                                <p>{{requerimiento.observacion}}</p>
+                            </div>
+                        </div>
+
+                        <!-- Agregar el campo de observación antes del modal-footer -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Nueva Observación</h6>
+                                <textarea class="form-control" id="observacion{{requerimiento.id}}" 
+                                          name="observacion" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="submitForm('{{requerimiento.id}}', 'aceptar')">
+                            Convertir a Proyecto
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="submitForm('{{requerimiento.id}}', 'rechazar')">
+                            Rechazar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -117,6 +182,19 @@
 {% endwith %}
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar envío de formularios
+    document.querySelectorAll('form[id^="formAceptar"], form[id^="formRechazar"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const observacion = this.querySelector('textarea[name="observacion"]').value;
+            if (!observacion.trim()) {
+                e.preventDefault();
+                alert('Por favor ingrese una observación');
+            }
+        });
+    });
+});
+
 function submitForm(id, action) {
     const observacion = document.getElementById('observacion' + id).value.trim();
     
@@ -125,12 +203,16 @@ function submitForm(id, action) {
         return;
     }
 
-    if (confirm(`¿Está seguro de ${action} este requerimiento?`)) {
+    const mensaje = action === 'aceptar' ? 
+        '¿Está seguro de convertir este requerimiento a proyecto?' : 
+        '¿Está seguro de rechazar este requerimiento?';
+
+    if (confirm(mensaje)) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = action === 'aceptar' 
-            ? "{{ url_for('controllers.update_proyecto_aceptar', id=0) }}".replace('0', id)
-            : "{{ url_for('controllers.update_proyecto_rechazar', id=0) }}".replace('0', id);
+        form.action = action === 'aceptar' ? 
+            `{{ url_for('controllers.update_proyecto_aceptar', id=0) }}`.replace('0', id) :
+            `{{ url_for('controllers.update_proyecto_rechazar', id=0) }}`.replace('0', id);
 
         const observacionInput = document.createElement('input');
         observacionInput.type = 'hidden';
