@@ -1,0 +1,372 @@
+{% extends "base_layout.html" %}
+
+{% block title %}{{ page_name or "Formulario" }}{% endblock %}
+
+{% block page_title %}{{ page_name or "Formulario" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-edit me-3"></i>
+                        <h5 class="mb-0">{{ page_name or "Formulario de Ejemplo" }}</h5>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <form id="exampleForm" method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="firstName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Nombre *
+                                    </label>
+                                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                    <div class="invalid-feedback">
+                                        Por favor ingresa tu nombre.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="lastName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Apellido *
+                                    </label>
+                                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                    <div class="invalid-feedback">
+                                        Por favor ingresa tu apellido.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-1"></i>Email *
+                                    </label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <div class="invalid-feedback">
+                                        Por favor ingresa un email válido.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i>Teléfono
+                                    </label>
+                                    <input type="tel" class="form-control" id="phone" name="phone">
+                                    <small class="form-text text-muted">Formato: +56 9 1234 5678</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="department" class="form-label">
+                                <i class="fas fa-building me-1"></i>Departamento *
+                            </label>
+                            <select class="form-select" id="department" name="department" required>
+                                <option value="">Selecciona un departamento</option>
+                                <option value="it">Tecnología</option>
+                                <option value="hr">Recursos Humanos</option>
+                                <option value="finance">Finanzas</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="operations">Operaciones</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Por favor selecciona un departamento.
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="startDate" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>Fecha de Inicio
+                                    </label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="salary" class="form-label">
+                                        <i class="fas fa-dollar-sign me-1"></i>Salario
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="salary" name="salary" min="0" step="1000">
+                                        <span class="input-group-text">CLP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-comment me-1"></i>Descripción del Puesto
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="4" 
+                                placeholder="Describe las responsabilidades y requisitos del puesto..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-cog me-1"></i>Permisos de Acceso
+                            </label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="readAccess" name="permissions[]" value="read">
+                                        <label class="form-check-label" for="readAccess">
+                                            <i class="fas fa-eye text-info me-1"></i>Lectura
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="writeAccess" name="permissions[]" value="write">
+                                        <label class="form-check-label" for="writeAccess">
+                                            <i class="fas fa-edit text-warning me-1"></i>Escritura
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="adminAccess" name="permissions[]" value="admin">
+                                        <label class="form-check-label" for="adminAccess">
+                                            <i class="fas fa-user-shield text-danger me-1"></i>Admin
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="reportAccess" name="permissions[]" value="reports">
+                                        <label class="form-check-label" for="reportAccess">
+                                            <i class="fas fa-chart-bar text-success me-1"></i>Reportes
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="activeUser" name="active" checked>
+                                <label class="form-check-label" for="activeUser">
+                                    <i class="fas fa-toggle-on text-success me-1"></i>Usuario Activo
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="termsAccepted" name="terms" required>
+                                <label class="form-check-label" for="termsAccepted">
+                                    Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">términos y condiciones</a> *
+                                </label>
+                                <div class="invalid-feedback">
+                                    Debes aceptar los términos y condiciones.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-secondary me-md-2" onclick="resetForm()">
+                                <i class="fas fa-undo me-1"></i>Limpiar
+                            </button>
+                            <button type="button" class="btn btn-outline-info me-md-2" onclick="previewData()">
+                                <i class="fas fa-eye me-1"></i>Vista Previa
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Preview Modal -->
+            <div class="modal fade" id="previewModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-eye me-2"></i>Vista Previa de Datos
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="previewContent">
+                            <!-- Content will be generated by JavaScript -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" onclick="$('#previewModal').modal('hide'); $('#exampleForm').submit();">
+                                <i class="fas fa-save me-1"></i>Confirmar y Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Terms Modal -->
+            <div class="modal fade" id="termsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Términos y Condiciones</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Al utilizar este formulario, usted acepta las siguientes condiciones:</p>
+                            <ul>
+                                <li>Los datos proporcionados serán utilizados únicamente para fines administrativos.</li>
+                                <li>La información personal será protegida según las políticas de privacidad de la empresa.</li>
+                                <li>Cualquier cambio en los términos será notificado oportunamente.</li>
+                                <li>El usuario puede solicitar la modificación o eliminación de sus datos en cualquier momento.</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" onclick="acceptTerms()">Aceptar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación de formulario con Bootstrap
+    const form = document.getElementById('exampleForm');
+    
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (form.checkValidity()) {
+            // Simular envío de datos
+            showSuccessMessage();
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Formateo automático de teléfono
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value.startsWith('56')) {
+                value = '+' + value.substring(0, 2) + ' ' + value.substring(2, 3) + ' ' + 
+                       value.substring(3, 7) + ' ' + value.substring(7, 11);
+            } else if (value.startsWith('9')) {
+                value = '+56 ' + value.substring(0, 1) + ' ' + value.substring(1, 5) + ' ' + value.substring(5, 9);
+            }
+        }
+        e.target.value = value;
+    });
+});
+
+function resetForm() {
+    const form = document.getElementById('exampleForm');
+    form.reset();
+    form.classList.remove('was-validated');
+}
+
+function previewData() {
+    const formData = new FormData(document.getElementById('exampleForm'));
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (data[key]) {
+            if (Array.isArray(data[key])) {
+                data[key].push(value);
+            } else {
+                data[key] = [data[key], value];
+            }
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-striped">';
+    
+    for (let [key, value] of Object.entries(data)) {
+        const label = document.querySelector(`label[for="${key}"]`)?.textContent || 
+                     document.querySelector(`input[name="${key}"]`)?.closest('.form-check')?.textContent || key;
+        
+        html += `<tr><td><strong>${label.replace(/\*/g, '')}</strong></td><td>${Array.isArray(value) ? value.join(', ') : value}</td></tr>`;
+    }
+    
+    html += '</table></div>';
+    
+    document.getElementById('previewContent').innerHTML = html;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+
+function acceptTerms() {
+    document.getElementById('termsAccepted').checked = true;
+    bootstrap.Modal.getInstance(document.getElementById('termsModal')).hide();
+}
+
+function showSuccessMessage() {
+    // Crear y mostrar mensaje de éxito
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>¡Éxito!</strong> Los datos han sido guardados correctamente.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+        if (alertDiv) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.btn-primary {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.btn-primary:hover {
+    background-color: #5a6fd8;
+    border-color: #5a6fd8;
+}
+
+.was-validated .form-control:valid {
+    border-color: #28a745;
+}
+
+.was-validated .form-control:invalid {
+    border-color: #dc3545;
+}
+</style>
+{% endblock %}

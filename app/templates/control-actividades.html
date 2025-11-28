@@ -1,0 +1,1305 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Control de Actividades{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS específico para control-actividades -->
+    <style>
+        .proyecto-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border-left: 4px solid #007bff;
+        }
+        .proyecto-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .progress-custom {
+            height: 8px;
+            border-radius: 4px;
+        }
+        .btn-control {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-control:hover {
+            background: linear-gradient(45deg, #218838, #1ea080);
+            color: white;
+            transform: scale(1.05);
+        }
+        .btn-ver {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-ver:hover {
+            background: linear-gradient(45deg, #0056b3, #004085);
+            color: white;
+            transform: scale(1.05);
+        }
+        .estado-badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+        }
+        .proyecto-stats {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        
+        /* Estilos adicionales para la vista de tabla */
+        .proyecto-fila {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .proyecto-fila:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #495057;
+            background-color: #f8f9fa;
+        }
+        .table td {
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+        }
+        .btn-group .btn {
+            margin: 0 1px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-black shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-clipboard-check"></i> Control de Actividades</h2>
+                            <p class="mb-0">Proyectos en ejecución </p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <i class="fas fa-tasks fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <i class="fas fa-project-diagram fa-2x text-primary mb-2"></i>
+                    <h4 class="text-primary" id="totalProyectos">0</h4>
+                    <small class="text-muted">Total Proyectos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                    <h4 class="text-success" id="progresoPromedio">0%</h4>
+                    <small class="text-muted">Progreso Promedio</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                    <h4 class="text-warning" id="proyectosAtrasados">0</h4>
+                    <small class="text-muted">Con Retraso</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-info mb-2"></i>
+                    <h4 class="text-info" id="totalTrabajadores">0</h4>
+                    <small class="text-muted">Trabajadores Activos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="buscarProyecto" placeholder="Buscar proyecto por nombre o sector...">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="row g-2">
+                <div class="col-4">
+                    <select class="form-select" id="filtroGrupo">
+                        <option value="">Todos los grupos</option>
+                        <!-- Las opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="col-4">
+                    <div class="btn-group w-100" role="group">
+                        <button class="btn btn-outline-secondary active btn-sm" onclick="filtrarPorProgreso('todos')" title="Todos">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="filtrarPorProgreso('bajo')" title="< 25%">
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="filtrarPorProgreso('medio')" title="25-75%">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="filtrarPorProgreso('alto')" title="> 75%">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="row g-1">
+                        <div class="col-6">
+                            <button class="btn btn-success w-100" onclick="exportarActividadesXLSX()" title="Exportar actividades a Excel">
+                                <i class="fas fa-file-excel"></i> Exportar xlsx
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-primary w-100" onclick="abrirModalSubirControl()" title="Subir archivo Excel de control">
+                                <i class="fas fa-upload"></i> Subir control
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de proyectos -->
+    <div id="proyectosContainer">
+        <!-- Loading spinner inicial -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Cargando proyectos...</span>
+                </div>
+                <p class="mt-3 text-muted">Cargando proyectos en ejecución...</p>
+            </div>
+        </div>
+
+        <!-- Vista de tarjetas (Ahora como tabla compacta) -->
+        <div id="proyectosGrid" style="display: none;">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 20%;">Proyecto</th>
+                                    <th style="width: 10%;">Sector</th>
+                                    <th style="width: 10%;">Grupo</th>
+                                    <th style="width: 15%;">Progreso Real/Esperado</th>
+                                    <th style="width: 10%;">Actividades</th>
+                                    <th style="width: 10%;">Trabajadores</th>
+                                    <th style="width: 10%;">Fecha Inicio</th>
+                                    <th style="width: 15%;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proyectosGridBody">
+                                <!-- Las filas se cargarán dinámicamente aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista de tabla -->
+        <div id="proyectosTabla" style="display: none;">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 18%;">Proyecto</th>
+                                    <th style="width: 8%;">Sector</th>
+                                    <th style="width: 8%;">Grupo</th>
+                                    <th style="width: 15%;">Progreso Real/Esperado</th>
+                                    <th style="width: 10%;">Estado Cronograma</th>
+                                    <th style="width: 8%;">Actividades</th>
+                                    <th style="width: 8%;">Trabajadores</th>
+                                    <th style="width: 9%;">Fecha Inicio</th>
+                                    <th style="width: 16%;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proyectosTablaBody">
+                                <!-- Las filas se cargarán dinámicamente aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje cuando no hay proyectos -->
+        <div id="noProyectos" style="display: none;">
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay proyectos en ejecución</h4>
+                <p class="text-muted">No se encontraron proyectos con estado = 4</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalles del proyecto -->
+<div class="modal fade" id="modalVerProyecto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-eye"></i> Detalles del Proyecto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalVerContenido">
+                <!-- Contenido se carga dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let proyectosData = [];
+let vistaActual = 'tarjetas'; // 'tarjetas' o 'tabla'
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar grupos disponibles
+    cargarGruposDisponibles();
+    
+    // Cargar proyectos al iniciar la página
+    cargarProyectosEstado4();
+    
+    // Configurar eventos
+    document.getElementById('buscarProyecto').addEventListener('input', filtrarProyectos);
+    document.getElementById('filtroGrupo').addEventListener('change', function() {
+        const grupoId = this.value;
+        cargarProyectosPorGrupo(grupoId);
+    });
+});
+
+async function cargarGruposDisponibles() {
+    try {
+        console.log('🔄 Cargando grupos disponibles...');
+        
+        const response = await fetch('/grupos_disponibles');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.grupos) {
+            const select = document.getElementById('filtroGrupo');
+            
+            // Limpiar opciones existentes (excepto la primera)
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+            
+            // Agregar opciones de grupos
+            data.grupos.forEach(grupo => {
+                if (grupo.tiene_proyectos) {
+                    const option = document.createElement('option');
+                    option.value = grupo.id;
+                    option.textContent = `${grupo.nombre} (${grupo.total_proyectos})`;
+                    select.appendChild(option);
+                }
+            });
+            
+            console.log(`✅ ${data.grupos.length} grupos cargados`);
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar grupos:', error);
+    }
+}
+
+async function cargarProyectosPorGrupo(grupoId = null) {
+    try {
+        console.log(`🔄 Cargando proyectos${grupoId ? ` del grupo ${grupoId}` : ''}...`);
+        
+        // Construir URL con parámetro de grupo si es necesario
+        let url = '/proyectos_estado_4';
+        if (grupoId) {
+            url += `?grupo_id=${grupoId}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.proyectos && data.proyectos.length > 0) {
+            proyectosData = data.proyectos;
+            mostrarProyectos(proyectosData);
+            actualizarEstadisticas(proyectosData);
+            console.log(`✅ ${proyectosData.length} proyectos cargados${data.grupo_filtrado ? ` (grupo: ${data.grupo_filtrado})` : ''}`);
+        } else {
+            mostrarSinProyectos();
+            console.warn(`⚠️ No se encontraron proyectos${grupoId ? ` en el grupo ${grupoId}` : ''}`);
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar proyectos:', error);
+        mostrarError('Error al cargar los proyectos: ' + error.message);
+    } finally {
+        // Ocultar loading spinner
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+}
+
+async function cargarProyectosEstado4() {
+    // Usar la nueva función que maneja filtros por grupo
+    cargarProyectosPorGrupo();
+}
+
+function mostrarProyectos(proyectos) {
+    if (!proyectos || proyectos.length === 0) {
+        mostrarSinProyectos();
+        return;
+    }
+    
+    if (vistaActual === 'tarjetas') {
+        mostrarProyectosTarjetas(proyectos);
+    } else {
+        mostrarProyectosTabla(proyectos);
+    }
+    
+    document.getElementById('noProyectos').style.display = 'none';
+}
+
+function mostrarProyectosTarjetas(proyectos) {
+    const tbody = document.getElementById('proyectosGridBody');
+    tbody.innerHTML = '';
+    
+    proyectos.forEach(proyecto => {
+        const fila = crearFilaProyectoGrid(proyecto);
+        tbody.appendChild(fila);
+    });
+    
+    document.getElementById('proyectosGrid').style.display = 'block';
+    document.getElementById('proyectosTabla').style.display = 'none';
+}
+
+function mostrarProyectosTabla(proyectos) {
+    const tbody = document.getElementById('proyectosTablaBody');
+    tbody.innerHTML = '';
+    
+    proyectos.forEach(proyecto => {
+        const fila = crearFilaProyecto(proyecto);
+        tbody.appendChild(fila);
+    });
+    
+    document.getElementById('proyectosGrid').style.display = 'none';
+    document.getElementById('proyectosTabla').style.display = 'block';
+}
+
+function crearTarjetaProyecto(proyecto) {
+    const col = document.createElement('div');
+    col.className = 'col-lg-4 col-md-6 mb-4';
+    
+    // Calcular color de progreso
+    const progreso = proyecto.progreso || 0;
+    let colorProgreso = 'bg-danger';
+    if (progreso >= 75) colorProgreso = 'bg-success';
+    else if (progreso >= 50) colorProgreso = 'bg-warning';
+    else if (progreso >= 25) colorProgreso = 'bg-info';
+    
+    // Formatear fecha
+    const fechaFormateada = formatearFecha(proyecto.fecha_inicio || proyecto.fecha);
+    
+    col.innerHTML = `
+        <div class="card proyecto-card h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-primary fw-bold">${proyecto.nombre}</h6>
+                <span class="badge estado-badge bg-success">Estado 4</span>
+            </div>
+            <div class="card-body">
+                <!-- Información básica -->
+                <div class="mb-3">
+                    <p class="text-muted mb-1"><i class="fas fa-industry"></i> <strong>Sector:</strong> ${proyecto.sector || 'No especificado'}</p>
+                    <p class="text-muted mb-1"><i class="fas fa-users"></i> <strong>Grupo:</strong> ${proyecto.grupo || 'Sin grupo'}</p>
+                    <p class="text-muted mb-1"><i class="fas fa-calendar"></i> <strong>Inicio:</strong> ${fechaFormateada}</p>
+                    <p class="text-muted mb-0"><i class="fas fa-user"></i> <strong>Responsable:</strong> ${proyecto.responsable || 'No asignado'}</p>
+                </div>
+                
+                <!-- Descripción (truncada) -->
+                <div class="mb-3">
+                    <p class="text-muted small mb-0">
+                        ${proyecto.descripcion ? 
+                            (proyecto.descripcion.length > 100 ? 
+                                proyecto.descripcion.substring(0, 100) + '...' : 
+                                proyecto.descripcion) : 
+                            'Sin descripción disponible'}
+                    </p>
+                </div>
+                
+                <!-- Progreso -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">Progreso General</small>
+                        <small class="fw-bold">${progreso}%</small>
+                    </div>
+                    <div class="progress progress-custom">
+                        <div class="progress-bar ${colorProgreso}" 
+                             style="width: ${progreso}%" 
+                             role="progressbar"></div>
+                    </div>
+                </div>
+                
+                <!-- Estadísticas adicionales -->
+                <div class="proyecto-stats">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Actividades</small>
+                            <span class="fw-bold text-primary">${proyecto.total_actividades || 0}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Completadas</small>
+                            <span class="fw-bold text-success">${proyecto.actividades_completadas || 0}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Trabajadores</small>
+                            <span class="fw-bold text-info">${proyecto.total_trabajadores || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-ver btn-sm flex-fill" onclick="verProyecto(${proyecto.id})">
+                        <i class="fas fa-eye"></i> Ver
+                    </button>
+                    <button class="btn btn-control btn-sm flex-fill" onclick="controlProyecto(${proyecto.id})">
+                        <i class="fas fa-cogs"></i> Control
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+function crearFilaProyectoGrid(proyecto) {
+    const fila = document.createElement('tr');
+    fila.className = 'proyecto-fila';
+    
+    // Calcular color de progreso
+    const progreso = proyecto.progreso || 0;
+    let colorProgreso = 'bg-danger';
+    let colorTexto = 'text-white';
+    if (progreso >= 75) {
+        colorProgreso = 'bg-success';
+    } else if (progreso >= 50) {
+        colorProgreso = 'bg-warning';
+        colorTexto = 'text-dark';
+    } else if (progreso >= 25) {
+        colorProgreso = 'bg-info';
+    }
+    
+    // Formatear fecha
+    const fechaFormateada = formatearFecha(proyecto.fecha_inicio || proyecto.fecha);
+    
+    fila.innerHTML = `
+        <td>
+            <div>
+                <h6 class="mb-1 text-primary fw-bold">${proyecto.nombre}</h6>
+                <small class="text-muted">
+                    ${proyecto.descripcion ? 
+                        (proyecto.descripcion.length > 100 ? 
+                            proyecto.descripcion.substring(0, 100) + '...' : 
+                            proyecto.descripcion) : 
+                        'Sin descripción'}
+                </small>
+            </div>
+        </td>
+        <td>
+            <span class="badge bg-light text-dark border">${proyecto.sector || 'No especificado'}</span>
+        </td>
+        <td>
+            <span class="badge bg-secondary">${proyecto.grupo || 'Sin grupo'}</span>
+        </td>
+        <td>
+            <div class="d-flex align-items-center">
+                <div class="progress me-2" style="width: 70px; height: 12px;">
+                    <div class="progress-bar ${colorProgreso}" 
+                         style="width: ${progreso}%" 
+                         role="progressbar"></div>
+                </div>
+                <small class="fw-bold">${progreso}%</small>
+            </div>
+            <div class="mt-1">
+                <small class="text-muted">Esperado: ${proyecto.progreso_esperado || 0}%</small>
+            </div>
+            <div class="mt-1">
+                ${proyecto.porcentaje_atraso_adelanto && proyecto.porcentaje_atraso_adelanto !== 0 ? 
+                    `<small class="text-${proyecto.estado_cronograma === 'Atrasado' ? 'danger' : proyecto.estado_cronograma === 'Adelantado' ? 'primary' : 'success'} fw-bold">
+                        ${proyecto.estado_cronograma === 'Atrasado' ? '-' : proyecto.estado_cronograma === 'Adelantado' ? '+' : ''}${Math.abs(proyecto.porcentaje_atraso_adelanto)}%
+                    </small>` : 
+                    '<small class="text-success">En tiempo</small>'
+                }
+            </div>
+        </td>
+        <td class="text-center">
+            <div>
+                <span class="badge bg-info text-white">${proyecto.total_actividades || 0}</span>
+                <div class="mt-1">
+                    <small class="text-success fw-bold">${proyecto.actividades_completadas || 0}</small>
+                    <small class="text-muted"> completadas</small>
+                </div>
+            </div>
+        </td>
+        <td class="text-center">
+            <span class="badge bg-primary">${proyecto.total_trabajadores || 0}</span>
+            <div class="mt-1">
+                <small class="text-muted">asignados</small>
+            </div>
+        </td>
+        <td>
+            <small class="text-muted fw-medium">${fechaFormateada}</small>
+            <div class="mt-1">
+                <span class="badge bg-success estado-badge">Estado 4</span>
+            </div>
+        </td>
+        <td>
+            <div class="btn-group btn-group-sm d-flex gap-1">
+                <button class="btn btn-outline-primary btn-sm" onclick="verProyecto(${proyecto.id})" title="Ver detalles">
+                    <i class="fas fa-eye"></i> Ver
+                </button>
+                <button class="btn btn-outline-success btn-sm" onclick="controlProyecto(${proyecto.id})" title="Control de actividades">
+                    <i class="fas fa-cogs"></i> Control
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return fila;
+}
+
+function crearFilaProyecto(proyecto) {
+    const fila = document.createElement('tr');
+    fila.className = 'proyecto-fila';
+    
+    // Calcular color de progreso
+    const progreso = proyecto.progreso || 0;
+    let colorProgreso = 'bg-danger';
+    let colorTexto = 'text-white';
+    if (progreso >= 75) {
+        colorProgreso = 'bg-success';
+    } else if (progreso >= 50) {
+        colorProgreso = 'bg-warning';
+        colorTexto = 'text-dark';
+    } else if (progreso >= 25) {
+        colorProgreso = 'bg-info';
+    }
+    
+    // Formatear fecha
+    const fechaFormateada = formatearFecha(proyecto.fecha_inicio || proyecto.fecha);
+    
+    fila.innerHTML = `
+        <td>
+            <div>
+                <h6 class="mb-1 text-primary">${proyecto.nombre}</h6>
+                <small class="text-muted">
+                    ${proyecto.descripcion ? 
+                        (proyecto.descripcion.length > 80 ? 
+                            proyecto.descripcion.substring(0, 80) + '...' : 
+                            proyecto.descripcion) : 
+                        'Sin descripción'}
+                </small>
+            </div>
+        </td>
+        <td>
+            <span class="badge bg-light text-dark">${proyecto.sector || 'No especificado'}</span>
+        </td>
+        <td>
+            <span class="badge bg-secondary">${proyecto.grupo || 'Sin grupo'}</span>
+        </td>
+        <td>
+            <div class="d-flex align-items-center">
+                <div class="progress me-2" style="width: 60px; height: 8px;">
+                    <div class="progress-bar ${colorProgreso}" 
+                         style="width: ${progreso}%" 
+                         role="progressbar"></div>
+                </div>
+                <small class="fw-bold">${progreso}%</small>
+            </div>
+            <div class="mt-1">
+                <small class="text-muted">Esperado: ${proyecto.progreso_esperado || 0}%</small>
+                ${proyecto.porcentaje_atraso_adelanto && proyecto.porcentaje_atraso_adelanto !== 0 ? 
+                    `<div><small class="text-${proyecto.estado_cronograma === 'Atrasado' ? 'danger' : proyecto.estado_cronograma === 'Adelantado' ? 'primary' : 'success'} fw-bold">
+                        ${proyecto.estado_cronograma === 'Atrasado' ? '-' : proyecto.estado_cronograma === 'Adelantado' ? '+' : ''}${Math.abs(proyecto.porcentaje_atraso_adelanto)}%
+                    </small></div>` : 
+                    '<div><small class="text-success">En tiempo</small></div>'
+                }
+            </div>
+        </td>
+        <td>
+            ${crearBadgeEstadoCronograma(proyecto)}
+        </td>
+        <td class="text-center">
+            <div>
+                <span class="fw-bold text-success">${proyecto.actividades_completadas || 0}</span>
+                <span class="text-muted">/${proyecto.total_actividades || 0}</span>
+            </div>
+        </td>
+        <td class="text-center">
+            <span class="badge bg-info">${proyecto.total_trabajadores || 0}</span>
+        </td>
+        <td>
+            <small class="text-muted">${fechaFormateada}</small>
+        </td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary btn-sm" onclick="verProyecto(${proyecto.id})" title="Ver detalles">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-outline-success btn-sm" onclick="controlProyecto(${proyecto.id})" title="Control">
+                    <i class="fas fa-cogs"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return fila;
+}
+
+function crearBadgeEstadoCronograma(proyecto) {
+    const estado = proyecto.estado_cronograma || 'En tiempo';
+    const porcentaje = Math.abs(proyecto.porcentaje_atraso_adelanto || 0);
+    
+    let badgeClass = 'bg-success';
+    let iconClass = 'fas fa-check-circle';
+    let texto = 'En tiempo';
+    
+    if (estado === 'Atrasado') {
+        badgeClass = 'bg-danger';
+        iconClass = 'fas fa-exclamation-triangle';
+        texto = porcentaje > 0 ? `${porcentaje}% atrasado` : 'Atrasado';
+    } else if (estado === 'Adelantado') {
+        badgeClass = 'bg-primary';
+        iconClass = 'fas fa-rocket';
+        texto = porcentaje > 0 ? `${porcentaje}% adelantado` : 'Adelantado';
+    }
+    
+    return `
+        <span class="badge ${badgeClass}" title="Estado: ${estado}${porcentaje > 0 ? ` (${porcentaje}%)` : ''}">
+            <i class="${iconClass}"></i> ${texto}
+        </span>
+    `;
+}
+
+function actualizarEstadisticas(proyectos) {
+    const total = proyectos.length;
+    const progresoPromedio = Math.round(proyectos.reduce((sum, p) => sum + (p.progreso || 0), 0) / total);
+    const atrasados = proyectos.filter(p => (p.progreso || 0) < 50).length;
+    const totalTrabajadores = proyectos.reduce((sum, p) => sum + (p.total_trabajadores || 0), 0);
+    
+    document.getElementById('totalProyectos').textContent = total;
+    document.getElementById('progresoPromedio').textContent = `${progresoPromedio}%`;
+    document.getElementById('proyectosAtrasados').textContent = atrasados;
+    document.getElementById('totalTrabajadores').textContent = totalTrabajadores;
+}
+
+function mostrarSinProyectos() {
+    document.getElementById('proyectosGrid').style.display = 'none';
+    document.getElementById('proyectosTabla').style.display = 'none';
+    document.getElementById('noProyectos').style.display = 'block';
+    
+    // Resetear estadísticas
+    document.getElementById('totalProyectos').textContent = '0';
+    document.getElementById('progresoPromedio').textContent = '0%';
+    document.getElementById('proyectosAtrasados').textContent = '0';
+    document.getElementById('totalTrabajadores').textContent = '0';
+}
+
+function cambiarVista(tipoVista) {
+    vistaActual = tipoVista;
+    
+    // Actualizar botones activos
+    document.getElementById('btnTarjetas').classList.remove('active');
+    document.getElementById('btnTabla').classList.remove('active');
+    
+    if (tipoVista === 'tarjetas') {
+        document.getElementById('btnTarjetas').classList.add('active');
+    } else {
+        document.getElementById('btnTabla').classList.add('active');
+    }
+    
+    // Volver a mostrar los proyectos con la nueva vista
+    if (proyectosData && proyectosData.length > 0) {
+        mostrarProyectos(proyectosData);
+    }
+}
+
+function filtrarProyectos() {
+    const busqueda = document.getElementById('buscarProyecto').value.toLowerCase();
+    const proyectosFiltrados = proyectosData.filter(proyecto => 
+        proyecto.nombre.toLowerCase().includes(busqueda) ||
+        (proyecto.sector && proyecto.sector.toLowerCase().includes(busqueda)) ||
+        (proyecto.descripcion && proyecto.descripcion.toLowerCase().includes(busqueda))
+    );
+    
+    mostrarProyectos(proyectosFiltrados);
+}
+
+function filtrarPorProgreso(tipo) {
+    let proyectosFiltrados = [...proyectosData];
+    
+    switch(tipo) {
+        case 'bajo':
+            proyectosFiltrados = proyectosData.filter(p => (p.progreso || 0) < 25);
+            break;
+        case 'medio':
+            proyectosFiltrados = proyectosData.filter(p => (p.progreso || 0) >= 25 && (p.progreso || 0) <= 75);
+            break;
+        case 'alto':
+            proyectosFiltrados = proyectosData.filter(p => (p.progreso || 0) > 75);
+            break;
+        default:
+            // 'todos' - no filtrar
+            break;
+    }
+    
+    mostrarProyectos(proyectosFiltrados);
+    
+    // Actualizar botones activos
+    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+async function verProyecto(proyectoId) {
+    try {
+        console.log(`👁️ Cargando detalles del proyecto ${proyectoId}`);
+        
+        // Verificar que el modal existe
+        const modalElement = document.getElementById('modalVerProyecto');
+        if (!modalElement) {
+            console.error('❌ El modal modalVerProyecto no existe en el DOM');
+            alert('Error: No se encuentra el modal en la página.');
+            return;
+        }
+        
+        // Mostrar loading en el modal
+        const modalContent = document.getElementById('modalVerContenido');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Cargando detalles del proyecto...</p>
+                </div>
+            `;
+        }
+        
+        // Mostrar modal usando Bootstrap 5
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Cargar detalles del proyecto
+        const response = await fetch(`/proyecto_detalle/${proyectoId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.proyecto) {
+            mostrarDetallesProyecto(data.proyecto);
+        } else {
+            throw new Error('No se pudieron cargar los detalles del proyecto');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar detalles:', error);
+        document.getElementById('modalVerContenido').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Error al cargar detalles</strong>
+                <br>${error.message}
+            </div>
+        `;
+    }
+}
+
+function mostrarDetallesProyecto(proyecto) {
+    const progreso = proyecto.progreso || 0;
+    let colorProgreso = 'progress-bar-danger';
+    if (progreso >= 75) colorProgreso = 'progress-bar-success';
+    else if (progreso >= 50) colorProgreso = 'progress-bar-warning';
+    else if (progreso >= 25) colorProgreso = 'progress-bar-info';
+    
+    document.getElementById('modalVerContenido').innerHTML = `
+        <div class="row">
+            <div class="col-12">
+                <h5 class="text-primary mb-3">${proyecto.nombre}</h5>
+                
+                <!-- Información básica -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Sector:</strong> ${proyecto.sector || 'No especificado'}</p>
+                        <p><strong>Estado:</strong> <span class="badge bg-success">Estado 4</span></p>
+                        <p><strong>Fecha Inicio:</strong> ${formatearFecha(proyecto.fecha_inicio || proyecto.fecha)}</p>
+                        <p><strong>Responsable:</strong> ${proyecto.responsable || 'No asignado'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Total Actividades:</strong> ${proyecto.total_actividades || 0}</p>
+                        <p><strong>Completadas:</strong> ${proyecto.actividades_completadas || 0}</p>
+                        <p><strong>Trabajadores:</strong> ${proyecto.total_trabajadores || 0}</p>
+                    </div>
+                </div>
+                
+                <!-- Progreso -->
+                <div class="mb-4">
+                    <h6>Progreso del Proyecto</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label small">Progreso Real</label>
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar ${colorProgreso}" 
+                                     style="width: ${progreso}%" 
+                                     role="progressbar">${progreso}%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Progreso Esperado</label>
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar bg-info" 
+                                     style="width: ${proyecto.progreso_esperado || 0}%" 
+                                     role="progressbar">${proyecto.progreso_esperado || 0}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Estado del cronograma -->
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            ${mostrarEstadoCronograma(proyecto)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Descripción -->
+                <div class="mb-4">
+                    <h6>Descripción</h6>
+                    <p class="text-muted">${proyecto.descripcion || 'Sin descripción disponible'}</p>
+                </div>
+                
+                <!-- Actividades del Proyecto -->
+                <div class="mb-3">
+                    <h6>Actividades del Proyecto</h6>
+                    ${mostrarActividades(proyecto.actividades || [])}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function mostrarActividades(actividades) {
+    if (!actividades || actividades.length === 0) {
+        return `
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i>
+                No hay actividades registradas para este proyecto
+            </div>
+        `;
+    }
+    
+    let actividadesHtml = `
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Actividad</th>
+                        <th>Estado</th>
+                        <th>Progreso</th>
+                        <th>Fechas</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    actividades.forEach(actividad => {
+        const fechas = [];
+        if (actividad.fecha_inicio) fechas.push(`Inicio: ${formatearFecha(actividad.fecha_inicio)}`);
+        if (actividad.fecha_fin) fechas.push(`Fin: ${formatearFecha(actividad.fecha_fin)}`);
+        const fechasTexto = fechas.length > 0 ? fechas.join('<br>') : 'Sin fechas';
+        
+        actividadesHtml += `
+            <tr>
+                <td>
+                    <div>
+                        <strong>${actividad.nombre}</strong>
+                        ${actividad.descripcion !== 'Sin descripción' ? 
+                            `<br><small class="text-muted">${actividad.descripcion}</small>` : 
+                            ''
+                        }
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-${actividad.color_estado}">${actividad.estado}</span>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="progress me-2" style="width: 60px; height: 15px;">
+                            <div class="progress-bar bg-${actividad.color_estado}" 
+                                 style="width: ${actividad.progreso}%"
+                                 title="${actividad.progreso}%">
+                            </div>
+                        </div>
+                        <small>${actividad.progreso}%</small>
+                    </div>
+                </td>
+                <td>
+                    <small>${fechasTexto}</small>
+                </td>
+            </tr>
+        `;
+    });
+    
+    actividadesHtml += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    return actividadesHtml;
+}
+
+function mostrarEstadoCronograma(proyecto) {
+    const estado = proyecto.estado_cronograma || 'En tiempo';
+    const porcentaje = Math.abs(proyecto.porcentaje_atraso_adelanto || 0);
+    
+    let badgeClass = 'bg-success';
+    let iconClass = 'fas fa-check-circle';
+    let mensaje = 'El proyecto está en tiempo según lo planificado';
+    
+    if (estado === 'Atrasado') {
+        badgeClass = 'bg-danger';
+        iconClass = 'fas fa-exclamation-triangle';
+        mensaje = porcentaje > 0 ? 
+            `El proyecto está atrasado ${porcentaje}% respecto al cronograma planificado` :
+            'El proyecto presenta atrasos respecto al cronograma';
+    } else if (estado === 'Adelantado') {
+        badgeClass = 'bg-primary';
+        iconClass = 'fas fa-rocket';
+        mensaje = porcentaje > 0 ? 
+            `El proyecto está adelantado ${porcentaje}% respecto al cronograma planificado` :
+            'El proyecto está adelantado respecto al cronograma';
+    }
+    
+    return `
+        <div class="d-flex align-items-center">
+            <span class="badge ${badgeClass} me-2">
+                <i class="${iconClass}"></i> ${estado}
+                ${porcentaje > 0 ? ` (${porcentaje}%)` : ''}
+            </span>
+            <small class="text-muted">${mensaje}</small>
+        </div>
+    `;
+}
+
+function controlProyecto(proyectoId) {
+    console.log(`🎛️ Redirigiendo a control del proyecto ${proyectoId}`);
+    
+    // Redirigir a la página de control/avance de actividades con el proyecto preseleccionado
+    window.location.href = `/avance-actividades?proyecto=${proyectoId}`;
+}
+
+// Funciones auxiliares
+function formatearFecha(fecha) {
+    if (!fecha) return 'No especificada';
+    try {
+        const fechaObj = new Date(fecha);
+        return fechaObj.toLocaleDateString('es-ES');
+    } catch (e) {
+        return fecha.toString();
+    }
+}
+
+function mostrarAlerta(mensaje, tipo) {
+    const alertaDiv = document.createElement('div');
+    alertaDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alertaDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertaDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertaDiv.remove();
+    }, 5000);
+}
+
+function mostrarError(mensaje) {
+    mostrarAlerta(mensaje, 'danger');
+}
+
+// Función para exportar actividades a Excel
+async function exportarActividadesXLSX() {
+    try {
+        console.log('📤 Iniciando exportación de actividades a Excel...');
+        
+        // Mostrar indicador de carga
+        const btnExport = event.target;
+        const textoOriginal = btnExport.innerHTML;
+        btnExport.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
+        btnExport.disabled = true;
+        
+        // Realizar petición al servidor
+        const response = await fetch('/exportar_actividades_xlsx', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Descargar el archivo
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Generar nombre de archivo con fecha
+        const fecha = new Date().toISOString().split('T')[0];
+        a.download = `actividades_proyecto_${fecha}.xlsx`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        console.log('✅ Exportación completada exitosamente');
+        mostrarAlerta('✅ Archivo Excel exportado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error en la exportación:', error);
+        mostrarAlerta(`❌ Error al exportar: ${error.message}`, 'danger');
+    } finally {
+        // Restaurar botón
+        const btnExport = document.querySelector('[onclick="exportarActividadesXLSX()"]');
+        if (btnExport) {
+            btnExport.innerHTML = '<i class="fas fa-file-excel"></i> Exportar xlsx';
+            btnExport.disabled = false;
+        }
+    }
+}
+
+// Función para abrir el modal de subir control
+function abrirModalSubirControl() {
+    const modal = new bootstrap.Modal(document.getElementById('modalSubirControl'));
+    modal.show();
+}
+
+// Función para manejar la subida del archivo
+async function subirArchivoControl(event) {
+    event.preventDefault();
+    
+    try {
+        console.log('🚀 Iniciando subida de archivo de control...');
+        
+        const formData = new FormData();
+        const archivo = document.getElementById('archivoControl').files[0];
+        
+        if (!archivo) {
+            throw new Error('Por favor selecciona un archivo');
+        }
+        
+        formData.append('archivo', archivo);
+        
+        // Mostrar indicador de carga
+        const btnSubir = document.getElementById('btnSubirArchivo');
+        const spinner = document.getElementById('spinnerSubida');
+        const textoOriginal = btnSubir.innerHTML;
+        
+        btnSubir.disabled = true;
+        spinner.classList.remove('d-none');
+        btnSubir.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
+        
+        // Realizar petición al servidor
+        const response = await fetch('/subir_control_actividades', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        // Mostrar resultado
+        const resultadoDiv = document.getElementById('resultadoSubida');
+        const mensajeDiv = document.getElementById('mensajeResultado');
+        const detallesDiv = document.getElementById('detallesResultado');
+        
+        resultadoDiv.classList.remove('d-none');
+        
+        if (response.ok && result.success) {
+            mensajeDiv.className = 'alert alert-success';
+            mensajeDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${result.message}`;
+            
+            // Mostrar detalles del procesamiento
+            let detalles = '<h6>Resumen del procesamiento:</h6><ul>';
+            if (result.actualizadas > 0) {
+                detalles += `<li><strong>Actividades actualizadas:</strong> ${result.actualizadas}</li>`;
+            }
+            if (result.nuevas > 0) {
+                detalles += `<li><strong>Actividades nuevas:</strong> ${result.nuevas}</li>`;
+            }
+            if (result.errores && result.errores.length > 0) {
+                detalles += `<li><strong>Errores:</strong> ${result.errores.length}</li>`;
+            }
+            detalles += '</ul>';
+            
+            if (result.errores && result.errores.length > 0) {
+                detalles += '<h6>Detalles de errores:</h6><ul>';
+                result.errores.forEach(error => {
+                    detalles += `<li>Fila ${error.fila}: ${error.mensaje}</li>`;
+                });
+                detalles += '</ul>';
+            }
+            
+            detallesDiv.innerHTML = detalles;
+            
+            // Recargar la página después de un tiempo
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+            
+        } else {
+            mensajeDiv.className = 'alert alert-danger';
+            mensajeDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${result.message || 'Error al procesar el archivo'}`;
+            
+            if (result.errores && result.errores.length > 0) {
+                let detalles = '<h6>Errores encontrados:</h6><ul>';
+                result.errores.forEach(error => {
+                    detalles += `<li>${error}</li>`;
+                });
+                detalles += '</ul>';
+                detallesDiv.innerHTML = detalles;
+            }
+        }
+        
+        console.log('✅ Procesamiento completado');
+        
+    } catch (error) {
+        console.error('❌ Error en la subida:', error);
+        
+        const resultadoDiv = document.getElementById('resultadoSubida');
+        const mensajeDiv = document.getElementById('mensajeResultado');
+        
+        resultadoDiv.classList.remove('d-none');
+        mensajeDiv.className = 'alert alert-danger';
+        mensajeDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
+        
+    } finally {
+        // Restaurar botón
+        const btnSubir = document.getElementById('btnSubirArchivo');
+        const spinner = document.getElementById('spinnerSubida');
+        
+        btnSubir.disabled = false;
+        spinner.classList.add('d-none');
+        btnSubir.innerHTML = '<i class="fas fa-upload"></i> Subir Archivo';
+    }
+}
+
+// Inicializar evento del formulario cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formSubirControl');
+    if (form) {
+        form.addEventListener('submit', subirArchivoControl);
+    }
+});
+</script>
+
+<!-- Modal para subir control -->
+<div class="modal fade" id="modalSubirControl" tabindex="-1" aria-labelledby="modalSubirControlLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSubirControlLabel">
+                    <i class="fas fa-upload"></i> Subir Control de Actividades
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formSubirControl" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="archivoControl" class="form-label">Archivo Excel (.xlsx)</label>
+                        <input type="file" class="form-control" id="archivoControl" name="archivo" accept=".xlsx" required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Selecciona un archivo Excel con el formato de control de actividades. 
+                            El archivo debe contener las columnas necesarias para actualizar las actividades existentes o agregar nuevas.
+                        </div>
+                    </div>
+                    <div id="resultadoSubida" class="d-none">
+                        <div class="alert" role="alert" id="mensajeResultado"></div>
+                        <div id="detallesResultado"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnSubirArchivo">
+                        <span class="spinner-border spinner-border-sm d-none" id="spinnerSubida" role="status" aria-hidden="true"></span>
+                        <i class="fas fa-upload"></i> Subir Archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+

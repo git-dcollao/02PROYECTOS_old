@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-from .models import Sector, Requerimiento
+from .models import Sector, Requerimiento, Grupo
 
 handlers_bp = Blueprint('handlers', __name__)
 
@@ -7,7 +7,7 @@ handlers_bp = Blueprint('handlers', __name__)
 def requerimientos():  # El nombre de la función coincide con la redirección
     requerimientos = Requerimiento.query.all()
     sectores = Sector.query.all()
-    return render_template('requerimiento.html', requerimientos=requerimientos, sectores=sectores)
+    return render_template('requirements/requerimiento.html', requerimientos=requerimientos, sectores=sectores)
 
 # Ruta para la página "Tipo de Recinto"
 @handlers_bp.route('/recintos')
@@ -69,6 +69,11 @@ def especialidad():
 def equipo():
     return render_template('equipo.html')
 
+# Ruta para la página "Grupo"
+@handlers_bp.route('/grupo')
+def grupo():
+    return render_template('grupo.html')
+
 # Ruta para la página "Tipologías del Proyecto"
 @handlers_bp.route('/tipologia')
 def tipologia():
@@ -93,3 +98,8 @@ def estado():
 @handlers_bp.route('/')
 def inicio():
     return render_template('index.html')
+
+# Ejemplo de nueva página
+@handlers_bp.route('/mi-nueva-pagina')
+def mi_nueva_pagina():
+    return render_template('pages/ejemplo-nueva-pagina.html')

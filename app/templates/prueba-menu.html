@@ -1,0 +1,52 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Prueba Menú{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-bug"></i> Prueba del Menú Bootstrap</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Esta es una página de prueba para verificar el funcionamiento del menú</h5>
+                    <p>Si puede ver el menú "Configuración" funcionando correctamente aquí, el problema está específicamente en la página proyecto-llenar.html</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Instrucciones:</strong><br>
+                        1. Haga clic en el menú "Configuración" arriba<br>
+                        2. Verifique que muestre las páginas correctas, no "ID Nombre"<br>
+                        3. Compare con el comportamiento en /proyecto-llenar
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Página de prueba del menú cargada');
+    
+    // Debug del menú
+    setTimeout(function() {
+        console.log('🔍 Verificando menú en página de prueba...');
+        const dropdowns = document.querySelectorAll('.dropdown-menu');
+        console.log(`📋 Total dropdowns: ${dropdowns.length}`);
+        
+        dropdowns.forEach((dropdown, index) => {
+            console.log(`Dropdown ${index + 1}:`);
+            console.log(`  ID: ${dropdown.id}`);
+            console.log(`  Clases: ${dropdown.className}`);
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            console.log(`  Items: ${items.length}`);
+            items.forEach((item, itemIndex) => {
+                console.log(`    ${itemIndex + 1}. "${item.textContent.trim()}" → ${item.href}`);
+            });
+        });
+    }, 500);
+});
+</script>
+{% endblock %}

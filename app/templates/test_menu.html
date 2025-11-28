@@ -1,0 +1,75 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Prueba de Menú{% endblock %}
+
+{% block content %}
+<div class="col-md-12">
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-test-tube"></i> Prueba del Menú Dinámico</h3>
+        </div>
+        <div class="card-body">
+            {% if current_user.is_authenticated %}
+                <div class="alert alert-success">
+                    <h4><i class="fas fa-check-circle"></i> Usuario Autenticado</h4>
+                    <p><strong>Nombre:</strong> {{ current_user.nombre }}</p>
+                    <p><strong>Email:</strong> {{ current_user.email }}</p>
+                    <p><strong>Rol:</strong> {{ current_user.rol.value }}</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle"></i> Estado del Menú</h5>
+                    <p><strong>Total de elementos del menú:</strong> {{ get_menu_item_count() }}</p>
+                    <p><strong>Acceso a /dashboard:</strong> 
+                        {% if has_menu_access('/dashboard') %}
+                            <span class="badge badge-success">✅ PERMITIDO</span>
+                        {% else %}
+                            <span class="badge badge-danger">❌ DENEGADO</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🔍 Estructura del Menú</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set user_menu = get_user_menu() %}
+                        {% if user_menu %}
+                            {% for category in user_menu %}
+                                <h6><i class="{{ category.icon }}"></i> {{ category.category }} ({{ category.count }} elementos)</h6>
+                                <ul class="list-group mb-3">
+                                    {% for page in category.pages %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="{{ page.icon }}"></i> {{ page.name }}</span>
+                                            <code>{{ page.url }}</code>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-warning">No hay elementos de menú disponibles</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+            {% else %}
+                <div class="alert alert-warning">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Usuario No Autenticado</h4>
+                    <p>Para ver el menú dinámico, necesitas iniciar sesión.</p>
+                    <a href="/auth/login" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <a href="/" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
+</div>
+{% endblock %}
+

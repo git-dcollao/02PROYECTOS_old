@@ -1,0 +1,108 @@
+{% extends "base_layout.html" %}
+
+{% block title %}{{ page_name or "Página de Ejemplo" }}{% endblock %}
+
+{% block page_title %}{{ page_name or "Página de Ejemplo" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {{ page_name or "Página de Ejemplo" }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 class="text-primary">Bienvenido a tu nueva página</h4>
+                            <p class="lead">Esta es una página generada automáticamente desde el sistema de gestión de permisos.</p>
+                            
+                            <div class="alert alert-info" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Información:</strong> Este template fue cargado dinámicamente y registrado automáticamente en el sistema.
+                            </div>
+                            
+                            <h5>Características de esta página:</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Diseño responsivo con Bootstrap 5
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Integración completa con el sistema de menús
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Control de acceso basado en roles
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Fácil personalización y modificación
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                                    <h6 class="card-title">Personalización</h6>
+                                    <p class="card-text small">
+                                        Puedes editar este template directamente en el archivo 
+                                        <code>uploads/templates/</code> para personalizarlo según tus necesidades.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                <h6>Multi-Usuario</h6>
+                                <small class="text-muted">Acceso controlado por roles</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="fas fa-mobile-alt fa-2x text-success mb-2"></i>
+                                <h6>Responsivo</h6>
+                                <small class="text-muted">Compatible con móviles</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="fas fa-bolt fa-2x text-warning mb-2"></i>
+                                <h6>Rápido</h6>
+                                <small class="text-muted">Carga optimizada</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="fas fa-shield-alt fa-2x text-info mb-2"></i>
+                                <h6>Seguro</h6>
+                                <small class="text-muted">Autenticación requerida</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="fas fa-clock me-1"></i>
+                        Página generada automáticamente por el Sistema de Gestión de Proyectos MAHO
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

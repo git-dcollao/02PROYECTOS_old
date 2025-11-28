@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Endpoints AJAX - Requerimientos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border: 1px solid #ddd; 
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        button:hover { background-color: #0056b3; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Endpoints AJAX - Controller de Requerimientos</h1>
+    
+    <h2>🔗 Endpoints a probar:</h2>
+    <ul>
+        <li><code>/get_tiposrecintos_by_sector/1</code> - Tipos de recinto por sector</li>
+        <li><code>/get_recintos_by_tipo/1</code> - Recintos por tipo</li>
+        <li><code>/get_tiposrecintos</code> - Tipos de recinto (requiere login)</li>
+        <li><code>/get_recintos</code> - Recintos (requiere login)</li>
+    </ul>
+
+    <div>
+        <button onclick="testEndpoint('/get_tiposrecintos_by_sector/1', 'Tipos de Recinto por Sector')">
+            🏢 Test Tipos por Sector
+        </button>
+        <button onclick="testEndpoint('/get_recintos_by_tipo/1', 'Recintos por Tipo')">
+            🏠 Test Recintos por Tipo
+        </button>
+        <button onclick="testEndpoint('/get_tiposrecintos', 'Tipos de Recinto (Auth)')">
+            🔐 Test Tipos (Auth)
+        </button>
+        <button onclick="testEndpoint('/get_recintos', 'Recintos (Auth)')">
+            🔐 Test Recintos (Auth)
+        </button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        async function testEndpoint(url, name) {
+            const resultsDiv = document.getElementById('results');
+            const testId = 'test-' + Date.now();
+            
+            // Crear div para este test
+            const testDiv = document.createElement('div');
+            testDiv.id = testId;
+            testDiv.className = 'test-result';
+            testDiv.innerHTML = `
+                <h3>🔄 Probando: ${name}</h3>
+                <p><strong>URL:</strong> ${url}</p>
+                <p>Estado: Ejecutando prueba...</p>
+            `;
+            resultsDiv.appendChild(testDiv);
+
+            try {
+                console.log(`🔍 Probando endpoint: ${url}`);
+                const response = await fetch(url);
+                
+                console.log(`📊 Status: ${response.status}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`✅ Datos recibidos:`, data);
+                    
+                    testDiv.className = 'test-result success';
+                    testDiv.innerHTML = `
+                        <h3>✅ ${name} - ÉXITO</h3>
+                        <p><strong>URL:</strong> ${url}</p>
+                        <p><strong>Status:</strong> ${response.status} OK</p>
+                        <p><strong>Registros encontrados:</strong> ${data.length || 'N/A'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    console.error(`❌ Error ${response.status}: ${response.statusText}`);
+                    const errorText = await response.text();
+                    
+                    testDiv.className = 'test-result error';
+                    testDiv.innerHTML = `
+                        <h3>❌ ${name} - ERROR</h3>
+                        <p><strong>URL:</strong> ${url}</p>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <pre>${errorText}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error(`💥 Error de conexión:`, error);
+                
+                testDiv.className = 'test-result error';
+                testDiv.innerHTML = `
+                    <h3>💥 ${name} - ERROR DE CONEXIÓN</h3>
+                    <p><strong>URL:</strong> ${url}</p>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        // Auto-test al cargar la página
+        window.onload = function() {
+            console.log('🚀 Iniciando tests automáticos...');
+            setTimeout(() => testEndpoint('/get_tiposrecintos_by_sector/1', 'Tipos de Recinto por Sector'), 500);
+            setTimeout(() => testEndpoint('/get_recintos_by_tipo/1', 'Recintos por Tipo'), 1000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Administración Avanzada de Trabajadores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Mensajes de Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {                                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div><div class="btn-group w-100" role="group">
+                                            <button type="button" class="btn btn-outline-primary w-100" onclick="abrirModalEdicion(${id})">
+                                                <i class="fas fa-edit"></i> Editar Completo
+                                            </button>
+                                        </div>sage                     <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" onclick="abrirModalEdicion(${id})">
+                            <i class="fas fa-edit"></i> Editar Trabajador
+                        </button>
+                    </div>                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Título y Badge SUPERADMIN -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-users-cog"></i> Administración Avanzada de Trabajadores</h2>
+                    <p class="text-muted">Gestión completa de trabajadores con múltiples áreas</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-danger fs-6"><i class="fas fa-crown"></i> SUPERADMIN</span>
+                    <br><small class="text-muted">Acceso completo al sistema</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Estadísticas Avanzadas -->
+    {% if estadisticas %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Estadísticas Avanzadas de Trabajadores</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-primary">{{ estadisticas.total_trabajadores }}</h3>
+                                <p class="mb-0">Total Trabajadores</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-success">{{ estadisticas.trabajadores_con_area }}</h3>
+                                <p class="mb-0">Con Área Principal</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-warning">{{ estadisticas.trabajadores_sin_area }}</h3>
+                                <p class="mb-0">Sin Área Principal</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-info">{{ estadisticas.trabajadores_con_multiples_areas }}</h3>
+                                <p class="mb-0">Múltiples Áreas</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-purple">{{ estadisticas.areas_totales }}</h3>
+                                <p class="mb-0">Áreas Totales</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-dark">{{ estadisticas.por_area|length }}</h3>
+                                <p class="mb-0">Áreas Activas</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if estadisticas.por_area %}
+                    <hr>
+                    <h6><i class="fas fa-building"></i> Distribución por Área:</h6>
+                    <div class="row">
+                        {% for area_nombre, count in estadisticas.por_area.items() %}
+                        <div class="col-md-4 mb-2">
+                            <span class="badge bg-primary me-2">{{ area_nombre }}</span>
+                            <span class="fw-bold">{{ count }} trabajadores</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-users"></i> Lista Completa de Trabajadores</h4>
+                    <div>
+                        <span class="badge bg-light text-dark">Vista: Todos los Trabajadores</span>
+                        <span class="badge bg-warning text-dark ms-1">Gestión Avanzada</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if trabajadores %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>RUT</th>
+                                    <th>Profesión</th>
+                                    <th>Áreas Asignadas</th>
+                                    <th>Código</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trabajador in trabajadores %}
+                                <tr>
+                                    <td>{{ trabajador.id }}</td>
+                                    <td>{{ trabajador.nombre }}</td>
+                                    <td>
+                                        {% if trabajador.rut %}
+                                            <code class="text-primary">{{ trabajador.rut }}</code>
+                                        {% else %}
+                                            <span class="text-muted">Sin RUT</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ trabajador.profesion or 'Sin especificar' }}</td>
+                                    <td>
+                                        {% if trabajador.todas_las_areas %}
+                                            {% for area in trabajador.todas_las_areas %}
+                                                <span class="badge bg-primary me-1">{{ area.nombre }}</span>
+                                            {% endfor %}
+                                            {% if trabajador.todas_las_areas|length > 1 %}
+                                                <br><small class="text-success">
+                                                    <i class="fas fa-star"></i> Múltiples áreas
+                                                </small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Sin áreas</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ trabajador.nombrecorto or 'N/A' }}</td>
+                                    <td class="text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    onclick="abrirModalDetalle({{ trabajador.id }})"
+                                                    title="Ver detalle completo">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editModal{{ trabajador.id }}"
+                                                    title="Editar con múltiples áreas">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ trabajador.id }}, '{{ trabajador.nombre }}')"
+                                                    title="Eliminar trabajador">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay trabajadores registrados en el sistema.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-plus"></i> Agregar Trabajador Avanzado</h4>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_trabajador_admin') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" id="nombre" name="name" required 
+                                   placeholder="Ingrese el nombre completo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="rut" class="form-label">RUT</label>
+                            <input type="text" class="form-control" id="rut" name="rut" required 
+                                   placeholder="12.345.678-9"
+                                   title="Formato: 12.345.678-9 (con o sin puntos y guión)">
+                            <div class="form-text">Formato: 12.345.678-9 (puedes ingresar con o sin puntos)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profesion" class="form-label">Profesión</label>
+                            <input type="text" class="form-control" id="profesion" name="profesion"
+                                   placeholder="Ingrese la profesión">
+                        </div>
+                        <div class="mb-3">
+                            <label for="areas_ids" class="form-label">
+                                <i class="fas fa-building"></i> Áreas de Trabajo (Múltiple)
+                            </label>
+                            <select class="form-select" id="areas_ids" name="areas_ids" multiple required 
+                                    style="min-height: 140px;">
+                                {% for area in areas %}
+                                    <option value="{{ area.id }}">{{ area.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-crown text-warning"></i> 
+                                <strong>SUPERADMIN:</strong> Puedes asignar múltiples áreas libremente
+                                <br>
+                                <i class="fas fa-info-circle text-info"></i> 
+                                Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples áreas
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nombrecorto" class="form-label">Código/Nombre Corto</label>
+                            <input type="text" class="form-control" id="nombrecorto" name="nombrecorto"
+                                   placeholder="Código abreviado">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña Inicial</label>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="Contraseña inicial" value="Maho#2024">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Crear Trabajador Avanzado
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Panel de Herramientas Avanzadas -->
+            <div class="card shadow mt-3">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Herramientas SUPERADMIN</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('controllers.ruta_trabajadores') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-users"></i> Vista Normal
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALES AVANZADOS PARA EDICIÓN -->
+{% if trabajadores %}
+    {% for trabajador in trabajadores %}
+    <!-- Modal de Edición Avanzada -->
+    <div class="modal fade" id="editModal{{ trabajador.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit"></i> Editar Trabajador: {{ trabajador.nombre }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('controllers.update_trabajador_admin', id=trabajador.id) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-id-card"></i> Información Personal</h6>
+                                <div class="mb-3">
+                                    <label for="nombre{{ trabajador.id }}" class="form-label">Nombre Completo</label>
+                                    <input type="text" class="form-control" 
+                                           id="nombre{{ trabajador.id }}" 
+                                           name="name" 
+                                           value="{{ trabajador.nombre }}" 
+                                           required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="rut{{ trabajador.id }}" class="form-label">RUT</label>
+                                    <input type="text" class="form-control" 
+                                           id="rut{{ trabajador.id }}" 
+                                           name="rut" 
+                                           value="{{ trabajador.rut or '' }}"
+                                           placeholder="12.345.678-9">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="profesion{{ trabajador.id }}" class="form-label">Profesión</label>
+                                    <input type="text" class="form-control" 
+                                           id="profesion{{ trabajador.id }}" 
+                                           name="profesion" 
+                                           value="{{ trabajador.profesion or '' }}"
+                                           placeholder="Ingrese la profesión">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nombrecorto{{ trabajador.id }}" class="form-label">Código</label>
+                                    <input type="text" class="form-control" 
+                                           id="nombrecorto{{ trabajador.id }}" 
+                                           name="nombrecorto" 
+                                           value="{{ trabajador.nombrecorto or '' }}"
+                                           placeholder="Código abreviado">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-building"></i> Gestión de Áreas</h6>
+                                <div class="mb-3">
+                                    <label for="areas{{ trabajador.id }}" class="form-label">Áreas Asignadas</label>
+                                    <select class="form-select" id="areas{{ trabajador.id }}" name="areas_ids" 
+                                            multiple style="min-height: 150px;">
+                                        {% for area in areas %}
+                                            <option value="{{ area.id }}" 
+                                                    {% if area in trabajador.todas_las_areas %}selected{% endif %}>
+                                                {{ area.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Ctrl+Click para seleccionar múltiples áreas
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password{{ trabajador.id }}" class="form-label">Nueva Contraseña</label>
+                                    <input type="password" class="form-control" 
+                                           id="password{{ trabajador.id }}" 
+                                           name="password" 
+                                           placeholder="Dejar vacío para mantener actual">
+                                    <small class="form-text text-muted">Solo completar si se desea cambiar</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información actual de áreas -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Áreas Actuales:</h6>
+                            {% if trabajador.todas_las_areas %}
+                                {% for area in trabajador.todas_las_areas %}
+                                    <span class="badge bg-primary me-1">{{ area.nombre }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">Sin áreas asignadas</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Actualizar Trabajador
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar al trabajador <strong id="trabajadorNombre"></strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>ATENCIÓN:</strong> Esta acción eliminará también:
+                    <ul class="mb-0">
+                        <li>Todas las asignaciones de área del trabajador</li>
+                        <li>Relaciones con equipos de trabajo</li>
+                        <li>Historial de proyectos asignados</li>
+                    </ul>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> Esta acción no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('trabajadorNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_trabajador', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Función para crear modal de detalle dinámicamente para trabajadores (versión admin)
+function abrirModalDetalle(id) {
+    const rows = document.querySelectorAll('tbody tr');
+    let trabajadorRow = null;
+    
+    for (const row of rows) {
+        const firstCell = row.querySelector('td:first-child');
+        if (firstCell && firstCell.textContent.trim() === id.toString()) {
+            trabajadorRow = row;
+            break;
+        }
+    }
+    
+    if (!trabajadorRow) {
+        console.error('No se encontró el trabajador con ID:', id);
+        return;
+    }
+    
+    const existingModal = document.getElementById(`dynamicDetailModal${id}`);
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const cells = trabajadorRow.querySelectorAll('td');
+    const trabajadorId = cells[0].textContent.trim();
+    const nombre = cells[1].textContent.trim();
+    const rut = cells[2].textContent.trim();
+    const profesion = cells[3].textContent.trim();
+    const areas = cells[4].innerHTML;
+    const nombreCorto = cells[5].textContent.trim();
+    
+    const modalHTML = `
+        <div class="modal fade" id="dynamicDetailModal${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-tie"></i> Detalle Completo del Trabajador: ${nombre}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-id-card"></i> Información Personal</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">ID Sistema:</dt>
+                                            <dd class="col-sm-8"><span class="badge bg-secondary">${trabajadorId}</span></dd>
+                                            <dt class="col-sm-4">Nombre:</dt>
+                                            <dd class="col-sm-8">${nombre}</dd>
+                                            <dt class="col-sm-4">RUT:</dt>
+                                            <dd class="col-sm-8">${rut}</dd>
+                                            <dt class="col-sm-4">Profesión:</dt>
+                                            <dd class="col-sm-8">${profesion}</dd>
+                                            <dt class="col-sm-4">Código:</dt>
+                                            <dd class="col-sm-8"><span class="badge bg-dark">${nombreCorto}</span></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-building"></i> Asignaciones de Área</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            ${areas}
+                                        </div>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-crown text-warning"></i> 
+                                            <small><strong>Vista SUPERADMIN:</strong> Acceso completo a gestión de múltiples áreas.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    const modal = new bootstrap.Modal(document.getElementById(`dynamicDetailModal${id}`));
+    modal.show();
+    
+    modal._element.addEventListener('hidden.bs.modal', function () {
+        modal._element.remove();
+    });
+}
+
+// Función para abrir modal de edición desde modal de detalles
+function abrirModalEdicion(id) {
+    // Cerrar el modal de detalles actual
+    const detalleModal = document.getElementById(`dynamicDetailModal${id}`);
+    if (detalleModal) {
+        const bsModal = bootstrap.Modal.getInstance(detalleModal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    }
+    
+    // Pequeña pausa para que se cierre completamente el modal anterior
+    setTimeout(function() {
+        // Abrir el modal de edición
+        const editModal = document.getElementById(`editModal${id}`);
+        if (editModal) {
+            const bsEditModal = new bootstrap.Modal(editModal);
+            bsEditModal.show();
+        }
+    }, 300);
+}
+
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
+
+<style>
+.text-purple {
+    color: #6f42c1 !important;
+}
+</style>
+
+{% endblock %}

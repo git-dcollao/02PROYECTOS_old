@@ -3,3 +3,26 @@
 venv/
 __pycache__/
 #/00 WS/
+
+# MySQL data directory
+mysql_data/
+mysql_data/*
+!mysql_data/.gitkeep
+
+# Python cache
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+logs/
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

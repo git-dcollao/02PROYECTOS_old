@@ -1,0 +1,351 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Gestión de Backups{% endblock %}
+
+{% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<!-- CSS Global OBLIGATORIO - Sistema de estilos unificado -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+<!-- CSS Específico de Gestión de Backups -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gestion-backup.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Gestión de Backups</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCreateBackup">
+                    <i class="fas fa-plus"></i> Crear Backup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Buttons para diagnosticar -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <button onclick="testSystemStatus()" class="btn btn-warning btn-sm">
+                Test Sistema Backup
+            </button>
+            <button onclick="testLoadBackupsInline()" class="btn btn-info btn-sm">
+                Test Cargar Backups
+            </button>
+            <button onclick="testDirectFetchInline()" class="btn btn-success btn-sm">
+                Test Fetch Directo
+            </button>
+            <button onclick="testDebugEndpointInline()" class="btn btn-danger btn-sm">
+                Test Debug (Sin Auth)
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title text-muted mb-2">Total Backups</h6>
+                            <h3 class="mb-0" id="totalBackups">-</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-database fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title text-muted mb-2">Último Backup</h6>
+                            <p class="mb-0" id="lastBackupDate">-</p>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-clock fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title text-muted mb-2">Espacio Total</h6>
+                            <h4 class="mb-0" id="totalSize">-</h4>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-hdd fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title text-muted mb-2">Estado BD</h6>
+                            <span class="badge bg-success" id="dbStatus">-</span>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-heartbeat fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backups List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database"></i> Backups Existentes
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-select form-select-sm" id="filterStatus" style="width: auto;">
+                            <option value="">Todos los estados</option>
+                            <option value="success">Exitosos</option>
+                            <option value="error">Con errores</option>
+                        </select>
+                        <input type="date" class="form-control form-control-sm" id="filterDate" style="width: auto;" placeholder="Filtrar por fecha">
+                        <button class="btn btn-sm btn-outline-secondary" id="btnClearFilters">
+                            <i class="fas fa-filter-circle-xmark"></i> Limpiar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" id="btnCleanOldBackups">
+                            <i class="fas fa-trash-alt"></i> Limpiar Antiguos
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="window.enhancedBackupManager.loadBackups()">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Tabla de backups estilo grilla -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="backupsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="fas fa-file"></i> Archivo</th>
+                                    <th><i class="fas fa-calendar"></i> Fecha</th>
+                                    <th><i class="fas fa-hdd"></i> Tamaño</th>
+                                    <th><i class="fas fa-info-circle"></i> Estado</th>
+                                    <th class="text-end"><i class="fas fa-cogs"></i> Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backupsList">
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <p class="text-muted mt-2 mb-0">Cargando backups...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Backup Form -->
+    <div class="row mt-4" id="createBackupSection">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Crear Nuevo Backup</h5>
+                </div>
+                <div class="card-body">
+                    <form id="backupForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="backupName" class="form-label">Nombre del Backup</label>
+                                    <input type="text" class="form-control" id="backupName" name="name" 
+                                           placeholder="mi_backup_personalizado">
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle"></i> 
+                                        El archivo final será: <strong>[tu_nombre]_YYYYMMDD_HHMMSS.sql</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="backupDescription" class="form-label">Descripción (Opcional)</label>
+                                    <input type="text" class="form-control" id="backupDescription" name="description" 
+                                           placeholder="Backup antes de actualización...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeData" name="include_data" checked>
+                                    <label class="form-check-label" for="includeData">
+                                        <strong>Incluir Datos (INSERT)</strong>
+                                        <div class="form-text">
+                                            <i class="fas fa-database text-primary"></i>
+                                            Si se desmarca, solo se exportará la estructura de las tablas (DDL)
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="compressBackup" name="compress" checked>
+                                    <label class="form-check-label" for="compressBackup">
+                                        <strong>Comprimir Backup (.gz)</strong>
+                                        <div class="form-text">
+                                            <i class="fas fa-file-archive text-success"></i>
+                                            Reduce el tamaño del archivo hasta un 90%
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary" id="btnGenerateBackup">
+                                    <i class="fas fa-save"></i> Generar Backup
+                                </button>
+                                <small class="text-muted ms-3">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    <strong>IMPORTANTE:</strong> Asegúrate de marcar "Incluir Datos" para exportar los registros de la BD
+                                </small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Subir Backup -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload"></i> Subir Backup desde Disco Duro
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Sube un archivo de backup desde tu computadora. Se aceptan archivos .sql, .sql.gz o .gz
+                        </p>
+                    </div>
+                </div>
+                
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="backupFile" class="form-label">Seleccionar Archivo de Backup</label>
+                                <input type="file" class="form-control" id="backupFile" name="backup_file" 
+                                       accept=".sql,.gz,.sql.gz" required>
+                                <div class="form-text">
+                                    <i class="fas fa-file-archive"></i> 
+                                    Formatos soportados: .sql, .sql.gz, .gz (máximo 500MB)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Acciones</label>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-info" id="btnUploadBackup">
+                                        <i class="fas fa-upload"></i> Subir Backup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información del archivo seleccionado -->
+                    <div id="fileInfo" class="row mt-3" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-file"></i> Archivo Seleccionado:</h6>
+                                <div id="fileDetails"></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmAction">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- API Client - Requerido para las peticiones AJAX -->
+<script src="{{ url_for('static', filename='js/api-client.js') }}?v=1.1.0"></script>
+
+<!-- Enhanced Backup Manager - Versión Mejorada con Progress Tracking -->
+<script src="{{ url_for('static', filename='js/enhanced-backup-manager.js') }}?v=1.4.0"></script>
+
+<script>
+// Configuración del Enhanced Backup Manager
+console.log('🚀 [Template] Inicializando Enhanced Backup Manager...');
+
+// Configurar CSRF token
+if (window.api) {
+    window.api.csrfToken = '{{ csrf_token() }}';
+    console.log('✅ [Template] CSRF token configurado');
+} else {
+    console.error('❌ [Template] window.api no disponible');
+}
+
+// Verificación de dependencias
+setTimeout(() => {
+    console.log('🔍 [Template] Verificando estado después de 2 segundos:');
+    console.log('  - window.api:', !!window.api);
+    console.log('  - window.enhancedBackupManager:', !!window.enhancedBackupManager);
+    console.log('  - Bootstrap:', typeof bootstrap !== 'undefined');
+    
+    if (window.enhancedBackupManager) {
+        console.log('✅ [Template] Enhanced Backup Manager inicializado correctamente');
+    } else {
+        console.error('❌ [Template] Enhanced Backup Manager no se inicializó');
+    }
+}, 2000);
+
+console.log('🎯 [Template] Enhanced Backup Manager v1.0.0 con progress tracking cargado');
+</script>
+{% endblock %}

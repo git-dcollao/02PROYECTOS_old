@@ -1,0 +1,923 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Gestión de Requerimientos{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS global para modales de la app -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+    <!-- CSS específico cargado desde archivo separado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/requerimientos.css') }}"}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-clipboard-list me-2"></i>
+        Gestión de Requerimientos
+    </h2>
+    <div>
+        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-plus me-1"></i>
+            Nuevo Requerimiento
+        </button>
+        <span class="badge bg-primary text-white fs-6">
+            {{ requerimientos|length }} Total
+        </span>
+    </div>
+</div>
+
+<!-- Filtros y búsqueda -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="estadoFilter">
+                    <option value="">Todos los estados</option>
+                    <option value="1">Pendientes</option>
+                    <option value="2">Aceptados</option>
+                    <option value="3">En Preparación</option>
+                    <option value="4">Finalizados</option>
+                    <option value="9">Rechazados</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="sectorFilter">
+                    <option value="">Todos los sectores</option>
+                    {% for sector in sectores %}
+                    <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- Tabla de requerimientos -->
+    {% if requerimientos %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tablarequerimiento">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="8%">ID</th>
+                            <th width="18%">Proyecto</th>
+                            <th width="12%">Fecha Ingreso</th>
+                            <th width="18%">Ubicación</th>
+                            <th width="22%">Descripción</th>
+                            <th width="10%">Estado</th>
+                            <th width="12%" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for requerimiento in requerimientos %}
+                        <tr class="requerimiento-row" 
+                            data-nombre="{{ requerimiento.nombre|lower }}" 
+                            data-estado="{{ requerimiento.estado.id }}"
+                            data-sector="{{ requerimiento.id_sector }}">
+                            <td>
+                                <span class="badge bg-primary fs-6">#{{ requerimiento.id }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-start">
+                                    <div class="requirement-icon me-2">
+                                        <i class="fas fa-clipboard-list"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ requerimiento.nombre }}</div>
+                                        <small class="text-muted">{{ requerimiento.estado.nombre }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                <small>{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</small>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="location-icon me-2">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <small class="text-muted">{{ requerimiento.sector.nombre }}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="location-icon me-2">
+                                            <i class="fas fa-home"></i>
+                                        </div>
+                                        <small class="text-muted">{{ requerimiento.tiporecinto.nombre }}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="location-icon me-2">
+                                            <i class="fas fa-door-open"></i>
+                                        </div>
+                                        <div class="fw-bold text-truncate" style="max-width: 120px;" title="{{ requerimiento.recinto.nombre }}">
+                                            {{ requerimiento.recinto.nombre }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ requerimiento.descripcion }}">
+                                    {{ requerimiento.descripcion[:80] }}{% if requerimiento.descripcion|length > 80 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if requerimiento.estado.id == 1 %}
+                                    <span class="badge bg-warning">{{ requerimiento.estado.nombre }}</span>
+                                {% elif requerimiento.estado.id == 2 %}
+                                    <span class="badge bg-info">{{ requerimiento.estado.nombre }}</span>
+                                {% elif requerimiento.estado.id == 3 %}
+                                    <span class="badge bg-primary">{{ requerimiento.estado.nombre }}</span>
+                                {% elif requerimiento.estado.id == 4 %}
+                                    <span class="badge bg-success">{{ requerimiento.estado.nombre }}</span>
+                                {% elif requerimiento.estado.id == 5 %}
+                                    <span class="badge bg-danger">{{ requerimiento.estado.nombre }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ requerimiento.estado.nombre }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                                            onclick="editarRequerimiento({{ requerimiento.id }})"
+                                            title="Ver/Editar requerimiento">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                            onclick="confirmarEliminacion({{ requerimiento.id }}, '{{ requerimiento.nombre }}')"
+                                            title="Eliminar requerimiento">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+        <h5 class="text-muted">¡No hay requerimientos registrados!</h5>
+        <p class="text-muted">Comience creando su primer requerimiento en el sistema.</p>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-plus me-1"></i>
+            Crear Primer Requerimiento
+        </button>
+    </div>
+    {% endif %}
+    </div>
+
+<!-- Estadísticas en tarjetas modernas -->
+{% if requerimientos %}
+<div class="row mt-4 g-3">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-primary bg-opacity-10 text-primary mb-3">
+                    <i class="fas fa-clipboard-list fa-2x"></i>
+                </div>
+                <h4 class="text-primary fw-bold">{{ requerimientos|length }}</h4>
+                <p class="text-muted mb-0">Total Requerimientos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-warning bg-opacity-10 text-warning mb-3">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <h4 class="text-warning fw-bold">{{ requerimientos|selectattr("estado.id", "equalto", 1)|list|length }}</h4>
+                <p class="text-muted mb-0">Pendientes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-info bg-opacity-10 text-info mb-3">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+                <h4 class="text-info fw-bold">{{ requerimientos|selectattr("estado.id", "equalto", 2)|list|length }}</h4>
+                <p class="text-muted mb-0">Aceptados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-success bg-opacity-10 text-success mb-3">
+                    <i class="fas fa-clipboard-check fa-2x"></i>
+                </div>
+                <h4 class="text-success fw-bold">{{ requerimientos|selectattr("estado.id", "equalto", 4)|list|length }}</h4>
+                <p class="text-muted mb-0">Finalizados</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal para Agregar Nuevo Requerimiento -->
+<div class="modal fade modal-app modal-size-large modal-auto-height modal-edit-form" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-with-icon">
+                    <div class="modal-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h5 class="modal-title">Agregar Nuevo Requerimiento</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formNuevoRequerimiento" action="{{ url_for('requerimientos.add_requerimiento') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body modal-edit-form">
+                    <!-- Campos básicos usando el sistema de grid responsivo -->
+                    <div class="form-fields-section">
+                        <div class="form-row-responsive">
+                            <div class="form-group">
+                                <label class="form-label">Nombre del Requerimiento</label>
+                                <input type="text" class="form-control" name="nombre" required 
+                                       placeholder="Ingrese el nombre del requerimiento">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Ingreso</label>
+                                <input type="date" class="form-control" name="fecha" id="fechaRequerimiento" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sector</label>
+                                <select class="form-control" name="id_sector" id="sector-select" required>
+                                    <option value="">Seleccione un Sector</option>
+                                    {% for sector in sectores %}
+                                    <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Recinto</label>
+                                <select class="form-control" name="id_tiporecinto" id="tiporecinto-select" required disabled>
+                                    <option value="">Primero seleccione un sector</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Recinto</label>
+                                <select class="form-control" name="id_recinto" id="recinto-select" required disabled>
+                                    <option value="">Primero seleccione un tipo de recinto</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Descripción que ocupa el espacio restante -->
+                    <div class="form-description-section">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" name="descripcion" required 
+                                  placeholder="Describa el requerimiento detalladamente..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Requerimiento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade modal-app modal-size-small modal-auto-height" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-with-icon">
+                    <div class="modal-icon modal-icon-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-confirmation-content">
+                    <p class="modal-confirmation-text">
+                        ¿Está seguro de que desea eliminar el requerimiento <strong id="requerimientoNombre"></strong>?
+                    </p>
+                    <div class="modal-warning-alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Esta acción eliminará permanentemente el requerimiento y puede afectar equipos de trabajo relacionados.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('requerimientoNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('requerimientos.eliminar_requerimiento', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Configuración de selects en cascada
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidad de búsqueda y filtros
+    const searchInput = document.getElementById('searchInput');
+    const estadoFilter = document.getElementById('estadoFilter');
+    const sectorFilter = document.getElementById('sectorFilter');
+    
+    function filtrarRequerimientos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const estadoId = estadoFilter.value;
+        const sectorId = sectorFilter.value;
+        const filas = document.querySelectorAll('.requerimiento-row');
+        let contadorVisible = 0;
+        
+        filas.forEach(fila => {
+            const nombre = fila.getAttribute('data-nombre');
+            const descripcion = fila.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+            const estado = fila.getAttribute('data-estado');
+            const sector = fila.getAttribute('data-sector');
+            
+            const coincideBusqueda = nombre.includes(searchTerm) || descripcion.includes(searchTerm);
+            const coincideEstado = !estadoId || estado === estadoId;
+            const coincideSector = !sectorId || sector === sectorId;
+            
+            if (coincideBusqueda && coincideEstado && coincideSector) {
+                fila.style.display = '';
+                contadorVisible++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Actualizar contador
+        const badge = document.querySelector('.badge.bg-primary.text-white.fs-6');
+        if (badge) {
+            badge.textContent = `${contadorVisible} Visible`;
+        }
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filtrarRequerimientos);
+    if (estadoFilter) estadoFilter.addEventListener('change', filtrarRequerimientos);
+    if (sectorFilter) sectorFilter.addEventListener('change', filtrarRequerimientos);
+
+    // Configuración del formulario nuevo
+    const sectorSelect = document.getElementById('sector-select');
+    const tipoRecintoSelect = document.getElementById('tiporecinto-select');
+    const recintoSelect = document.getElementById('recinto-select');
+
+    sectorSelect.addEventListener('change', function() {
+        const sectorId = this.value;
+        console.log('🔍 Sector seleccionado:', sectorId);
+        if (sectorId) {
+            tipoRecintoSelect.disabled = false;
+            
+            console.log('🔍 Haciendo fetch a:', `/get_tiposrecintos_by_sector/${sectorId}`);
+            fetch(`/get_tiposrecintos_by_sector/${sectorId}`)
+                .then(response => {
+                    console.log('🔍 Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('🔍 Tipos de recinto recibidos:', data);
+                    tipoRecintoSelect.innerHTML = '<option value="">Seleccione un Tipo de Recinto</option>';
+                    data.forEach(tipo => {
+                        const option = document.createElement('option');
+                        option.value = tipo.id;
+                        option.textContent = tipo.nombre;
+                        tipoRecintoSelect.appendChild(option);
+                        console.log('🔍 Agregado tipo de recinto:', tipo.nombre);
+                    });
+                })
+                .catch(error => {
+                    console.error('❌ Error al cargar tipos de recinto:', error);
+                    alert('Error al cargar tipos de recinto: ' + error.message);
+                });
+                
+            recintoSelect.disabled = true;
+            recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+        } else {
+            tipoRecintoSelect.disabled = true;
+            tipoRecintoSelect.innerHTML = '<option value="">Primero seleccione un sector</option>';
+            recintoSelect.disabled = true;
+            recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+        }
+    });
+
+    tipoRecintoSelect.addEventListener('change', function() {
+        const tipoRecintoId = this.value;
+        console.log('🔍 Tipo de recinto seleccionado:', tipoRecintoId);
+        if (tipoRecintoId) {
+            recintoSelect.disabled = false;
+            
+            console.log('🔍 Haciendo fetch a:', `/get_recintos_by_tipo/${tipoRecintoId}`);
+            fetch(`/get_recintos_by_tipo/${tipoRecintoId}`) 
+                .then(response => {
+                    console.log('🔍 Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('🔍 Recintos recibidos:', data);
+                    recintoSelect.innerHTML = '<option value="">Seleccione un Recinto</option>';
+                    data.forEach(recinto => {
+                        const option = document.createElement('option');
+                        option.value = recinto.id;
+                        option.textContent = recinto.nombre;
+                        recintoSelect.appendChild(option);
+                        console.log('🔍 Agregado recinto:', recinto.nombre);
+                    });
+                })
+                .catch(error => {
+                    console.error('❌ Error al cargar recintos:', error);
+                    alert('Error al cargar recintos: ' + error.message);
+                });
+        } else {
+            recintoSelect.disabled = true;
+            recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+        }
+    });
+
+    // Manejo del formulario AJAX con botones incluidos
+    document.getElementById('formNuevoRequerimiento').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        // Agregar token CSRF al FormData
+        formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+        
+        fetch('/add_requerimiento', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Agregar nueva fila a la tabla CON el formato correcto al INICIO
+                const tablaElement = document.getElementById('tablarequerimiento');
+                console.log('🔍 Elemento tabla encontrado:', tablaElement);
+                
+                if (!tablaElement) {
+                    console.error('❌ No se encontró la tabla con ID tablarequerimiento');
+                    alert('Requerimiento creado exitosamente, pero no se pudo actualizar la tabla. Recarga la página.');
+                    return;
+                }
+                
+                const tbody = tablaElement.getElementsByTagName('tbody')[0];
+                console.log('🔍 Tbody encontrado:', tbody);
+                
+                if (!tbody) {
+                    console.error('❌ No se encontró el tbody en la tabla');
+                    alert('Requerimiento creado exitosamente, pero no se pudo actualizar la tabla. Recarga la página.');
+                    return;
+                }
+                
+                const newRow = tbody.insertRow(0); // Insertar al inicio (posición 0)
+                
+                // Aplicar atributos de datos para filtros
+                newRow.className = 'requerimiento-row';
+                newRow.setAttribute('data-nombre', data.requerimiento.nombre.toLowerCase());
+                newRow.setAttribute('data-estado', data.requerimiento.estado_id);
+                newRow.setAttribute('data-sector', data.requerimiento.sector_id);
+                
+                newRow.innerHTML = `
+                    <td>
+                        <span class="badge bg-primary fs-6">#${data.requerimiento.id}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-start">
+                            <div class="requirement-icon me-2">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">${data.requerimiento.nombre}</div>
+                                <small class="text-muted">${data.requerimiento.estado_nombre}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <i class="fas fa-calendar-alt text-muted me-1"></i>
+                        <small>${data.requerimiento.fecha}</small>
+                    </td>
+                    <td>
+                        <div>
+                            <div class="d-flex align-items-center mb-1">
+                                <div class="location-icon me-2">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <small class="text-muted">${data.requerimiento.sector_nombre}</small>
+                            </div>
+                            <div class="d-flex align-items-center mb-1">
+                                <div class="location-icon me-2">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <small class="text-muted">${data.requerimiento.tiporecinto_nombre}</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="location-icon me-2">
+                                    <i class="fas fa-door-open"></i>
+                                </div>
+                                <div class="fw-bold text-truncate" style="max-width: 120px;" title="${data.requerimiento.recinto_nombre}">
+                                    ${data.requerimiento.recinto_nombre}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="${data.requerimiento.descripcion}">
+                            ${data.requerimiento.descripcion.length > 80 ? data.requerimiento.descripcion.substring(0, 80) + '...' : data.requerimiento.descripcion}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-warning">${data.requerimiento.estado_nombre}</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                    onclick="editarRequerimiento(${data.requerimiento.id})"
+                                    title="Ver/Editar requerimiento">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                    onclick="confirmarEliminacion(${data.requerimiento.id}, '${data.requerimiento.nombre}')"
+                                    title="Eliminar requerimiento">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                // Actualizar contadores de estadísticas
+                actualizarContadores();
+                
+                // Cerrar modal y limpiar formulario
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
+                modal.hide();
+                this.reset();
+                
+                // Deshabilitar selects
+                tipoRecintoSelect.disabled = true;
+                recintoSelect.disabled = true;
+                
+                // Mostrar mensaje de éxito
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    Requerimiento agregado exitosamente
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4').insertAdjacentElement('afterend', alertDiv);
+                
+                setTimeout(() => alertDiv.remove(), 5000);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud');
+        });
+    });
+
+    // Auto-dismiss alerts
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+
+// Función para actualizar contadores de estadísticas
+function actualizarContadores() {
+    const filas = document.querySelectorAll('.requerimiento-row');
+    const total = filas.length;
+    
+    // Contar por estado
+    let pendientes = 0, aceptados = 0, finalizados = 0;
+    
+    filas.forEach(fila => {
+        const estadoId = parseInt(fila.getAttribute('data-estado'));
+        if (estadoId === 1) pendientes++;
+        else if (estadoId === 2) aceptados++;
+        else if (estadoId === 4) finalizados++;
+    });
+    
+    // Actualizar contador principal
+    const badgeTotal = document.querySelector('.badge.bg-primary.text-white.fs-6');
+    if (badgeTotal) badgeTotal.textContent = `${total} Total`;
+    
+    // Actualizar tarjetas de estadísticas
+    const estadisticasCards = document.querySelectorAll('.card .card-body h4');
+    if (estadisticasCards.length >= 4) {
+        estadisticasCards[0].textContent = total;     // Total
+        estadisticasCards[1].textContent = pendientes; // Pendientes
+        estadisticasCards[2].textContent = aceptados;  // Aceptados
+        estadisticasCards[3].textContent = finalizados; // Finalizados
+    }
+}
+
+// Función para editar requerimiento (para los nuevos botones)
+function editarRequerimiento(id) {
+    // En lugar de recargar la página, crear y mostrar el modal dinámicamente
+    fetch(`/get_requerimiento/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Crear modal dinámicamente
+                crearModalEdicion(data.requerimiento);
+            } else {
+                alert('Error al cargar los datos del requerimiento');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al cargar los datos del requerimiento');
+        });
+}
+
+// Función para crear modal de edición dinámicamente
+function crearModalEdicion(requerimiento) {
+    // Validar que los datos requeridos estén presentes
+    if (!requerimiento || !requerimiento.id) {
+        console.error('Datos de requerimiento inválidos:', requerimiento);
+        alert('Error: Datos del requerimiento incompletos');
+        return;
+    }
+    
+    // Eliminar modal existente si existe
+    const existingModal = document.getElementById(`dynamicEditModal${requerimiento.id}`);
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Crear el modal HTML
+    const modalHTML = `
+        <div class="modal fade modal-app modal-size-large modal-auto-height modal-edit-form" id="dynamicEditModal${requerimiento.id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title-with-icon">
+                            <div class="modal-icon">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <h5 class="modal-title">Editar Requerimiento</h5>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/update_requerimiento/${requerimiento.id}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="modal-body">
+                            <!-- Campos básicos usando clases consistentes -->
+                            <div class="form-fields-section">
+                                <div class="form-row-responsive">
+                                    <div class="form-group">
+                                        <label class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" name="nombre" value="${requerimiento.nombre}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Fecha</label>
+                                        <input type="date" class="form-control" name="fecha" value="${requerimiento.fecha}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Sector</label>
+                                        <select class="form-control sector-select" name="id_sector" required>
+                                            ${requerimiento.sectores_html}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Tipo de Recinto</label>
+                                        <select class="form-control tiporecinto-select" name="id_tiporecinto" required disabled>
+                                            <option value="">Seleccione un Tipo de Recinto</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Recinto</label>
+                                        <select class="form-control recinto-select" name="id_recinto" required disabled>
+                                            <option value="">Seleccione un Recinto</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Descripción que ocupa el espacio restante -->
+                            <div class="form-description-section">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" name="descripcion" required>${requerimiento.descripcion}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Actualizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Configurar eventos de cascada para el modal dinámico
+    configurarEventosCascadaModal(requerimiento.id);
+    
+    // Validar datos antes de inicializar cascada
+    const sectorId = requerimiento.sector ? requerimiento.sector.id : null;
+    const tipoRecintoId = requerimiento.tiporecinto ? requerimiento.tiporecinto.id : null;
+    const recintoId = requerimiento.recinto ? requerimiento.recinto.id : null;
+    
+    // Inicializar cascada con los valores actuales
+    if (sectorId && tipoRecintoId && recintoId) {
+        inicializarCascadaModal(requerimiento.id, sectorId, tipoRecintoId, recintoId);
+    } else {
+        console.warn('Datos de sector/recinto incompletos:', {sectorId, tipoRecintoId, recintoId});
+    }
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById(`dynamicEditModal${requerimiento.id}`));
+    modal.show();
+    
+    // Limpiar modal cuando se cierre
+    document.getElementById(`dynamicEditModal${requerimiento.id}`).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// Función para configurar eventos de cascada en modales dinámicos
+function configurarEventosCascadaModal(modalId) {
+    const modalElement = document.getElementById(`dynamicEditModal${modalId}`);
+    const sectorSelect = modalElement.querySelector('.sector-select');
+    const tipoRecintoSelect = modalElement.querySelector('.tiporecinto-select');
+    const recintoSelect = modalElement.querySelector('.recinto-select');
+
+    if (sectorSelect) {
+        sectorSelect.addEventListener('change', function() {
+            const sectorId = this.value;
+            console.log('Modal - Sector cambiado:', sectorId);
+            if (sectorId) {
+                tipoRecintoSelect.disabled = false;
+                
+                fetch(`/get_tiposrecintos_by_sector/${sectorId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Modal - Tipos de recinto recibidos:', data);
+                        tipoRecintoSelect.innerHTML = '<option value="">Seleccione un Tipo de Recinto</option>';
+                        data.forEach(tipo => {
+                            const option = document.createElement('option');
+                            option.value = tipo.id;
+                            option.textContent = tipo.nombre;
+                            tipoRecintoSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+                    
+                recintoSelect.disabled = true;
+                recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+            } else {
+                tipoRecintoSelect.disabled = true;
+                tipoRecintoSelect.innerHTML = '<option value="">Primero seleccione un sector</option>';
+                recintoSelect.disabled = true;
+                recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+            }
+        });
+    }
+
+    if (tipoRecintoSelect) {
+        tipoRecintoSelect.addEventListener('change', function() {
+            const tipoRecintoId = this.value;
+            console.log('Modal - Tipo recinto cambiado:', tipoRecintoId);
+            if (tipoRecintoId) {
+                recintoSelect.disabled = false;
+                
+                fetch(`/get_recintos_by_tipo/${tipoRecintoId}`) 
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Modal - Recintos recibidos:', data);
+                        recintoSelect.innerHTML = '<option value="">Seleccione un Recinto</option>';
+                        data.forEach(recinto => {
+                            const option = document.createElement('option');
+                            option.value = recinto.id;
+                            option.textContent = recinto.nombre;
+                            recintoSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                recintoSelect.disabled = true;
+                recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+            }
+        });
+    }
+}
+
+function inicializarCascadaModal(modalId, sectorId, tipoRecintoId, recintoId) {
+    console.log('Inicializando cascada modal:', {modalId, sectorId, tipoRecintoId, recintoId});
+    
+    const modalElement = document.getElementById(`dynamicEditModal${modalId}`);
+    const sectorSelect = modalElement.querySelector('.sector-select');
+    const tipoRecintoSelect = modalElement.querySelector('.tiporecinto-select');
+    const recintoSelect = modalElement.querySelector('.recinto-select');
+    
+    // Primero cargar tipos de recinto basados en el sector
+    if (sectorId) {
+        tipoRecintoSelect.disabled = false;
+        
+        fetch(`/get_tiposrecintos_by_sector/${sectorId}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Modal - Inicialización tipos recinto:', data);
+                tipoRecintoSelect.innerHTML = '<option value="">Seleccione un Tipo de Recinto</option>';
+                data.forEach(tipo => {
+                    const option = document.createElement('option');
+                    option.value = tipo.id;
+                    option.textContent = tipo.nombre;
+                    if (tipo.id == tipoRecintoId) {
+                        option.selected = true;
+                    }
+                    tipoRecintoSelect.appendChild(option);
+                });
+                
+                // Luego cargar recintos basados en el tipo
+                if (tipoRecintoId) {
+                    cargarRecintosPorTipo(modalElement, tipoRecintoId, recintoId);
+                }
+            })
+            .catch(error => console.error('Error cargando tipos de recinto:', error));
+    }
+}
+
+function cargarRecintosPorTipo(modalElement, tipoRecintoId, recintoIdSeleccionado) {
+    const recintoSelect = modalElement.querySelector('.recinto-select');
+    
+    recintoSelect.disabled = false;
+    
+    fetch(`/get_recintos_by_tipo/${tipoRecintoId}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Modal - Inicialización recintos:', data);
+            recintoSelect.innerHTML = '<option value="">Seleccione un Recinto</option>';
+            data.forEach(recinto => {
+                const option = document.createElement('option');
+                option.value = recinto.id;
+                option.textContent = recinto.nombre;
+                if (recinto.id == recintoIdSeleccionado) {
+                    option.selected = true;
+                }
+                recintoSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error cargando recintos:', error));
+}
+
+// Establecer fecha actual al abrir el modal de agregar requerimiento
+document.getElementById('addModal').addEventListener('show.bs.modal', function() {
+    const fechaInput = document.getElementById('fechaRequerimiento');
+    if (fechaInput) {
+        const today = new Date();
+        const formattedDate = today.getFullYear() + '-' + 
+                            String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                            String(today.getDate()).padStart(2, '0');
+        fechaInput.value = formattedDate;
+    }
+});
+
+</script>
+{% endblock %}

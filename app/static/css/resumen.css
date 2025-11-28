@@ -1,0 +1,292 @@
+/* ========================================
+   RESUMEN EJECUTIVO - Estilos Específicos
+   ======================================== */
+
+/* =========================
+   Layout y Contenedores
+   ========================= */
+
+.container-fluid {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* =========================
+   Cards y Headers
+   ========================= */
+
+.card {
+    border-radius: 8px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+    padding: 1rem 1.25rem;
+}
+
+.card-header h5 {
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* =========================
+   Estadísticas
+   ========================= */
+
+.border-primary {
+    border-color: #0d6efd !important;
+    border-width: 2px;
+}
+
+.border-info {
+    border-color: #0dcaf0 !important;
+    border-width: 2px;
+}
+
+.border-danger {
+    border-color: #dc3545 !important;
+    border-width: 2px;
+}
+
+.border-success {
+    border-color: #198754 !important;
+    border-width: 2px;
+}
+
+/* =========================
+   Tabla de Actividades
+   ========================= */
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.table tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.025);
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.table-danger:hover {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+}
+
+/* =========================
+   Barras de Progreso
+   ========================= */
+
+.progress {
+    height: 20px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 20px;
+    transition: width 0.6s ease;
+}
+
+.progress-bar.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.progress-bar.bg-success {
+    background-color: #198754 !important;
+}
+
+/* =========================
+   Badges
+   ========================= */
+
+.badge {
+    padding: 0.4em 0.8em;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.badge.bg-light {
+    color: #212529;
+    border: 1px solid #dee2e6;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+/* =========================
+   Botones
+   ========================= */
+
+.btn {
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-light {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    color: #212529;
+}
+
+.btn-light:hover {
+    background-color: #f8f9fa;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-success:hover {
+    background-color: #157347;
+    border-color: #146c43;
+}
+
+/* =========================
+   Loading y Estados Vacíos
+   ========================= */
+
+.loading-spinner {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden-initial {
+    display: none;
+}
+
+/* =========================
+   Niveles de Indentación EDT
+   ========================= */
+
+.ps-1 { 
+    padding-left: 1rem !important; 
+}
+
+.ps-2 { 
+    padding-left: 2rem !important;
+}
+
+.ps-3 { 
+    padding-left: 3rem !important; 
+}
+
+.ps-4 { 
+    padding-left: 4rem !important; 
+}
+
+.ps-5 { 
+    padding-left: 5rem !important; 
+}
+
+/* =========================
+   Responsive Design
+   ========================= */
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .card-header h5 {
+        font-size: 1rem;
+    }
+
+    .table thead th {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .table tbody td {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.3em 0.6em;
+    }
+
+    .progress {
+        height: 16px;
+    }
+
+    .progress-bar {
+        font-size: 0.7rem;
+        line-height: 16px;
+    }
+
+    /* Ocultar columnas menos importantes en móviles */
+    .table th:nth-child(3),
+    .table td:nth-child(3),
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Estadísticas en columna completa */
+    .row > [class*='col-md-3'] {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+}
+
+/* =========================
+   Utilidades
+   ========================= */
+
+.text-truncate-custom {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}

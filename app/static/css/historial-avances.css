@@ -1,0 +1,156 @@
+/* ========================================
+   HISTORIAL DE AVANCES - ESTILOS ESPECÍFICOS
+   ======================================== */
+
+/* Contenedor de tabla responsiva */
+.table-responsive {
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Estilos de tabla */
+.table td {
+    vertical-align: middle;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+.table th {
+    border-top: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    vertical-align: middle;
+    padding: 0.6rem 0.6rem;
+}
+
+/* Colores de tabla por estado */
+.table-success {
+    --bs-table-bg: rgba(25, 135, 84, 0.1);
+}
+
+.table-danger {
+    --bs-table-bg: rgba(220, 53, 69, 0.1);
+}
+
+/* Badges pequeños */
+.badge.small {
+    font-size: 0.7rem;
+    padding: 0.25em 0.5em;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+/* Spinner grande */
+.spinner-large {
+    width: 3rem !important;
+    height: 3rem !important;
+}
+
+/* Separador visual */
+.border-separator {
+    border-top: 2px solid #dee2e6 !important;
+    height: 2px;
+}
+
+/* Contenedores con estado inicial oculto */
+.hidden-initial {
+    display: none;
+}
+
+/* Columnas de tabla con anchos específicos */
+.table .col-fecha {
+    width: 10%;
+}
+
+.table .col-trabajador {
+    width: 12%;
+}
+
+.table .col-proyecto {
+    width: 15%;
+}
+
+.table .col-edt {
+    width: 8%;
+}
+
+.table .col-actividad {
+    width: 30%;
+}
+
+.table .col-anterior {
+    width: 8%;
+}
+
+.table .col-nuevo {
+    width: 8%;
+}
+
+.table .col-diferencia {
+    width: 9%;
+}
+
+/* Filtros responsivos */
+@media (max-width: 768px) {
+    .table td {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    
+    .table th {
+        padding: 0.4rem 0.4rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Estados de carga */
+.table-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.table-loaded {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Mejoras visuales para historial */
+.historial-session {
+    border-left: 3px solid #007bff;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+
+.historial-session.success {
+    border-left-color: #28a745;
+}
+
+.historial-session.warning {
+    border-left-color: #ffc107;
+}
+
+.historial-session.danger {
+    border-left-color: #dc3545;
+}
+
+/* Iconos de diferencia */
+.diferencia-positiva {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.diferencia-negativa {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.diferencia-neutral {
+    color: #6c757d;
+    font-weight: normal;
+}

@@ -1,0 +1,665 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Administración Avanzada de Trabajadores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Mensajes de Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Título y Badge SUPERADMIN -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-users-cog"></i> Administración Avanzada de Trabajadores
+                    </h2>
+                    <p class="text-muted mb-0">Panel exclusivo SUPERADMIN - Gestión completa de trabajadores y áreas</p>
+                </div>
+                <div>
+                    <span class="badge bg-danger fs-6">
+                        <i class="fas fa-crown"></i> SUPERADMIN
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Estadísticas Avanzadas -->
+    {% if estadisticas %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Estadísticas Generales del Sistema
+                        <small class="opacity-75">| Vista Completa SUPERADMIN</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-primary">{{ estadisticas.total_trabajadores }}</h3>
+                                <p class="mb-0 small">Total Trabajadores</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-success">{{ estadisticas.trabajadores_con_sector }}</h3>
+                                <p class="mb-0 small">Con Sector Asignado</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-warning">{{ estadisticas.trabajadores_sin_sector }}</h3>
+                                <p class="mb-0 small">Sin Sector</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-info">{{ estadisticas.trabajadores_con_recinto }}</h3>
+                                <p class="mb-0 small">Con Recinto</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-secondary">{{ estadisticas.sectores_totales }}</h3>
+                                <p class="mb-0 small">Sectores Disponibles</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h3 class="text-dark">{{ estadisticas.sectores_diferentes }}</h3>
+                                <p class="mb-0 small">Sectores en Uso</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Panel de Gestión de Trabajadores -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-users"></i> Lista de Trabajadores
+                            <span class="badge bg-light text-dark ms-2">{{ trabajadores|length }} registros</span>
+                        </h4>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+                            <i class="fas fa-plus"></i> Agregar Trabajador
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Profesión</th>
+                                    <th>Recinto</th>
+                                    <th>Código</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trabajador in trabajadores %}
+                                <tr>
+                                    <td><strong>{{ trabajador.id }}</strong></td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ trabajador.nombre }}</strong>
+                                            {% if trabajador.email %}
+                                                <br><small class="text-muted">{{ trabajador.email }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ trabajador.profesion or 'No especificada' }}</td>
+                                    <td>
+                                        {% if trabajador.recinto %}
+                                            <span class="badge bg-info">{{ trabajador.recinto.nombre }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Sin recinto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-dark">{{ trabajador.nombrecorto or 'N/A' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if trabajador.rol %}
+                                            <span class="badge bg-{{ 'danger' if trabajador.rol.value == 'superadmin' else 'warning' if trabajador.rol.value == 'admin' else 'info' }}">
+                                                {{ trabajador.rol.value.upper() }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">SIN ROL</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-info" 
+                                                    onclick="abrirModalDetalle({{ trabajador.id }})"
+                                                    title="Ver detalle completo">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editModal{{ trabajador.id }}"
+                                                    title="Editar con múltiples áreas">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ trabajador.id }}, `{{ trabajador.nombre|replace('`', '\\`') }}`)"
+                                                    title="Eliminar trabajador">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="fas fa-users fa-3x mb-3 opacity-50"></i>
+                                        <br>No hay trabajadores registrados en el sistema
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Herramientas SUPERADMIN -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Herramientas SUPERADMIN</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('controllers.ruta_trabajadores') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-users"></i> Vista Normal
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar trabajador -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Agregar Nuevo Trabajador
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('controllers.add_trabajador_admin') }}" method="POST" id="addTrabajadorForm" onsubmit="return validarFormularioAdd()">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-crown"></i> 
+                        <strong>Modo SUPERADMIN:</strong> Asigna sector y recinto al trabajador.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-id-card"></i> Información Personal</h6>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="rut" class="form-label">RUT</label>
+                                <input type="text" class="form-control" id="rut" name="rut" placeholder="12.345.678-9">
+                            </div>
+                            <div class="mb-3">
+                                <label for="profesion" class="form-label">Profesión</label>
+                                <input type="text" class="form-control" id="profesion" name="profesion">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-envelope"></i> Información de Contacto</h6>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" id="telefono" name="telefono">
+                            </div>
+                            <div class="mb-3">
+                                <label for="nombrecorto" class="form-label">Código/Nombre Corto</label>
+                                <input type="text" class="form-control" id="nombrecorto" name="nombrecorto">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><i class="fas fa-building"></i> Asignación de Ubicación</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sector_id_add" class="form-label">Sector <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="sector_id_add" name="sector_id" required onchange="filtrarRecintosPorSector('add')">
+                                            <option value="">Seleccionar Sector</option>
+                                            {% for sector in sectores %}
+                                            <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="recinto_id_add" class="form-label">Recinto (Opcional)</label>
+                                        <select class="form-select" id="recinto_id_add" name="recinto_id">
+                                            <option value="">Seleccionar Recinto</option>
+                                            {% for recinto in recintos %}
+                                            <option value="{{ recinto.id }}" data-sector-id="{{ recinto.tiporecinto.id_sector }}">{{ recinto.nombre }} ({{ recinto.tiporecinto.nombre }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar Trabajador
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de edición para cada trabajador -->
+{% for trabajador in trabajadores %}
+<div class="modal fade" id="editModal{{ trabajador.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-edit"></i> Editar Trabajador: {{ trabajador.nombre }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('controllers.update_trabajador_admin', id=trabajador.id) }}" method="POST" 
+                  id="editTrabajadorForm{{ trabajador.id }}" 
+                  onsubmit="return validarFormularioEdit({{ trabajador.id }})">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-crown"></i> 
+                        <strong>Modo SUPERADMIN:</strong> Edición completa con gestión de sector y recinto.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-id-card"></i> Información Personal</h6>
+                            <div class="mb-3">
+                                <label for="nombre{{ trabajador.id }}" class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" 
+                                       id="nombre{{ trabajador.id }}" 
+                                       name="name" 
+                                       value="{{ trabajador.nombre }}" 
+                                       required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="rut{{ trabajador.id }}" class="form-label">RUT</label>
+                                <input type="text" class="form-control" 
+                                       id="rut{{ trabajador.id }}" 
+                                       name="rut" 
+                                       value="{{ trabajador.rut or '' }}" 
+                                       placeholder="12.345.678-9">
+                            </div>
+                            <div class="mb-3">
+                                <label for="profesion{{ trabajador.id }}" class="form-label">Profesión</label>
+                                <input type="text" class="form-control" 
+                                       id="profesion{{ trabajador.id }}" 
+                                       name="profesion" 
+                                       value="{{ trabajador.profesion or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-envelope"></i> Información de Contacto</h6>
+                            <div class="mb-3">
+                                <label for="email{{ trabajador.id }}" class="form-label">Email</label>
+                                <input type="email" class="form-control" 
+                                       id="email{{ trabajador.id }}" 
+                                       name="email" 
+                                       value="{{ trabajador.email or '' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefono{{ trabajador.id }}" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" 
+                                       id="telefono{{ trabajador.id }}" 
+                                       name="telefono" 
+                                       value="{{ trabajador.telefono or '' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="nombrecorto{{ trabajador.id }}" class="form-label">Código/Nombre Corto</label>
+                                <input type="text" class="form-control" 
+                                       id="nombrecorto{{ trabajador.id }}" 
+                                       name="nombrecorto" 
+                                       value="{{ trabajador.nombrecorto or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><i class="fas fa-building"></i> Asignación de Ubicación</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sector_id_{{ trabajador.id }}" class="form-label">Sector <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="sector_id_{{ trabajador.id }}" name="sector_id" required onchange="filtrarRecintosPorSector('{{ trabajador.id }}')">
+                                            <option value="">Seleccionar Sector</option>
+                                            {% for sector in sectores %}
+                                            <option value="{{ sector.id }}" {% if trabajador.sector_id == sector.id %}selected{% endif %}>{{ sector.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="recinto_id_{{ trabajador.id }}" class="form-label">Recinto (Opcional)</label>
+                                        <select class="form-select" id="recinto_id_{{ trabajador.id }}" name="recinto_id">
+                                            <option value="">Seleccionar Recinto</option>
+                                            {% for recinto in recintos %}
+                                            <option value="{{ recinto.id }}" data-sector-id="{{ recinto.tiporecinto.id_sector }}" {% if trabajador.recinto_id == recinto.id %}selected{% endif %}>{{ recinto.nombre }} ({{ recinto.tiporecinto.nombre }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Actualizar Trabajador
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-warning"></i>
+                    <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro que deseas eliminar al trabajador <strong><span id="trabajadorNombre"></span></strong>?</p>
+                <p class="text-muted small">Se eliminarán todos los datos relacionados con este trabajador.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('trabajadorNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_trabajador', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Función para crear modal de detalle dinámicamente para trabajadores (SUPERADMIN)
+function abrirModalDetalle(id) {
+    // Buscar la fila del trabajador en la tabla actual
+    const rows = document.querySelectorAll('tbody tr');
+    let trabajadorRow = null;
+    
+    for (const row of rows) {
+        const firstCell = row.querySelector('td:first-child');
+        if (firstCell && firstCell.textContent.trim() === id.toString()) {
+            trabajadorRow = row;
+            break;
+        }
+    }
+    
+    if (!trabajadorRow) {
+        console.error('No se encontró el trabajador con ID:', id);
+        return;
+    }
+    
+    // Limpiar modal anterior si existe
+    const existingModal = document.getElementById(`dynamicDetailModal${id}`);
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Obtener datos de la fila
+    const cells = trabajadorRow.querySelectorAll('td');
+    const trabajadorId = cells[0].textContent.trim();
+    const nombre = cells[1].querySelector('strong').textContent.trim();
+    const email = cells[1].querySelector('small') ? cells[1].querySelector('small').textContent.trim() : 'No especificado';
+    const rut = cells[2].querySelector('code').textContent.trim();
+    const profesion = cells[3].textContent.trim();
+    const sector = cells[4].innerHTML; // Badge del sector
+    const recinto = cells[5].innerHTML; // Badge del recinto
+    const nombreCorto = cells[6].querySelector('.badge').textContent.trim();
+    const rol = cells[7].querySelector('.badge').textContent.trim();
+    
+    // Crear el modal HTML (SIN botones de edición)
+    const modalHTML = `
+        <div class="modal fade" id="dynamicDetailModal${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user"></i> Detalle del Trabajador: ${nombre}
+                            <span class="badge bg-warning text-dark ms-2">SUPERADMIN VIEW</span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-id-card"></i> Información Personal</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-4">ID:</dt>
+                                    <dd class="col-sm-8"><span class="badge bg-primary">${trabajadorId}</span></dd>
+                                    <dt class="col-sm-4">Nombre:</dt>
+                                    <dd class="col-sm-8">${nombre}</dd>
+                                    <dt class="col-sm-4">Email:</dt>
+                                    <dd class="col-sm-8"><code>${email}</code></dd>
+                                    <dt class="col-sm-4">RUT:</dt>
+                                    <dd class="col-sm-8"><code>${rut}</code></dd>
+                                    <dt class="col-sm-4">Profesión:</dt>
+                                    <dd class="col-sm-8">${profesion}</dd>
+                                    <dt class="col-sm-4">Código:</dt>
+                                    <dd class="col-sm-8"><span class="badge bg-secondary">${nombreCorto}</span></dd>
+                                    <dt class="col-sm-4">Rol:</dt>
+                                    <dd class="col-sm-8">${rol}</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-building"></i> Asignación de Ubicación</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-4">Sector:</dt>
+                                    <dd class="col-sm-8">${sector}</dd>
+                                    <dt class="col-sm-4">Recinto:</dt>
+                                    <dd class="col-sm-8">${recinto}</dd>
+                                </dl>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-crown text-warning"></i> 
+                                    <small><strong>Vista SUPERADMIN:</strong> Acceso completo a gestión de sectores y recintos.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById(`dynamicDetailModal${id}`));
+    modal.show();
+    
+    // Limpiar modal al cerrarlo
+    modal._element.addEventListener('hidden.bs.modal', function () {
+        modal._element.remove();
+    });
+}
+
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+
+// Función para filtrar recintos por sector seleccionado
+function filtrarRecintosPorSector(formType) {
+    let sectorSelect, recintoSelect;
+    
+    if (formType === 'add') {
+        sectorSelect = document.getElementById('sector_id_add');
+        recintoSelect = document.getElementById('recinto_id_add');
+    } else {
+        sectorSelect = document.getElementById('sector_id_' + formType);
+        recintoSelect = document.getElementById('recinto_id_' + formType);
+    }
+    
+    const sectorId = sectorSelect.value;
+    const recintoOptions = recintoSelect.querySelectorAll('option');
+    
+    // Limpiar selección actual
+    recintoSelect.value = '';
+    
+    // Mostrar/ocultar recintos basado en el sector seleccionado
+    recintoOptions.forEach(option => {
+        if (option.value === '') {
+            option.style.display = 'block'; // Mantener opción "Seleccionar Recinto"
+        } else {
+            const optionSectorId = option.getAttribute('data-sector-id');
+            if (sectorId === '' || optionSectorId === sectorId) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        }
+    });
+}
+
+// Validación para formulario de agregar trabajador
+function validarFormularioAdd() {
+    const sectorSelect = document.getElementById('sector_id_add');
+    
+    if (!sectorSelect.value) {
+        alert('Debe seleccionar un sector para el trabajador.');
+        sectorSelect.classList.add('is-invalid');
+        sectorSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+    
+    sectorSelect.classList.remove('is-invalid');
+    return true;
+}
+
+// Validación para formulario de editar trabajador
+function validarFormularioEdit(trabajadorId) {
+    const sectorSelect = document.getElementById('sector_id_' + trabajadorId);
+    
+    if (!sectorSelect.value) {
+        alert('Debe seleccionar un sector para el trabajador.');
+        sectorSelect.classList.add('is-invalid');
+        sectorSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+    
+    sectorSelect.classList.remove('is-invalid');
+    return true;
+}
+
+// Escuchar cambios en los selectores para limpiar errores dinámicamente
+document.addEventListener('DOMContentLoaded', function() {
+    // Para el modal de agregar
+    const addSectorSelect = document.getElementById('sector_id_add');
+    if (addSectorSelect) {
+        addSectorSelect.addEventListener('change', function() {
+            this.classList.remove('is-invalid');
+        });
+    }
+    
+    // Para los modales de editar
+    document.addEventListener('show.bs.modal', function(event) {
+        const modal = event.target;
+        if (modal.id.startsWith('editModal')) {
+            const trabajadorId = modal.id.replace('editModal', '');
+            const editSectorSelect = document.getElementById('sector_id_' + trabajadorId);
+            
+            if (editSectorSelect) {
+                editSectorSelect.addEventListener('change', function() {
+                    this.classList.remove('is-invalid');
+                });
+                
+                // Aplicar filtro inicial de recintos si hay sector seleccionado
+                if (editSectorSelect.value) {
+                    filtrarRecintosPorSector(trabajadorId);
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

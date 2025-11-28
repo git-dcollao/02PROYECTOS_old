@@ -1,0 +1,1775 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Proyectos Finalizados{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Mensajes de Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header con estadísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-clipboard-check"></i> Proyectos Finalizados</h2>
+                            <p class="mb-0">Listado de proyectos con estado finalizado</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ requerimientos|selectattr("id_estado", "equalto", 4)|list|length }}</h3>
+                                <small>Finalizados</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="sectorFilter">
+                <option value="">Todos los sectores</option>
+                {% for sector in sectores %}
+                <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="fechaFilter">
+                <option value="">Todas las fechas</option>
+                <option value="recientes">Más recientes</option>
+                <option value="antiguos">Más antiguos</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tabla de requerimientos en grilla -->
+    {% set reqs_finalizados = requerimientos|selectattr("id_estado", "equalto", 4)|list %}
+    {% if reqs_finalizados %}
+    <div class="card shadow">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list-alt"></i> Proyectos Finalizados</h5>
+                <span class="badge bg-primary" id="contadorRequerimientos">{{ reqs_finalizados|length }} Finalizados</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaRequerimientos">
+                    <thead class="table-primary">
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="15%">Nombre</th>
+                            <th width="10%">Fecha Ingreso</th>
+                            <th width="12%">Ubicación</th>
+                            <th width="25%">Descripción</th>
+                            <th width="10%">Estado</th>
+                            <th width="23%">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for requerimiento in reqs_finalizados %}
+                        <tr class="requerimiento-row" 
+                            data-nombre="{{ requerimiento.nombre|lower }}" 
+                            data-fecha="{{ requerimiento.fecha.strftime('%Y-%m-%d') }}"
+                            data-sector="{{ requerimiento.id_sector }}">
+                            <td>
+                                <span class="badge bg-primary">#{{ requerimiento.id }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ requerimiento.nombre }}</div>
+                                <small class="text-muted">{{ requerimiento.sector.nombre }}</small>
+                            </td>
+                            <td>
+                                <small>{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <span class="badge bg-secondary text-truncate" style="max-width: 120px;" title="{{ requerimiento.sector.nombre }}">{{ requerimiento.sector.nombre }}</span>
+                                    <span class="badge bg-outline-secondary text-truncate" style="max-width: 120px;" title="{{ requerimiento.tiporecinto.nombre }}">{{ requerimiento.tiporecinto.nombre }}</span>
+                                    <span class="badge bg-light text-dark text-truncate" style="max-width: 120px;" title="{{ requerimiento.recinto.nombre }}">{{ requerimiento.recinto.nombre }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 300px;" title="{{ requerimiento.descripcion }}">
+                                    {{ requerimiento.descripcion[:100] }}{% if requerimiento.descripcion|length > 100 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ requerimiento.estado.nombre }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalVerRequerimiento{{ requerimiento.id }}"
+                                            title="Ver detalles">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalSubirXLSX{{ requerimiento.id }}">
+                                        <i class="fas fa-file-excel"></i> Subir xlsx
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-outline-info btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalGantt{{ requerimiento.id }}"
+                                            onclick="cargarGantt({{ requerimiento.id }})">
+                                        <i class="fas fa-table"></i> Ver Carta Gantt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+        <h5 class="text-muted">¡No hay proyectos finalizados!</h5>
+        <p class="text-muted">No existen proyectos en estado finalizado actualmente.</p>
+    </div>
+    {% endif %}
+
+    <!-- Modales para cada requerimiento finalizado -->
+    {% for requerimiento in reqs_finalizados %}
+    <div class="modal fade" id="modalVerRequerimiento{{ requerimiento.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle"></i> Detalles del Proyecto #{{ requerimiento.id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Información General</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Nombre:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.nombre }}</dd>
+                                <dt class="col-sm-4">Fecha Ingreso:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</dd>
+                                <dt class="col-sm-4">Fecha Aceptación:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else 'N/A' }}</dd>
+                                <dt class="col-sm-4">Estado:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-info">{{ requerimiento.estado.nombre }}</span>
+                                </dd>
+                                <dt class="col-sm-4">Prioridad:</dt>
+                                <dd class="col-sm-8">
+                                    {{ requerimiento.prioridad.nombre if requerimiento.prioridad else 'N/A' }}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Ubicación</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Sector:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.sector.nombre }}</dd>
+                                <dt class="col-sm-4">Tipo Recinto:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.tiporecinto.nombre }}</dd>
+                                <dt class="col-sm-4">Recinto:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.recinto.nombre }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Descripción</h6>
+                            <div class="bg-light p-3 rounded mb-3">
+                                {{ requerimiento.descripcion }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Información del Proyecto</h6>
+                            <dl class="row">
+                                <dt class="col-sm-5">Tipología:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.tipologia.nombre if requerimiento.tipologia else 'N/A' }}</dd>
+                                <dt class="col-sm-5">Fuente de Financiamiento:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.financiamiento.nombre if requerimiento.financiamiento else 'N/A' }}</dd>
+                                <dt class="col-sm-5">Tipo de Proyecto:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.tipoproyecto.nombre if requerimiento.tipoproyecto else 'N/A' }}</dd>
+                                <dt class="col-sm-5">Observaciones:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.observacion or 'N/A' }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Equipo de Trabajo</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Profesión</th>
+                                            <th>Especialidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for equipo in requerimiento.equipos_trabajo %}
+                                        <tr>
+                                            <td>{{ equipo.trabajador.nombre }}</td>
+                                            <td>{{ equipo.trabajador.profesion or '' }}</td>
+                                            <td>{{ equipo.especialidad.nombre }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">
+                                                <i class="fas fa-users-slash"></i> No hay miembros asignados
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para subir XLSX por requerimiento -->
+    <div class="modal fade" id="modalSubirXLSX{{ requerimiento.id }}" tabindex="-1" aria-labelledby="modalSubirXLSXLabel{{ requerimiento.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" method="POST" action="{{ url_for('controllers.subir_gantt_xlsx', req_id=requerimiento.id) }}" enctype="multipart/form-data">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalSubirXLSXLabel{{ requerimiento.id }}">
+                        <i class="fas fa-file-excel"></i> Subir Carta Gantt (XLSX) para #{{ requerimiento.id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Mostrar mensaje de éxito/error si existe -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <div class="mb-3">
+                        <label for="archivoGantt{{ requerimiento.id }}" class="form-label">Seleccionar archivo XLSX</label>
+                        <input type="file" class="form-control" id="archivoGantt{{ requerimiento.id }}" name="archivo_gantt" accept=".xlsx" required>
+                        <div class="form-text">
+                            El archivo debe tener el formato de Carta Gantt (<code>.xlsx</code>).
+                        </div>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i>
+                        El archivo debe contener las columnas requeridas para la Carta Gantt.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Subir Archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Carta Gantt -->
+    <div class="modal fade" id="modalGantt{{ requerimiento.id }}" tabindex="-1" aria-labelledby="modalGanttLabel{{ requerimiento.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xxl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="modalGanttLabel{{ requerimiento.id }}">
+                        <i class="fas fa-table"></i> Carta Gantt - Proyecto #{{ requerimiento.id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="ganttLoader{{ requerimiento.id }}" class="text-center my-3">
+                        <div class="spinner-border text-info"></div>
+                        <div>Cargando actividades...</div>
+                    </div>
+                    
+                    <!-- Layout mejorado con columna de nombres visible -->
+                    <div class="container-fluid p-3" id="ganttMainContainer{{ requerimiento.id }}" style="display: none;">
+                        <!-- Sección superior: Tabla de actividades (colapsable) -->
+                        <div class="row mb-3" id="ganttTableSection{{ requerimiento.id }}">
+                            <div class="col-12">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-list"></i> Tabla Completa de Actividades
+                                        </h6>
+                                        <button class="btn btn-outline-light btn-sm" onclick="toggleTableVisibility({{ requerimiento.id }})" id="toggleTableBtn{{ requerimiento.id }}">
+                                            <i class="fas fa-eye-slash"></i> Ocultar
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0" id="ganttTableCard{{ requerimiento.id }}">
+                                        <div style="max-height: 250px; overflow-y: auto;">
+                                            <div id="ganttTable{{ requerimiento.id }}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sección principal: Gráfico Gantt con columna de nombres -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-chart-gantt"></i> Diagrama de Gantt con Nombres de Tareas
+                                        </h6>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-light btn-sm" onclick="toggleNamesColumn({{ requerimiento.id }})" id="toggleNamesBtn{{ requerimiento.id }}">
+                                                <i class="fas fa-columns"></i> Mostrar/Ocultar Nombres
+                                            </button>
+                                            <div id="ganttViewControls{{ requerimiento.id }}"></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="gantt-layout" id="ganttLayout{{ requerimiento.id }}">
+                                            <!-- Columna de nombres de tareas -->
+                                            <div class="gantt-names-column" id="ganttNamesColumn{{ requerimiento.id }}">
+                                                <div class="gantt-names-header">
+                                                    <div class="fw-bold text-center p-2 bg-light border-bottom">
+                                                        <i class="fas fa-tasks"></i> Nombres de Tareas
+                                                    </div>
+                                                </div>
+                                                <div class="gantt-names-body" id="ganttNamesBody{{ requerimiento.id }}">
+                                                    <!-- Se llenará dinámicamente -->
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Contenedor del gráfico Gantt -->
+                                            <div class="gantt-chart-container">
+                                                <div id="ganttContainer{{ requerimiento.id }}" style="width:100%; min-height:500px; display:none;">
+                                                    <div id="frappeGantt{{ requerimiento.id }}" style="width:100%; min-height:500px;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenedor para errores/mensajes -->
+                    <div id="ganttErrorContainer{{ requerimiento.id }}" class="p-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleCompactView({{ requerimiento.id }})">
+                        <i class="fas fa-compress-arrows-alt"></i> Vista Compacta
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Estadísticas adicionales -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
+                    <h4 class="text-primary">{{ requerimientos|selectattr("id_estado", "equalto", 4)|list|length }}</h4>
+                    <small class="text-muted">Finalizados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h4 class="text-success">{{ requerimientos|selectattr("id_estado", "equalto", 2)|list|length }}</h4>
+                    <small class="text-muted">Aceptados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                    <h4 class="text-danger">{{ requerimientos|selectattr("id_estado", "equalto", 9)|list|length }}</h4>
+                    <small class="text-muted">Rechazados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="fas fa-tasks fa-2x text-info mb-2"></i>
+                    <h4 class="text-info">{{ requerimientos|length }}</h4>
+                    <small class="text-muted">Total Requerimientos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+
+    <!-- Modal para subir XLSX -->
+    {# Elimina el modal global, ya que cada requerimiento tiene su propio modal con req_id #}
+    {#
+    <div class="modal fade" id="modalSubirXLSX" tabindex="-1" aria-labelledby="modalSubirXLSXLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" method="POST" action="{{ url_for('controllers.subir_gantt_xlsx') }}" enctype="multipart/form-data">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalSubirXLSXLabel">
+                        <i class="fas fa-file-excel"></i> Subir Carta Gantt (XLSX)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="archivoGantt" class="form-label">Seleccionar archivo XLSX</label>
+                        <input type="file" class="form-control" id="archivoGantt" name="archivo_gantt" accept=".xlsx" required>
+                        <div class="form-text">
+                            El archivo debe tener el formato de Carta Gantt (<code>.xlsx</code>).
+                        </div>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i>
+                        El archivo debe contener las columnas requeridas para la Carta Gantt.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Subir Archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    #}
+</div>
+
+{% block head %}
+    {{ super() }}
+    <!-- Agrega Frappe Gantt  -->
+    <link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
+    <script src="https://unpkg.com/frappe-gantt@0.5.0/dist/frappe-gantt.min.js"></script>
+    
+    <!-- 
+    <script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.css">-->
+{% endblock %}
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #5a9bff);
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.table td {
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.requerimiento-row:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Estilos específicos para Gantt - MEJORADOS PARA RESPONSIVIDAD */
+[id^="ganttContainer"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    min-height: 400px !important;
+    max-height: 600px !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+    padding: 15px !important;
+}
+
+[id^="frappeGantt"] {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    min-width: 1200px !important; /* Ancho mínimo para las columnas */
+    min-height: 400px !important;
+    overflow: visible !important;
+}
+
+/* Contenedor del SVG del Gantt */
+.gantt-container {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    min-width: 1200px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    background: white !important;
+    border-radius: 0.375rem !important;
+}
+
+/* SVG del Gantt */
+.gantt-container svg {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 1200px !important;
+    height: auto !important;
+}
+
+/* Elementos internos del Gantt */
+.gantt-container .bar,
+.gantt-container .bar-wrapper,
+.gantt-container .header,
+.gantt-container .grid-header,
+.gantt-container .grid-body {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Headers de fecha en el Gantt */
+.gantt-container .upper-text,
+.gantt-container .lower-text {
+    font-size: 12px !important;
+    fill: #495057 !important;
+}
+
+/* Ajustes para el layout de dos columnas */
+.gantt-chart-column {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    max-height: 70vh !important;
+}
+
+/* Scrollbar personalizada para el área del Gantt */
+[id^="ganttContainer"]::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+[id^="ganttContainer"]::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+[id^="ganttContainer"]::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+[id^="ganttContainer"]::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .modal-xxl {
+        max-width: 98vw !important;
+    }
+    
+    .col-lg-5 {
+        flex: 0 0 35% !important;
+    }
+    
+    
+    .border-end {
+        border-right: none !important;
+        border-bottom: 1px solid #dee2e6 !important;
+        margin-bottom: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    [id^="ganttContainer"] {
+        min-height: 300px !important;
+        max-height: 400px !important;
+    }
+}
+
+/* Estilos mejorados para modal más ancho */
+.modal-xxl {
+    max-width: 98vw !important;
+    width: 98vw !important;
+    margin: 1vh auto !important;
+}
+
+.modal-xxl .modal-content {
+    height: 98vh !important;
+    max-height: 98vh !important;
+    border-radius: 0.5rem !important;
+}
+
+.modal-xxl .modal-body {
+    height: calc(98vh - 120px) !important;
+    overflow-y: auto !important;
+    padding: 0 !important;
+}
+
+/* Ajustes específicos para pantallas grandes */
+@media (min-width: 1400px) {
+    .modal-xxl {
+        max-width: 98vw !important;
+        width: 98vw !important;
+    }
+    
+    .gantt-layout {
+        height: calc(98vh - 200px) !important;
+        max-height: none !important;
+    }
+    
+    .gantt-names-column {
+        flex: 0 0 350px !important;
+    }
+    
+    [id^="ganttContainer"] {
+        min-height: calc(98vh - 400px) !important;
+        max-height: calc(98vh - 400px) !important;
+    }
+}
+
+/* Para pantallas extra grandes (1920px+) */
+@media (min-width: 1920px) {
+    .modal-xxl {
+        max-width: 98vw !important;
+        width: 98vw !important;
+        margin: 1vh auto !important;
+    }
+    
+    .modal-xxl .modal-content {
+        height: 96vh !important;
+        max-height: 96vh !important;
+    }
+    
+    .modal-xxl .modal-body {
+        height: calc(96vh - 120px) !important;
+    }
+    
+    .gantt-layout {
+        height: calc(96vh - 250px) !important;
+    }
+    
+    .gantt-names-column {
+        flex: 0 0 400px !important;
+    }
+    
+    [id^="ganttContainer"] {
+        min-height: calc(96vh - 450px) !important;
+        max-height: calc(96vh - 450px) !important;
+    }
+    
+    /* Tabla de actividades más compacta en pantallas grandes */
+    #ganttTableSection .card-body {
+        max-height: 300px !important;
+    }
+}
+
+/* Mejoras para el scroll y contenido */
+.modal-xxl .modal-dialog-scrollable .modal-body {
+    overflow-y: visible !important;
+}
+
+.modal-xxl .container-fluid {
+    padding: 1rem !important;
+    height: 100% !important;
+}
+
+/* Asegurar que el gráfico use todo el espacio disponible */
+.gantt-chart-container {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+[id^="frappeGantt"] {
+    min-width: 1400px !important;
+}
+
+/* Scrollbar mejorada para pantallas grandes */
+.gantt-layout::-webkit-scrollbar,
+[id^="ganttContainer"]::-webkit-scrollbar {
+    height: 12px !important;
+    width: 12px !important;
+}
+
+.gantt-layout::-webkit-scrollbar-track,
+[id^="ganttContainer"]::-webkit-scrollbar-track {
+    background: #f8f9fa !important;
+    border-radius: 6px !important;
+}
+
+.gantt-layout::-webkit-scrollbar-thumb,
+[id^="ganttContainer"]::-webkit-scrollbar-thumb {
+    background: #6c757d !important;
+    border-radius: 6px !important;
+    border: 2px solid #f8f9fa !important;
+}
+
+.gantt-layout::-webkit-scrollbar-thumb:hover,
+[id^="ganttContainer"]::-webkit-scrollbar-thumb:hover {
+    background: #495057 !important;
+}
+
+/* Estilos específicos para texto en las barras del Gantt */
+.gantt-container .bar-label,
+.gantt-container .bar-wrapper text {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    fill: white !important;
+    text-anchor: start !important;
+    dominant-baseline: middle !important;
+    pointer-events: none !important;
+}
+
+/* Asegurar que el texto sea visible en barras oscuras */
+.gantt-container .bar rect + text {
+    fill: white !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+}
+
+/* Estilos para barras más altas para acomodar texto */
+.gantt-container .bar {
+    min-height: 25px !important;
+}
+
+/* Mejorar contraste del texto */
+.gantt-container .bar-progress + text,
+.gantt-container .bar-progress ~ text {
+    fill: rgba(255, 255, 255, 0.95) !important;
+    stroke: rgba(0, 0, 0, 0.2) !important;
+    stroke-width: 0.5px !important;
+    paint-order: stroke fill !important;
+}
+
+/* Estilos para el layout mejorado con columna de nombres */
+.gantt-layout {
+    display: flex;
+    height: 600px;
+    max-height: 70vh;
+}
+
+.gantt-names-column {
+    flex: 0 0 300px;
+    border-right: 2px solid #dee2e6;
+    background: #f8f9fa;
+    overflow-y: auto;
+    display: block;
+}
+
+.gantt-names-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+}
+
+.gantt-names-body {
+    padding: 0;
+}
+
+.gantt-name-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.gantt-name-item:hover {
+    background-color: #e3f2fd;
+}
+
+.gantt-name-item.active {
+    background-color: #bbdefb;
+    border-left: 4px solid #2196f3;
+}
+
+.gantt-name-item .task-id {
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.gantt-name-item .task-name {
+    font-weight: 500;
+    color: #333;
+    margin-top: 2px;
+}
+
+.gantt-name-item .task-dates {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.gantt-chart-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Ocultar columna de nombres */
+.gantt-names-column.hidden {
+    display: none;
+}
+
+.gantt-names-column.hidden + .gantt-chart-container {
+    flex: 1;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+    .gantt-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .gantt-names-column {
+        flex: 0 0 200px;
+        border-right: none;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .gantt-chart-container {
+        min-height: 400px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidad de búsqueda y filtrado
+    const searchInput = document.getElementById('searchInput');
+    const sectorFilter = document.getElementById('sectorFilter');
+    const fechaFilter = document.getElementById('fechaFilter');
+    const contadorRequerimientos = document.getElementById('contadorRequerimientos');
+    
+    function filtrarRequerimientos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const sectorId = sectorFilter.value;
+        const fechaOrden = fechaFilter.value;
+        const filas = document.querySelectorAll('.requerimiento-row');
+        let contadorVisible = 0;
+        let filasArray = Array.from(filas);
+        
+        // Filtrar por búsqueda y sector
+        filasArray.forEach(fila => {
+            const nombre = fila.getAttribute('data-nombre');
+            const descripcion = fila.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+            const sector = fila.getAttribute('data-sector');
+            
+            const coincideBusqueda = nombre.includes(searchTerm) || descripcion.includes(searchTerm);
+            const coincideSector = !sectorId || sector === sectorId;
+            
+            if (coincideBusqueda && coincideSector) {
+                fila.style.display = '';
+                contadorVisible++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Ordenar por fecha
+        if (fechaOrden) {
+            filasArray = filasArray.filter(fila => fila.style.display !== 'none');
+            filasArray.sort((a, b) => {
+                const fechaA = new Date(a.getAttribute('data-fecha'));
+                const fechaB = new Date(b.getAttribute('data-fecha'));
+                
+                if (fechaOrden === 'recientes') {
+                    return fechaB - fechaA;
+                } else {
+                    return fechaA - fechaB;
+                }
+            });
+            
+            const tbody = document.querySelector('#tablaRequerimientos tbody');
+            filasArray.forEach(fila => tbody.appendChild(fila));
+        }
+        
+        // Actualizar contador
+        if (contadorRequerimientos) {
+            contadorRequerimientos.textContent = `${contadorVisible} Finalizados`;
+        }
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filtrarRequerimientos);
+    if (sectorFilter) sectorFilter.addEventListener('change', filtrarRequerimientos);
+    if (fechaFilter) fechaFilter.addEventListener('change', filtrarRequerimientos);
+    
+    // Auto-dismiss alerts
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+
+function cargarGantt(reqId) {
+    const loader = document.getElementById(`ganttLoader${reqId}`);
+    const errorContainer = document.getElementById(`ganttErrorContainer${reqId}`);
+    const mainContainer = document.getElementById(`ganttMainContainer${reqId}`);
+    const tableDiv = document.getElementById(`ganttTable${reqId}`);
+    const ganttContainer = document.getElementById(`ganttContainer${reqId}`);
+    const ganttDiv = document.getElementById(`frappeGantt${reqId}`);
+    
+    // Reset inicial
+    loader.style.display = 'block';
+    mainContainer.style.display = 'none';
+    errorContainer.innerHTML = '';
+    tableDiv.innerHTML = '';
+    ganttContainer.style.display = 'none';
+    ganttDiv.innerHTML = '';
+
+    fetch(`/gantt_data/${reqId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            loader.style.display = 'none';
+            
+            if (!data.success) {
+                errorContainer.innerHTML = `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.error}
+                </div>`;
+                return;
+            }
+            
+            if (!data.actividades || data.actividades.length === 0) {
+                errorContainer.innerHTML = `<div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> No hay actividades en la Carta Gantt.
+                    <br><small>Sube un archivo XLSX primero usando el botón "Subir xlsx".</small>
+                </div>`;
+                return;
+            }
+
+            // Mostrar contenedor principal
+            mainContainer.style.display = 'block';
+            
+            // Mostrar tabla con las actividades (columna izquierda)
+            mostrarTablaActividades(data.actividades, tableDiv);
+            
+            // Mostrar columna de nombres (lateral)
+            const namesBody = document.getElementById(`ganttNamesBody${reqId}`);
+            mostrarColumnaNombres(data.actividades, namesBody);
+            
+            // Procesar datos para Gantt
+            const tasksProcesadas = procesarDatosParaGantt(data.actividades);
+            
+            if (tasksProcesadas.length === 0) {
+                errorContainer.innerHTML = `<div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i> No se pudieron procesar las actividades para el gráfico Gantt.
+                    <br><small>Verifica que las fechas estén en formato correcto.</small>
+                </div>`;
+                return;
+            }
+
+            console.log('📊 Tasks procesadas para Gantt:', tasksProcesadas);
+
+            // Renderizar gráfico Gantt (columna derecha)
+            renderizarGanttInmediato(reqId, tasksProcesadas, ganttContainer, ganttDiv);
+        })
+        .catch(err => {
+            console.error('❌ Error al cargar datos del Gantt:', err);
+            loader.style.display = 'none';
+            errorContainer.innerHTML = `<div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> Error al cargar la Carta Gantt: ${err.message}
+                <br><small>Verifica que el archivo XLSX esté correctamente subido.</small>
+            </div>`;
+        });
+}
+
+function mostrarTablaActividades(actividades, tableDiv) {
+    const columnas = [
+        { key: 'ID', label: 'ID', width: '50px' },
+        { key: 'EDT', label: 'EDT', width: '80px' },
+        { key: 'Nombre de tarea', label: 'Actividad', width: 'auto' },
+        { key: 'Comienzo', label: 'Inicio', width: '90px' },
+        { key: 'Fin', label: 'Fin', width: '90px' },
+        { key: 'Duración', label: 'Dur.', width: '60px' }
+    ];
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm table-striped gantt-table-compact">
+                <thead class="table-primary sticky-top">
+                    <tr>
+                        ${columnas.map(col => `<th style="width: ${col.width}; font-size: 0.7rem;">${col.label}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    actividades.forEach((act, idx) => {
+        html += '<tr>';
+        columnas.forEach(col => {
+            let valor = '';
+            switch(col.key) {
+                case 'ID':
+                    valor = act['ID'] !== undefined && act['ID'] !== '' ? act['ID'] : (idx + 1);
+                    break;
+                case 'EDT':
+                    valor = act['EDT'] ?? act['E.D.T.'] ?? act['Edt'] ?? '';
+                    break;
+                case 'Nombre de tarea':
+                    const nombre = act['Nombre de tarea'] ?? act['Actividad'] ?? act['Nombre'] ?? '';
+                    valor = `<span title="${nombre}" class="text-truncate d-inline-block" style="max-width: 200px;">${nombre}</span>`;
+                    break;
+                case 'Comienzo':
+                    const inicio = act['Comienzo'] ?? act['Inicio'] ?? act['Start'] ?? act['Fecha Inicio'] ?? '';
+                    valor = formatearFechaTabla(inicio);
+                    break;
+                case 'Fin':
+                    const fin = act['Fin'] ?? act['End'] ?? act['Fecha Fin'] ?? '';
+                    valor = formatearFechaTabla(fin);
+                    break;
+                case 'Duración':
+                    valor = act['Duración'] ?? act['Duration'] ?? '';
+                    break;
+                default:
+                    valor = act[col.key] ?? '';
+            }
+            html += `<td style="font-size: 0.65rem; padding: 0.25rem;">${valor}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += `</tbody></table>
+        <div class="small text-muted mt-2 text-center">
+            Total: ${actividades.length} actividades
+        </div>
+    </div>`;
+    
+    tableDiv.innerHTML = html;
+}
+
+function formatearFechaTabla(fecha) {
+    if (!fecha) return '';
+    
+    try {
+        const fechaObj = new Date(fecha);
+        if (!isNaN(fechaObj.getTime())) {
+            return fechaObj.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit'
+            });
+        }
+    } catch (e) {
+        // Si falla, devolver la fecha original
+    }
+    
+    return fecha.toString().substring(0, 10);
+}
+
+function truncarTextoParaBarra(texto, maxLength) {
+    if (!texto) return '';
+    if (texto.length <= maxLength) return texto;
+    
+    // Truncar de manera inteligente en espacios si es posible
+    const truncated = texto.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    if (lastSpace > maxLength * 0.7) { // Si hay un espacio en el último 30%
+        return truncated.substring(0, lastSpace) + '...';
+    }
+    
+    return truncated + '...';
+}
+
+function formatearFechaParaGantt(fechaStr) {
+    if (!fechaStr) return null;
+    
+    // Si ya está en formato YYYY-MM-DD
+    if (typeof fechaStr === 'string' && fechaStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return fechaStr;
+    }
+    
+    try {
+        // Intentar múltiples formatos de fecha
+        let fecha = null;
+        
+        // Formato DD/MM/YYYY o DD-MM-YYYY
+        if (typeof fechaStr === 'string' && fechaStr.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/)) {
+            const partes = fechaStr.split(/[\/\-]/);
+            fecha = new Date(partes[2], partes[1] - 1, partes[0]); // año, mes-1, día
+        } else {
+            fecha = new Date(fechaStr);
+        }
+        
+        if (!isNaN(fecha.getTime())) {
+            return fecha.toISOString().split('T')[0];
+        }
+    } catch (e) {
+        console.error('❌ Error al formatear fecha:', fechaStr, e);
+    }
+    
+    return null;
+}
+
+function determinarProgreso(actividad) {
+    // Buscar indicadores de progreso en los datos
+    const progreso = actividad['Progreso'] || 
+                    actividad['% Completado'] || 
+                    actividad['Progress'] ||
+                    actividad['Porcentaje completado'] ||
+                    actividad['% completado'];
+                    
+    if (progreso !== undefined && progreso !== null && progreso !== '') {
+        const num = parseFloat(progreso);
+        if (!isNaN(num)) {
+            return Math.min(100, Math.max(0, num));
+        }
+    }
+    return 0; // Por defecto sin progreso
+}
+
+function procesarDependencias(dependencias) {
+    if (!dependencias || dependencias === '') return '';
+    
+    // Convertir a string y limpiar
+    const depStr = dependencias.toString().trim();
+    
+    // Si es un número simple, convertir a formato de dependencia
+    if (/^\d+$/.test(depStr)) {
+        return `task_${depStr}`;
+    }
+    
+    // Si ya tiene formato task_, mantenerlo
+    if (depStr.startsWith('task_')) {
+        return depStr;
+    }
+    
+    return depStr;
+}
+
+// Función mejorada de debug
+function debugGanttContainer(reqId) {
+    const ganttContainer = document.getElementById(`ganttContainer${reqId}`);
+    const ganttDiv = document.getElementById(`frappeGantt${reqId}`);
+    
+    console.log('🔍 Debug COMPLETO del contenedor Gantt:');
+    console.log('Container:', ganttContainer);
+    console.log('Div:', ganttDiv);
+    
+    if (ganttDiv) {
+        const svgs = ganttDiv.querySelectorAll('svg');
+        const containers = ganttDiv.querySelectorAll('.gantt-container');
+        
+        console.log('SVGs encontrados:', svgs);
+        console.log('Contenedores encontrados:', containers);
+        console.log('HTML completo:', ganttDiv.innerHTML);
+        
+        // Intentar forzar visualización manual
+        svgs.forEach(svg => {
+            svg.style.display = 'block';
+            svg.style.visibility = 'visible';
+            svg.style.opacity = '1';
+        });
+        
+        containers.forEach(container => {
+            container.style.display = 'block';
+            container.style.visibility = 'visible';
+            container.style.opacity = '1';
+        });
+    }
+}
+
+// Función mejorada para reintentar
+function reintentarGantt(reqId) {
+    console.log('🔄 Reintentando renderizado del Gantt...');
+    
+    // Debug antes de reintentar
+    debugGanttContainer(reqId);
+    
+    // Limpiar estado previo
+    const ganttContainer = document.getElementById(`ganttContainer${reqId}`);
+    const ganttDiv = document.getElementById(`frappeGantt${reqId}`);
+    
+    if (ganttContainer) {
+        ganttContainer.style.display = 'none';
+        ganttContainer.style.visibility = 'hidden';
+    }
+    
+    if (ganttDiv) {
+        ganttDiv.innerHTML = '';
+    }
+    
+    // Eliminar referencia previa
+    delete window[`gantt_${reqId}`];
+    
+    // Recargar datos
+    setTimeout(() => {
+        cargarGantt(reqId);
+    }, 100);
+}
+
+// Funciones adicionales para el nuevo layout vertical
+function toggleTableVisibility(reqId) {
+    const tableSection = document.getElementById(`ganttTableSection${reqId}`);
+    const toggleBtn = document.getElementById(`toggleTableBtn${reqId}`);
+    
+    if (tableSection.style.display === 'none') {
+        // Mostrar tabla
+        tableSection.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar';
+        toggleBtn.title = 'Ocultar tabla completa';
+    } else {
+        // Ocultar tabla
+        tableSection.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Mostrar Tabla';
+        toggleBtn.title = 'Mostrar tabla completa';
+    }
+}
+
+function toggleNamesColumn(reqId) {
+    const namesColumn = document.getElementById(`ganttNamesColumn${reqId}`);
+    const toggleBtn = document.getElementById(`toggleNamesBtn${reqId}`);
+    
+    if (namesColumn.classList.contains('hidden')) {
+        // Mostrar columna
+        namesColumn.classList.remove('hidden');
+        toggleBtn.innerHTML = '<i class="fas fa-columns"></i> Ocultar Nombres';
+        toggleBtn.title = 'Ocultar columna de nombres';
+    } else {
+        // Ocultar columna
+        namesColumn.classList.add('hidden');
+        toggleBtn.innerHTML = '<i class="fas fa-expand-arrows-alt"></i> Mostrar Nombres';
+        toggleBtn.title = 'Mostrar columna de nombres';
+    }
+    
+    // Reajustar el gráfico Gantt
+    setTimeout(() => {
+        const gantt = window[`gantt_${reqId}`];
+        if (gantt && gantt.refresh) {
+            gantt.refresh();
+        }
+    }, 100);
+    
+    // Sincronizar scroll después de mostrar/ocultar columna
+    setTimeout(() => {
+        sincronizarScrollVertical(reqId);
+    }, 300);
+}
+
+// ✨ NUEVA FUNCIÓN: Sincronización de scroll vertical
+function sincronizarScrollVertical(reqId) {
+    const namesColumn = document.getElementById(`ganttNamesColumn${reqId}`);
+    const ganttContainer = document.getElementById(`ganttContainer${reqId}`);
+    
+    if (!namesColumn || !ganttContainer) {
+        console.warn('⚠️ No se pudieron encontrar los contenedores para sincronizar scroll');
+        return;
+    }
+    
+    let sincronizandoNames = false;
+    let sincronizandoGantt = false;
+    
+    // Sincronizar scroll de nombres hacia gráfico
+    namesColumn.addEventListener('scroll', function() {
+        if (sincronizandoGantt) return;
+        sincronizandoNames = true;
+        
+        const scrollRatio = this.scrollTop / (this.scrollHeight - this.clientHeight);
+        const ganttMaxScroll = ganttContainer.scrollHeight - ganttContainer.clientHeight;
+        ganttContainer.scrollTop = scrollRatio * ganttMaxScroll;
+        
+        setTimeout(() => { sincronizandoNames = false; }, 10);
+    });
+    
+    // Sincronizar scroll del gráfico hacia nombres
+    ganttContainer.addEventListener('scroll', function() {
+        if (sincronizandoNames) return;
+        sincronizandoGantt = true;
+        
+        const scrollRatio = this.scrollTop / (this.scrollHeight - this.clientHeight);
+        const namesMaxScroll = namesColumn.scrollHeight - namesColumn.clientHeight;
+        namesColumn.scrollTop = scrollRatio * namesMaxScroll;
+        
+        setTimeout(() => { sincronizandoGantt = false; }, 10);
+    });
+    
+    console.log('🔄 Sincronización de scroll vertical configurada');
+}
+
+function mostrarColumnaNombres(actividades, namesBody) {
+    let html = '';
+    
+    actividades.forEach((act, idx) => {
+        const nombreCompleto = act['Nombre de tarea'] || act['Actividad'] || act['Nombre'] || `Tarea ${idx + 1}`;
+        const edt = act['EDT'] || act['E.D.T.'] || act['Edt'] || (idx + 1);
+        const inicio = formatearFechaTabla(act['Comienzo'] || act['Inicio'] || act['Start'] || act['Fecha Inicio'] || '');
+        const fin = formatearFechaTabla(act['Fin'] || act['End'] || act['Fecha Fin'] || '');
+        const duracion = act['Duración'] || act['Duration'] || '';
+        
+        html += `
+            <div class="gantt-name-item gantt-task-row" data-task-index="${idx}" onclick="highlightTask(${idx})" title="${nombreCompleto}">
+                <div class="task-id">
+                    <i class="fas fa-hashtag"></i> ${edt}
+                    ${duracion ? `<span class="float-end">${duracion}</span>` : ''}
+                </div>
+                <div class="task-name">${nombreCompleto}</div>
+                <div class="task-dates">
+                    <i class="fas fa-calendar-alt"></i> ${inicio} 
+                    ${fin ? `<i class="fas fa-arrow-right mx-1"></i> ${fin}` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    namesBody.innerHTML = html;
+    
+    // Configurar altura fija para alineación perfecta
+    configurarAlturasTareas(actividades.length);
+}
+
+// ✨ NUEVA FUNCIÓN: Configurar alturas consistentes
+function configurarAlturasTareas(numTareas) {
+    const ALTURA_TAREA = 50; // Altura fija por tarea para alineación perfecta
+    const ALTURA_HEADER = 50; // Altura del header del Gantt
+    
+    // Aplicar estilos CSS dinámicamente
+    const style = document.createElement('style');
+    style.id = 'gantt-sync-styles';
+    
+    // Remover estilos previos si existen
+    const existingStyle = document.getElementById('gantt-sync-styles');
+    if (existingStyle) {
+        existingStyle.remove();
+    }
+    
+    style.textContent = `
+        /* Altura fija para elementos de nombres */
+        .gantt-task-row {
+            height: ${ALTURA_TAREA}px !important;
+            min-height: ${ALTURA_TAREA}px !important;
+            max-height: ${ALTURA_TAREA}px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Ajustar padding para centrar contenido */
+        .gantt-task-row .task-id,
+        .gantt-task-row .task-name,
+        .gantt-task-row .task-dates {
+            margin: 1px 0 !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Sincronizar altura total de la columna de nombres */
+        .gantt-names-body {
+            min-height: ${(numTareas * ALTURA_TAREA) + ALTURA_HEADER}px !important;
+        }
+        
+        /* Ajustar elementos del gráfico Gantt para alineación */
+        .gantt-container .bar-wrapper {
+            height: ${ALTURA_TAREA}px !important;
+        }
+        
+        .gantt-container .bar {
+            margin-top: ${(ALTURA_TAREA - 25) / 2}px !important; /* Centrar barra de 25px */
+        }
+        
+        /* Ajustar grid lines para alineación */
+        .gantt-container .grid-row {
+            height: ${ALTURA_TAREA}px !important;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    console.log(`📏 Configuradas alturas para ${numTareas} tareas (${ALTURA_TAREA}px c/u)`);
+}
+
+function highlightTask(taskIndex) {
+    // Remover highlight previo
+    document.querySelectorAll('.gantt-name-item.active').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Agregar highlight al item clickeado
+    const clickedItem = document.querySelector(`[data-task-index="${taskIndex}"]`);
+    if (clickedItem) {
+        clickedItem.classList.add('active');
+        
+        // ✨ SCROLL SINCRONIZADO AL HACER CLICK
+        scrollToTask(taskIndex, clickedItem);
+    }
+}
+
+// ✨ NUEVA FUNCIÓN: Scroll suave a tarea específica
+function scrollToTask(taskIndex, clickedItem) {
+    const ALTURA_TAREA = 50;
+    const targetPosition = taskIndex * ALTURA_TAREA;
+    
+    // Scroll en la columna de nombres
+    const namesColumn = clickedItem.closest('.gantt-names-column');
+    if (namesColumn) {
+        namesColumn.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+        });
+    }
+    
+    // Buscar el contenedor del Gantt y hacer scroll sincronizado
+    const ganttLayout = clickedItem.closest('.gantt-layout');
+    if (ganttLayout) {
+        const ganttContainer = ganttLayout.querySelector('[id^="ganttContainer"]');
+        if (ganttContainer) {
+            ganttContainer.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+    
+    console.log(`📍 Scroll hacia tarea ${taskIndex} en posición ${targetPosition}px`);
+}
+
+// Agrega esta función antes de cargarGantt o al final del bloque <script>
+function procesarDatosParaGantt(actividades) {
+    // Procesa las actividades para el formato de Frappe Gantt
+    return actividades
+        .filter(act => {
+            const tieneNombre = act && (act['Nombre de tarea'] || act['Actividad'] || act['Nombre']);
+            const tieneInicio = act['Inicio'] || act['Comienzo'] || act['Start'] || act['Fecha Inicio'];
+            const tieneFin = act['Fin'] || act['End'] || act['Fecha Fin'];
+            return tieneNombre && tieneInicio && tieneFin;
+        })
+        .map((act, idx) => {
+            const fechaInicio = formatearFechaParaGantt(
+                act['Inicio'] || act['Comienzo'] || act['Start'] || act['Fecha Inicio']
+            );
+            const fechaFin = formatearFechaParaGantt(
+                act['Fin'] || act['End'] || act['Fecha Fin']
+            );
+            const nombreCompleto = act['Nombre de tarea'] || act['Actividad'] || act['Nombre'] || `Tarea ${idx + 1}`;
+            const nombreParaBarra = truncarTextoParaBarra(nombreCompleto, 25);
+            return {
+                id: `task_${act['EDT'] || act['ID'] || (idx + 1)}`,
+                name: nombreParaBarra,
+                fullName: nombreCompleto,
+                start: fechaInicio,
+                end: fechaFin,
+                progress: determinarProgreso(act),
+                dependencies: procesarDependencias(act['Predecesoras'])
+            };
+        });
+}
+
+function renderizarGanttInmediato(reqId, tasks, ganttContainer, ganttDiv) {
+    const modal = document.getElementById(`modalGantt${reqId}`);
+    
+    // Función que efectivamente renderiza el gráfico
+    const ejecutarRenderizado = function() {
+        try {
+            console.log('🎯 Iniciando renderizado del gráfico Gantt...');
+            
+            // CONFIGURAR contenedor con scroll horizontal
+            ganttContainer.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 100% !important;
+                min-height: 450px !important;
+                max-height: 600px !important;
+                overflow-x: auto !important;
+                overflow-y: auto !important;
+                background-color: #ffffff !important;
+                border: 1px solid #dee2e6 !important;
+                border-radius: 0.375rem !important;
+                padding: 15px !important;
+                position: relative !important;
+            `;
+            
+            ganttDiv.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                min-width: 1200px !important;
+                min-height: 400px !important;
+                overflow: visible !important;
+            `;
+            
+            ganttDiv.innerHTML = '';
+            
+            console.log('📐 Estado del contenedor antes de crear Gantt:', {
+                containerDisplay: getComputedStyle(ganttContainer).display,
+                containerWidth: ganttContainer.offsetWidth,
+                containerHeight: ganttContainer.offsetHeight,
+                tasksCount: tasks.length
+            });
+
+            // Configuración optimizada del Gantt con altura fija por tarea
+            const ganttConfig = {
+                header_height: 50,
+                column_width: 30,
+                step: 24,
+                view_modes: ['Day', 'Week', 'Month'],
+                bar_height: 25,
+                bar_corner_radius: 3,
+                arrow_curve: 5,
+                padding: 18,
+                view_mode: 'Week',
+                date_format: 'YYYY-MM-DD',
+                language: 'es',
+                custom_popup_html: function(task) {
+                    const start = new Date(task._start);
+                    const end = new Date(task._end);
+                    const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                    
+                    return `
+                        <div class="details-container" style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h6 style="margin: 0 0 8px 0; color: #333;">${task.fullName || task.name}</h6>
+                            <div style="font-size: 12px; color: #666;">
+                                <div><strong>Inicio:</strong> ${start.toLocaleDateString('es-ES')}</div>
+                                <div><strong>Fin:</strong> ${end.toLocaleDateString('es-ES')}</div>
+                                <div><strong>Duración:</strong> ${duration} días</div>
+                                <div><strong>Progreso:</strong> ${task.progress}%</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+
+            // Crear el gráfico Gantt
+            const ganttInstance = new Gantt(`#frappeGantt${reqId}`, tasks, ganttConfig);
+            
+            console.log('✅ Gráfico Gantt creado exitosamente');
+            
+            // Ajustar el contenedor después de la creación
+            setTimeout(() => {
+                console.log('🔧 Ajustando contenedor después de creación...');
+                
+                const ganttSvg = ganttDiv.querySelector('svg');
+                const ganttContainerElement = ganttDiv.querySelector('.gantt-container');
+                
+                if (ganttSvg) {
+                    console.log('📊 SVG encontrado, aplicando estilos...');
+                    
+                    const svgWidth = ganttSvg.getAttribute('width') || ganttSvg.getBoundingClientRect().width;
+                    console.log('📏 Ancho del SVG:', svgWidth);
+                    
+                    ganttDiv.style.minWidth = Math.max(1200, parseInt(svgWidth) + 50) + 'px';
+                    
+                    ganttSvg.style.cssText = `
+                        display: block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        min-width: ${svgWidth}px !important;
+                    `;
+                }
+                
+                if (ganttContainerElement) {
+                    ganttContainerElement.style.cssText = `
+                        display: block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        width: 100% !important;
+                        overflow: visible !important;
+                        background: white !important;
+                    `;
+                }
+                
+                // ✨ SINCRONIZACIÓN DE SCROLL VERTICAL ✨
+                sincronizarScrollVertical(reqId);
+                
+            }, 300);
+            
+            // Guardar referencia y agregar controles
+            window[`gantt_${reqId}`] = ganttInstance;
+            agregarControlesVista(reqId, ganttInstance);
+            
+        } catch (ganttError) {
+            console.error('❌ Error al renderizar Gantt:', ganttError);
+            ganttContainer.style.display = 'block';
+            ganttDiv.innerHTML = `<div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> Error al renderizar el gráfico: ${ganttError.message}
+                <br><button class="btn btn-sm btn-warning mt-2" onclick="reintentarGantt(${reqId})">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
+            </div>`;
+        }
+    };
+
+    // Si el modal ya está visible, renderizar inmediatamente
+    if (modal.classList.contains('show')) {
+        console.log('🚀 Modal ya visible, renderizando inmediatamente...');
+        setTimeout(ejecutarRenderizado, 200);
+    } else {
+        console.log('⏳ Esperando a que el modal se muestre...');
+        const handleModalShown = function() {
+            console.log('🎉 Modal mostrado, renderizando Gantt...');
+            setTimeout(ejecutarRenderizado, 300);
+            modal.removeEventListener('shown.bs.modal', handleModalShown);
+        };
+        
+        modal.addEventListener('shown.bs.modal', handleModalShown);
+    }
+
+    // Limpiar cuando se cierre el modal
+    const handleModalHidden = function() {
+        console.log('🧹 Limpiando Gantt al cerrar modal...');
+        ganttDiv.innerHTML = '';
+        ganttContainer.style.display = 'none';
+        delete window[`gantt_${reqId}`];
+        modal.removeEventListener('hidden.bs.modal', handleModalHidden);
+    };
+    
+    modal.addEventListener('hidden.bs.modal', handleModalHidden);
+}
+
+function agregarControlesVista(reqId, gantt) {
+    const controlsContainer = document.getElementById(`ganttViewControls${reqId}`);
+    
+    if (controlsContainer.children.length > 0) {
+        console.log('⚠️ Controles ya existen, saltando...');
+        return;
+    }
+    
+    const controlesHTML = `
+        <div class="gantt-view-controls">
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="cambiarVistaGantt('Day', ${reqId})" title="Vista diaria">
+                <i class="fas fa-calendar-day"></i> Día
+            </button>
+            <button type="button" class="btn btn-light btn-sm" onclick="cambiarVistaGantt('Week', ${reqId})" title="Vista semanal">
+                <i class="fas fa-calendar-week"></i> Semana
+            </button>
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="cambiarVistaGantt('Month', ${reqId})" title="Vista mensual">
+                <i class="fas fa-calendar-alt"></i> Mes
+            </button>
+        </div>
+    `;
+    
+    controlsContainer.innerHTML = controlesHTML;
+    console.log('✅ Controles de vista agregados');
+}
+
+// ✨ MEJORAR función de cambio de vista para mantener sincronización
+function cambiarVistaGantt(modo, reqId) {
+    const gantt = window[`gantt_${reqId}`];
+    if (gantt && gantt.change_view_mode) {
+        try {
+            gantt.change_view_mode(modo);
+            console.log(`✅ Vista cambiada a: ${modo}`);
+            
+            // Actualizar botones activos
+            const controlsContainer = document.getElementById(`ganttViewControls${reqId}`);
+            const botones = controlsContainer.querySelectorAll('.btn');
+            
+            botones.forEach(btn => {
+                btn.classList.remove('btn-light');
+                btn.classList.add('btn-outline-light');
+            });
+            
+            const botonActivo = controlsContainer.querySelector(`[onclick*="${modo}"]`);
+            if (botonActivo) {
+                botonActivo.classList.remove('btn-outline-light');
+                botonActivo.classList.add('btn-light');
+            }
+            
+            // ✨ RE-SINCRONIZAR después del cambio de vista
+            setTimeout(() => {
+                sincronizarScrollVertical(reqId);
+            }, 500);
+            
+        } catch (error) {
+            console.error('❌ Error al cambiar vista:', error);
+        }
+    } else {
+        console.warn('⚠️ Instancia de Gantt no encontrada para reqId:', reqId);
+    }
+}
+
+function toggleCompactView(reqId) {
+    const tableSection = document.getElementById(`ganttTableSection${reqId}`);
+    const toggleBtn = document.querySelector(`[onclick="toggleCompactView(${reqId})"]`);
+    
+    if (tableSection.style.display === 'none') {
+        // Mostrar vista normal
+        tableSection.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="fas fa-compress-arrows-alt"></i> Vista Compacta';
+        toggleBtn.title = 'Activar vista compacta';
+    } else {
+        // Activar vista compacta (solo Gantt)
+        tableSection.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-expand-arrows-alt"></i> Vista Normal';
+        toggleBtn.title = 'Mostrar vista normal';
+    }
+    
+    // Forzar re-renderizado del Gantt
+    const gantt = window[`gantt_${reqId}`];
+    if (gantt && gantt.refresh) {
+        setTimeout(() => {
+            gantt.refresh();
+        }, 100);
+    }
+}
+</script>
+{% endblock content %}

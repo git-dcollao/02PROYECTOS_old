@@ -1,0 +1,437 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Gestión de Backups - Sistema Avanzado{% endblock %}
+
+{% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<!-- CSS Global OBLIGATORIO -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+<!-- CSS Específico -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/backup-manager-v2.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="col-12">
+    <div class="backup-manager-container">
+        <!-- Header -->
+        <div class="backup-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1><i class="fas fa-database"></i> Gestión de Backups</h1>
+                    <p class="text-muted">Sistema de respaldo y restauración de base de datos</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="btnCreateBackup">
+                        <i class="fas fa-plus"></i> Crear Backup
+                    </button>
+                    <button class="btn btn-success" id="btnUploadBackup">
+                        <i class="fas fa-upload"></i> Subir Backup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="totalBackups">0</div>
+                <div class="stat-label">Total Backups</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-success">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="lastBackupDate">-</div>
+                <div class="stat-label">Último Backup</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-warning">
+                <i class="fas fa-hdd"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="totalSize">0 MB</div>
+                <div class="stat-label">Espacio Total</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-info">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">
+                    <span class="badge bg-success" id="dbStatus">Activo</span>
+                </div>
+                <div class="stat-label">Estado BD</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backups Table -->
+    <div class="backups-section">
+        <div class="section-header">
+            <h3><i class="fas fa-list"></i> Backups Disponibles</h3>
+            <div class="section-actions">
+                <input type="text" class="form-control form-control-sm" id="searchBackup" placeholder="🔍 Buscar backup...">
+                <button class="btn btn-outline-secondary btn-sm" id="btnRefresh">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="backupsTable">
+                <thead>
+                    <tr>
+                        <th width="5%">
+                            <input type="checkbox" id="selectAll">
+                        </th>
+                        <th width="30%"><i class="fas fa-file"></i> Archivo</th>
+                        <th width="15%"><i class="fas fa-calendar"></i> Fecha</th>
+                        <th width="10%"><i class="fas fa-hdd"></i> Tamaño</th>
+                        <th width="15%"><i class="fas fa-info-circle"></i> Descripción</th>
+                        <th width="10%"><i class="fas fa-check-circle"></i> Estado</th>
+                        <th width="15%" class="text-end"><i class="fas fa-cogs"></i> Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="backupsList">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-3 text-muted">Cargando backups...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <span id="paginationInfo">0-0 de 0</span> backups
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                    <!-- Se genera dinámicamente -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Crear Backup -->
+<div class="modal fade" id="modalCreateBackup" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Crear Nuevo Backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formCreateBackup">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del Backup</label>
+                        <input type="text" class="form-control" id="backupName" placeholder="Ej: Backup_Mensual_Nov2025">
+                        <small class="text-muted">Dejar vacío para generar nombre automático</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="backupDescription" rows="3" placeholder="Describe el propósito de este backup..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeData" checked>
+                            <label class="form-check-label" for="includeData">
+                                <strong>Incluir datos</strong> (estructura + datos)
+                            </label>
+                        </div>
+                        <small class="text-muted">Si se desmarca, solo se guardará la estructura de las tablas</small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="compressBackup" checked>
+                            <label class="form-check-label" for="compressBackup">
+                                <strong>Comprimir backup</strong> (.sql.gz)
+                            </label>
+                        </div>
+                        <small class="text-muted">Reduce el tamaño del archivo hasta 10x</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Crear Backup
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Subir Backup -->
+<div class="modal fade" id="modalUploadBackup" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-upload"></i> Subir Backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h4>Arrastra tu archivo aquí</h4>
+                    <p class="text-muted">o haz clic para seleccionar</p>
+                    <input type="file" id="fileInput" accept=".sql,.sql.gz,.zip" hidden>
+                    <button type="button" class="btn btn-primary mt-3" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-folder-open"></i> Seleccionar Archivo
+                    </button>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> Formatos aceptados: .sql, .sql.gz, .zip
+                        </small>
+                    </div>
+                </div>
+                <div id="fileInfo" class="file-info mt-3" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="fas fa-file-archive text-primary"></i>
+                            <span id="fileName" class="ms-2"></span>
+                        </div>
+                        <div>
+                            <span id="fileSize" class="badge bg-secondary"></span>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="display: none;" id="uploadProgress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmUpload" disabled>
+                    <i class="fas fa-upload"></i> Subir Archivo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Progreso de Restauración -->
+<div class="modal fade" id="modalRestoreProgress" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sync-alt fa-spin"></i> Restaurando Backup
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress-section mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">Progreso General</span>
+                        <span class="fw-bold" id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             id="progressBar" 
+                             style="width: 0%">
+                            <span id="progressText">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time-stats mb-4">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <i class="fas fa-clock text-primary"></i>
+                                <div class="stat-value" id="elapsedTime">00:00</div>
+                                <div class="stat-label">Transcurrido</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <i class="fas fa-hourglass-half text-warning"></i>
+                                <div class="stat-value" id="estimatedTime">--:--</div>
+                                <div class="stat-label">Estimado</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <i class="fas fa-tachometer-alt text-success"></i>
+                                <div class="stat-value" id="throughput">- stmt/s</div>
+                                <div class="stat-label">Velocidad</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="execution-stats">
+                    <h6 class="mb-3"><i class="fas fa-chart-bar"></i> Estadísticas de Ejecución</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <span class="stat-icon text-success"><i class="fas fa-check-circle"></i></span>
+                                <span class="stat-label">Ejecutados:</span>
+                                <span class="stat-number text-success" id="stmtExecuted">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <span class="stat-icon text-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                                <span class="stat-label">Omitidos:</span>
+                                <span class="stat-number text-warning" id="stmtSkipped">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <span class="stat-icon text-danger"><i class="fas fa-clock"></i></span>
+                                <span class="stat-label">Timeouts:</span>
+                                <span class="stat-number text-danger" id="stmtTimeouts">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <span class="stat-icon text-info"><i class="fas fa-redo"></i></span>
+                                <span class="stat-label">Reintentos:</span>
+                                <span class="stat-number text-info" id="stmtRetries">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="current-phase mt-4">
+                    <h6><i class="fas fa-tasks"></i> Fase Actual</h6>
+                    <div class="alert alert-info mb-0" id="currentPhase">
+                        <i class="fas fa-spinner fa-spin"></i> Iniciando restauración...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btnCancelRestore" disabled>
+                    <i class="fas fa-stop"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" id="btnCloseProgress" style="display: none;" data-bs-dismiss="modal">
+                    <i class="fas fa-check"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmación de Eliminación -->
+<div class="modal fade" id="modalDeleteConfirm" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>¡Atención!</strong> Esta acción es irreversible.
+                </div>
+                <p>Estás a punto de eliminar el backup:</p>
+                <div class="bg-light p-3 rounded mb-3">
+                    <strong id="deleteBackupName"></strong>
+                </div>
+                <p>Para confirmar, ingresa el siguiente código de seguridad:</p>
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark text-white" id="deleteCode"></span>
+                        <input type="text" class="form-control" id="deleteCodeInput" placeholder="Ingresa el código">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDelete" disabled>
+                    <i class="fas fa-trash"></i> Eliminar Backup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmación de Restauración -->
+<div class="modal fade" id="modalRestoreConfirm" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirmar Restauración</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formRestoreConfirm">
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-radiation"></i>
+                        <strong>¡ADVERTENCIA CRÍTICA!</strong> Esta acción eliminará TODOS los datos actuales de la base de datos.
+                    </div>
+                    <p>Vas a restaurar el backup:</p>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <strong id="restoreBackupName"></strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="cleanDatabase">
+                            <label class="form-check-label" for="cleanDatabase">
+                                <strong>Limpiar base de datos antes de restaurar</strong>
+                            </label>
+                            <small class="d-block text-muted">Recomendado para evitar conflictos</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmConsequences" required>
+                            <label class="form-check-label" for="confirmConsequences">
+                                He leído y acepto las consecuencias de esta acción
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Escribe <code>RESTAURAR</code> para confirmar:</label>
+                        <input type="text" class="form-control" id="restoreConfirmText" placeholder="RESTAURAR" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña de tu cuenta:</label>
+                        <input type="password" class="form-control" id="userPassword" placeholder="Tu contraseña" required>
+                        <small class="text-muted">Requerida para operaciones críticas</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" id="btnConfirmRestore" disabled>
+                        <i class="fas fa-sync"></i> Restaurar Ahora
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    </div>
+    <!-- /backup-manager-container -->
+</div>
+<!-- /col-12 -->
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/backup-manager-v2.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}

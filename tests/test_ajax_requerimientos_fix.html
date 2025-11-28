@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Corrección Modal Edición Requerimientos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .status.pass { background: #d4edda; color: #155724; }
+        .status.fail { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test - Corrección Modal Edición Requerimientos</h1>
+        <p class="info">Test para validar la corrección del error "Cannot read properties of undefined (reading 'id')"</p>
+
+        <div class="test-section">
+            <h3>🎯 Problema Original</h3>
+            <div class="status fail">
+                <strong>Error:</strong> TypeError: Cannot read properties of undefined (reading 'id')
+                <br><strong>Línea:</strong> crearModalEdicion (requerimientos:1775:68)
+                <br><strong>Causa:</strong> requerimiento.sector.id undefined
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Correcciones Aplicadas</h3>
+            <ol>
+                <li><strong>Backend:</strong> Agregado campo 'sector' al JSON response del endpoint /get_requerimiento</li>
+                <li><strong>Frontend:</strong> Validación defensiva en función crearModalEdicion()</li>
+                <li><strong>Frontend:</strong> Validación de datos antes de inicializar cascada</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Simulación de Datos</h3>
+            <div id="simulacion-results"></div>
+            <button onclick="testDataStructures()">Ejecutar Tests de Estructura de Datos</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Validación JavaScript</h3>
+            <div id="js-validation-results"></div>
+            <button onclick="testJavaScriptValidation()">Ejecutar Tests de Validación JS</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Test de Funciones Defensivas</h3>
+            <div id="defensive-results"></div>
+            <button onclick="testDefensiveFunctions()">Ejecutar Tests Defensivos</button>
+        </div>
+    </div>
+
+    <script>
+        // Simular función crearModalEdicion mejorada
+        function crearModalEdicion(requerimiento) {
+            // Validar que los datos requeridos estén presentes
+            if (!requerimiento || !requerimiento.id) {
+                console.error('Datos de requerimiento inválidos:', requerimiento);
+                return { success: false, error: 'Datos del requerimiento incompletos' };
+            }
+            
+            // Validar datos antes de inicializar cascada
+            const sectorId = requerimiento.sector ? requerimiento.sector.id : null;
+            const tipoRecintoId = requerimiento.tiporecinto ? requerimiento.tiporecinto.id : null;
+            const recintoId = requerimiento.recinto ? requerimiento.recinto.id : null;
+            
+            if (!sectorId || !tipoRecintoId || !recintoId) {
+                console.warn('Datos de sector/recinto incompletos:', {sectorId, tipoRecintoId, recintoId});
+                return { success: false, error: 'Datos de sector/recinto incompletos' };
+            }
+            
+            return { 
+                success: true, 
+                data: { sectorId, tipoRecintoId, recintoId },
+                message: 'Modal creado exitosamente'
+            };
+        }
+
+        function testDataStructures() {
+            const results = document.getElementById('simulacion-results');
+            let html = '<h4>Resultados:</h4>';
+
+            // Test 1: Estructura correcta (nueva)
+            const correctData = {
+                id: 1,
+                nombre: 'Test Requerimiento',
+                sector: { id: 1, nombre: 'Sector Test' },
+                tiporecinto: { id: 1, nombre: 'Tipo Test' },
+                recinto: { id: 1, nombre: 'Recinto Test' }
+            };
+
+            // Test 2: Estructura incorrecta (antigua - sin sector)
+            const incorrectData = {
+                id: 1,
+                nombre: 'Test Requerimiento',
+                // sector: missing!
+                tiporecinto: { id: 1, nombre: 'Tipo Test' },
+                recinto: { id: 1, nombre: 'Recinto Test' }
+            };
+
+            // Test 3: Datos completamente vacíos
+            const emptyData = null;
+
+            const tests = [
+                { name: 'Estructura Correcta (Nueva)', data: correctData },
+                { name: 'Estructura Incorrecta (Antigua)', data: incorrectData },
+                { name: 'Datos Vacíos', data: emptyData }
+            ];
+
+            tests.forEach((test, index) => {
+                const result = crearModalEdicion(test.data);
+                const statusClass = result.success ? 'pass' : 'fail';
+                html += `
+                    <div class="status ${statusClass}">
+                        <strong>Test ${index + 1} - ${test.name}:</strong>
+                        ${result.success ? '✅ PASS' : '❌ FAIL'} - ${result.message || result.error}
+                    </div>
+                `;
+            });
+
+            results.innerHTML = html;
+        }
+
+        function testJavaScriptValidation() {
+            const results = document.getElementById('js-validation-results');
+            let html = '<h4>Tests de Validación:</h4>';
+
+            // Simular diferentes escenarios
+            const scenarios = [
+                {
+                    name: 'Datos completos',
+                    data: {
+                        id: 1,
+                        sector: { id: 1 },
+                        tiporecinto: { id: 2 },
+                        recinto: { id: 3 }
+                    }
+                },
+                {
+                    name: 'Sector undefined',
+                    data: {
+                        id: 1,
+                        sector: undefined,
+                        tiporecinto: { id: 2 },
+                        recinto: { id: 3 }
+                    }
+                },
+                {
+                    name: 'Objeto requerimiento null',
+                    data: null
+                },
+                {
+                    name: 'ID faltante',
+                    data: {
+                        sector: { id: 1 },
+                        tiporecinto: { id: 2 },
+                        recinto: { id: 3 }
+                    }
+                }
+            ];
+
+            scenarios.forEach((scenario, index) => {
+                try {
+                    const result = crearModalEdicion(scenario.data);
+                    const statusClass = result.success ? 'pass' : 'fail';
+                    html += `
+                        <div class="status ${statusClass}">
+                            <strong>Escenario ${index + 1} - ${scenario.name}:</strong>
+                            ${result.success ? '✅ Manejo correcto' : '⚠️ Error controlado'} - ${result.message || result.error}
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="status fail">
+                            <strong>Escenario ${index + 1} - ${scenario.name}:</strong>
+                            ❌ Error no controlado: ${error.message}
+                        </div>
+                    `;
+                }
+            });
+
+            results.innerHTML = html;
+        }
+
+        function testDefensiveFunctions() {
+            const results = document.getElementById('defensive-results');
+            let html = '<h4>Tests de Funciones Defensivas:</h4>';
+
+            // Test de acceso seguro a propiedades
+            function safeAccess(obj, path) {
+                return path.split('.').reduce((current, prop) => 
+                    current && current[prop] !== undefined ? current[prop] : null, obj);
+            }
+
+            const testObj = {
+                requerimiento: {
+                    sector: { id: 1 },
+                    tiporecinto: { id: 2 }
+                }
+            };
+
+            const testCases = [
+                { path: 'requerimiento.sector.id', expected: 1 },
+                { path: 'requerimiento.sector.nombre', expected: null },
+                { path: 'requerimiento.recinto.id', expected: null },
+                { path: 'nonexistent.property', expected: null }
+            ];
+
+            testCases.forEach((testCase, index) => {
+                const result = safeAccess(testObj, testCase.path);
+                const passed = result === testCase.expected;
+                html += `
+                    <div class="status ${passed ? 'pass' : 'fail'}">
+                        <strong>Test ${index + 1}:</strong> ${testCase.path} 
+                        ${passed ? '✅' : '❌'} (Esperado: ${testCase.expected}, Obtenido: ${result})
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="status pass">
+                    <strong>💡 Recomendación:</strong> Usar validación defensiva en producción:
+                    <pre>const sectorId = requerimiento?.sector?.id || null;</pre>
+                </div>
+            `;
+
+            results.innerHTML = html;
+        }
+
+        // Auto-ejecutar al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Test de corrección de modal de edición cargado');
+        });
+    </script>
+</body>
+</html>

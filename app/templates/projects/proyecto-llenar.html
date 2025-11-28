@@ -1,0 +1,835 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Proyectos - Llenar Información{% endblock %}
+
+{% block head %}
+<!-- CSS Global OBLIGATORIO - DEBE IR PRIMERO -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+<!-- CSS Específico de la Página -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/proyecto-llenar.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-project-diagram"></i> Gestión de Proyectos - Asignación de EDT</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">Suba archivos XLSX con información de proyectos para asignar a requerimientos en estado "En Desarrollo".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel de subida de archivo -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload"></i> Subir Archivo XLSX</h5>
+                </div>
+                <div class="card-body">
+                    <form id="uploadForm" action="/procesar-proyecto-xlsx" 
+                          method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label for="archivo_xlsx" class="form-label">Seleccionar archivo XLSX</label>
+                            <input type="file" class="form-control" id="archivo_xlsx" name="archivo_xlsx" 
+                                   accept=".xlsx,.xls" required>
+                            <div class="form-text">
+                                <strong>Formato requerido:</strong><br>
+                                El archivo debe contener exactamente estas columnas:
+                                <ul class="small mt-2 mb-2">
+                                    <li><strong>Id</strong>: Identificador único de la tarea</li>
+                                    <li><strong>Nivel de esquema</strong>: Nivel jerárquico (1=Proyecto, 2=Fase, 3=Tarea)</li>
+                                    <li><strong>EDT</strong>: Estructura de Desglose del Trabajo (ej: 1, 1.1, 1.1.1)</li>
+                                    <li><strong>Nombre de tarea</strong>: Descripción de la actividad</li>
+                                    <li><strong>Duración</strong>: Duración en días</li>
+                                    <li><strong>Comienzo</strong>: Fecha de inicio (formato: YYYY-MM-DD)</li>
+                                    <li><strong>Fin</strong>: Fecha de finalización (formato: YYYY-MM-DD)</li>
+                                    <li><strong>Predecesoras</strong>: IDs de tareas predecesoras separadas por coma</li>
+                                    <li><strong>Nombres de los recursos</strong>: Recursos asignados</li>
+                                </ul>
+                                <div class="alert alert-info small">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Las columnas pueden tener variaciones menores en mayúsculas/minúsculas y espacios.
+                                    <br>
+                                    <strong>Ejemplo:</strong> "Nivel de Esquema", "nivel de esquema", "NivelDeEsquema" son válidos.
+                                    <br>
+                                    <a href="/descargar-plantilla-gantt" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-download"></i> Descargar Plantilla de Ejemplo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-success" id="procesarBtn">
+                                <i class="fas fa-upload"></i> Procesar Archivo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de requerimientos disponibles -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> 
+                        Requerimientos Disponibles (Estado: En Desarrollo)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if requerimientos_disponibles %}
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Fecha</th>
+                                    <th>Proyecto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in requerimientos_disponibles %}
+                                <tr>
+                                    <td>{{ req.id }}</td>
+                                    <td>{{ req.nombre }}</td>
+                                    <td>{{ req.fecha.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if req.proyecto %}
+                                            <span class="badge bg-success">{{ req.proyecto }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Sin asignar</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        No hay requerimientos en estado "En Desarrollo" disponibles.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de proyectos asignados -->
+    {% if requerimientos_asignados %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Requerimientos con Proyecto Asignado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre Requerimiento</th>
+                                    <th>Proyecto (EDT)</th>
+                                    <th>Fecha Asignación</th>
+                                    <th>Actividades</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in requerimientos_asignados %}
+                                <tr>
+                                    <td>{{ req.id }}</td>
+                                    <td>{{ req.nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ req.proyecto }}</span>
+                                    </td>
+                                    <td>{{ req.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ req.actividades_proyecto.count() }} actividades
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/ver-gantt-proyecto/{{ req.id }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-gantt"></i> Ver Gantt
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                onclick="verDetalleProyecto({{ req.id }})">
+                                            <i class="fas fa-eye"></i> Detalles
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para asignar proyectos -->
+<div class="modal fade" id="asignarProyectoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Asignar Requerimientos a Proyectos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Se encontraron nuevos proyectos (nivel_esquema = 1). 
+                   Asigne cada proyecto a un requerimiento disponible:</p>
+                <div id="proyectosParaAsignar">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarAsignaciones()">
+                    <i class="fas fa-save"></i> Guardar Asignaciones
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalles del proyecto -->
+<div class="modal fade" id="detalleProyectoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles del Proyecto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalleProyectoContent">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let proyectosNuevos = [];
+let asignacionesTemporales = {};
+
+// NUEVA ARQUITECTURA: Función directa sin eventos de formulario
+function procesarArchivo() {
+    console.log('🎬 DEBUG: FUNCIÓN DIRECTA - Iniciando procesamiento de archivo');
+    
+    const form = document.getElementById('uploadForm');
+    const formData = new FormData(form);
+    const button = document.getElementById('procesarBtn');
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    button.disabled = true;
+    
+    console.log('🚀 DEBUG: Iniciando fetch a:', form.action);
+    console.log('🚀 DEBUG: FormData:', formData);
+    console.log('🚀 DEBUG: File input value:', document.getElementById('archivo_xlsx').files[0]?.name);
+    
+    // VALIDACIÓN CRÍTICA: Verificar que se seleccionó un archivo
+    const fileInput = document.getElementById('archivo_xlsx');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        console.error('❌ DEBUG: NO HAY ARCHIVO SELECCIONADO');
+        alert('Por favor, seleccione un archivo XLSX antes de procesar.');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    console.log('✅ DEBUG: Archivo seleccionado:', fileInput.files[0].name);
+    console.log('✅ DEBUG: Tamaño del archivo:', fileInput.files[0].size, 'bytes');
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'  // Incluir cookies de sesión
+    })
+    .then(response => {
+        console.log('🔍 DEBUG FETCH: Response received');
+        console.log('🔍 DEBUG FETCH: Response status:', response.status);
+        console.log('🔍 DEBUG FETCH: Response ok:', response.ok);
+        console.log('🔍 DEBUG FETCH: Response headers:', Object.fromEntries(response.headers.entries()));
+        console.log('🔍 DEBUG FETCH: Response URL:', response.url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        console.log('🔍 DEBUG CONTENT-TYPE:', contentType);
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('❌ DEBUG: Content-Type no es JSON:', contentType);
+            throw new Error('Response is not JSON');
+        }
+        
+        console.log('✅ DEBUG: Content-Type válido, procesando JSON...');
+        const jsonPromise = response.json();
+        console.log('🔍 DEBUG JSON: Promise creada:', jsonPromise);
+        return jsonPromise;
+    })
+    .then(data => {
+        console.log('🎯 DEBUG JSON PARSED: Datos recibidos del parsing JSON');
+        console.log('🎯 DEBUG JSON PARSED: Tipo de data:', typeof data);
+        console.log('🎯 DEBUG JSON PARSED: Data completa:', data);
+        
+        console.log('🔍 DEBUG: Respuesta JSON parseada exitosamente');
+        console.log('🔍 DEBUG: Tipo de data:', typeof data);
+        console.log('🔍 DEBUG: Respuesta completa del servidor:', data);
+        console.log('🔍 DEBUG: data.success =', data.success);
+        console.log('🔍 DEBUG: data.accion =', data.accion);
+        console.log('🔍 DEBUG: data.proyectos_nuevos =', data.proyectos_nuevos);
+        console.log('🔍 DEBUG: Cantidad proyectos nuevos:', data.proyectos_nuevos?.length);
+        
+        if (data.success) {
+            console.log('✅ DEBUG: data.success es true, evaluando acción...');
+            console.log('🔍 DEBUG CRITICAL: Tipo de proyectos_nuevos:', typeof data.proyectos_nuevos);
+            console.log('🔍 DEBUG CRITICAL: Es array?', Array.isArray(data.proyectos_nuevos));
+            console.log('🔍 DEBUG CRITICAL: Valor exacto:', data.proyectos_nuevos);
+            console.log('🔍 DEBUG CRITICAL: Length:', data.proyectos_nuevos?.length);
+            console.log('🔍 DEBUG CRITICAL: Condition check 1:', !!data.proyectos_nuevos);
+            console.log('🔍 DEBUG CRITICAL: Condition check 2:', data.proyectos_nuevos?.length > 0);
+            console.log('🔍 DEBUG CRITICAL: Full condition result:', data.proyectos_nuevos && data.proyectos_nuevos.length > 0);
+            
+            // 🚀 FLUJO OPTIMIZADO: Sin selección de proyecto principal
+            // Ir directo al modal de asignaciones si hay proyectos detectados
+            if (data.proyectos_nuevos && data.proyectos_nuevos.length > 0) {
+                console.log('✅ DEBUG: Abriendo modal con', data.proyectos_nuevos.length, 'proyectos');
+                console.log('✅ DEBUG: Requerimientos disponibles:', data.requerimientos_disponibles?.length || 0);
+                proyectosNuevos = data.proyectos_nuevos;
+                mostrarModalAsignacion(data.proyectos_nuevos, data.requerimientos_disponibles);
+            } else {
+                console.log('⚠️ DEBUG: No hay proyectos_nuevos, recargando página');
+                console.log('🔍 DEBUG: Verificación - ¿Existe proyectos_nuevos?', !!data.proyectos_nuevos);
+                console.log('🔍 DEBUG: Verificación - ¿Length > 0?', data.proyectos_nuevos?.length > 0);
+                console.log('❌ DEBUG CRITICAL: ENTRANDO EN RELOAD - ESTO ES EL PROBLEMA');
+                
+                // TEMPORAL: No recargar inmediatamente, mostrar error para debugging
+                alert('ERROR: No se detectaron proyectos válidos. Ver consola para detalles.');
+                // location.reload(); // Recargar si no hay proyectos nuevos para asignar
+            }
+        } else {
+            // Mostrar error más detallado
+            const errorMsg = data.message || 'Error desconocido al procesar el archivo';
+            
+            // Crear modal de error más informativo
+            let errorModal = `
+                <div class="modal fade" id="errorModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Error al procesar archivo</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-danger">
+                                    <strong>Error:</strong> ${errorMsg}
+                                </div>
+                                <h6>Formato correcto requerido:</h6>
+                                <ul class="small">
+                                    <li><strong>Id</strong>: Número entero único</li>
+                                    <li><strong>Nivel de esquema</strong>: 1 (Proyecto), 2 (Fase), 3 (Tarea)</li>
+                                    <li><strong>EDT</strong>: Estructura jerárquica (ej: 1, 1.1, 1.1.1)</li>
+                                    <li><strong>Nombre de tarea</strong>: Texto descriptivo</li>
+                                    <li><strong>Duración</strong>: Días (número entero)</li>
+                                    <li><strong>Comienzo/Fin</strong>: Fechas en formato YYYY-MM-DD</li>
+                                    <li><strong>Predecesoras</strong>: IDs separados por coma (opcional)</li>
+                                    <li><strong>Nombres de los recursos</strong>: Texto (opcional)</li>
+                                </ul>
+                                <div class="mt-3">
+                                    <a href="/descargar-plantilla-gantt" class="btn btn-primary">
+                                        <i class="fas fa-download"></i> Descargar Plantilla de Ejemplo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal existente si existe
+            const existingModal = document.getElementById('errorModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al DOM
+            document.body.insertAdjacentHTML('beforeend', errorModal);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+            modal.show();
+        }
+    })
+    .catch(error => {
+        console.error('❌ DEBUG CATCH: Error completo:', error);
+        console.error('❌ DEBUG CATCH: Error name:', error.name);
+        console.error('❌ DEBUG CATCH: Error message:', error.message);
+        console.error('❌ DEBUG CATCH: Error stack:', error.stack);
+        
+        let errorMessage = 'Error al procesar el archivo';
+        
+        if (error.message.includes('HTTP error! status: 404')) {
+            errorMessage = 'Endpoint no encontrado. Verifique la configuración del servidor.';
+        } else if (error.message.includes('Response is not JSON')) {
+            errorMessage = 'El servidor devolvió una respuesta no válida. Puede que haya un problema de autenticación.';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Error de conexión con el servidor. Verifique que el servidor esté funcionando.';
+        }
+        
+        // Crear modal de error más detallado
+        let errorModal = `
+            <div class="modal fade" id="fetchErrorModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Error de Conexión</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> ${errorMessage}
+                            </div>
+                            <details>
+                                <summary>Detalles técnicos</summary>
+                                <pre class="mt-2 p-2 bg-light border rounded">${error.message}</pre>
+                            </details>
+                            <div class="mt-3">
+                                <h6>Posibles soluciones:</h6>
+                                <ul>
+                                    <li>Verifique que esté logueado correctamente</li>
+                                    <li>Refresque la página e intente nuevamente</li>
+                                    <li>Verifique que el archivo tenga el formato correcto</li>
+                                    <li>Contacte al administrador si el problema persiste</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" onclick="location.reload()">Recargar Página</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remover modal existente si existe
+        const existingModal = document.getElementById('fetchErrorModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Agregar nuevo modal al DOM
+        document.body.insertAdjacentHTML('beforeend', errorModal);
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('fetchErrorModal'));
+        modal.show();
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// NUEVA ARQUITECTURA: Event listener directo sin form submit
+document.getElementById('procesarBtn').addEventListener('click', function(e) {
+    console.log('🎬 DEBUG: CLICK DIRECTO - Llamando procesarArchivo()');
+    e.preventDefault(); // Por seguridad
+    e.stopPropagation();
+    procesarArchivo();
+});
+
+function mostrarModalAsignacion(proyectos, requerimientos) {
+    console.log('🎯 DEBUG MODAL: mostrarModalAsignacion llamada');
+    console.log('🎯 DEBUG MODAL: proyectos recibidos:', proyectos);
+    console.log('🎯 DEBUG MODAL: requerimientos recibidos:', requerimientos);
+    console.log('🎯 DEBUG MODAL: Cantidad proyectos:', proyectos?.length);
+    console.log('🎯 DEBUG MODAL: Cantidad requerimientos:', requerimientos?.length);
+    
+    const container = document.getElementById('proyectosParaAsignar');
+    console.log('🎯 DEBUG MODAL: Container encontrado:', !!container);
+    if (!container) {
+        console.error('❌ DEBUG MODAL: No se encontró el contenedor proyectosParaAsignar');
+        return;
+    }
+    
+    container.innerHTML = '';
+    proyectos.forEach((proyecto, index) => {
+        const proyectoDiv = document.createElement('div');
+        proyectoDiv.className = 'card mb-3';
+        proyectoDiv.innerHTML = `
+            <div class="card-body">
+                <h6 class="card-title">Proyecto: ${proyecto.nombre_tarea}</h6>
+                <p class="card-text">
+                    <strong>EDT:</strong> ${proyecto.edt}<br>
+                    <strong>Duración:</strong> ${proyecto.duracion} días<br>
+                    <strong>Fecha Inicio:</strong> ${proyecto.fecha_inicio}<br>
+                    <strong>Fecha Fin:</strong> ${proyecto.fecha_fin}
+                </p>
+                <div class="mb-2">
+                    <label class="form-label">Asignar a Requerimiento:</label>
+                    <select class="form-select" id="req_${index}" onchange="actualizarAsignacion('${proyecto.edt}|${proyecto.nombre_tarea.replace(/'/g, "&#39;")}', this.value)">
+                        <option value="">Seleccionar requerimiento...</option>
+                        ${requerimientos.map(req => 
+                            `<option value="${req.id}">${req.titulo}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+            </div>
+        `;
+        container.appendChild(proyectoDiv);
+    });
+    
+    // Mostrar el modal
+    console.log('🎯 DEBUG MODAL: Intentando mostrar modal asignarProyectoModal');
+    
+    // Verificar que Bootstrap esté disponible
+    console.log('🎯 DEBUG MODAL: Bootstrap disponible:', typeof bootstrap !== 'undefined');
+    console.log('🎯 DEBUG MODAL: Bootstrap.Modal disponible:', typeof bootstrap?.Modal !== 'undefined');
+    
+    const modalElement = document.getElementById('asignarProyectoModal');
+    console.log('🎯 DEBUG MODAL: Modal element encontrado:', !!modalElement);
+    console.log('🎯 DEBUG MODAL: Modal element:', modalElement);
+    
+    if (!modalElement) {
+        console.error('❌ DEBUG MODAL: No se encontró el elemento asignarProyectoModal');
+        return;
+    }
+    
+    if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
+        console.error('❌ DEBUG MODAL: Bootstrap o Bootstrap.Modal no están disponibles');
+        return;
+    }
+    
+    console.log('🎯 DEBUG MODAL: Creando instancia de Bootstrap Modal...');
+    const modal = new bootstrap.Modal(modalElement);
+    
+    console.log('🎯 DEBUG MODAL: Mostrando modal...');
+    modal.show();
+    
+    console.log('✅ DEBUG MODAL: Modal.show() ejecutado exitosamente');
+}
+
+function actualizarAsignacion(edt, requerimientoId) {
+    console.log('📝 DEBUG ASIGNACION: Función actualizarAsignacion() llamada');
+    console.log('📝 DEBUG ASIGNACION: edt:', edt);
+    console.log('📝 DEBUG ASIGNACION: requerimientoId:', requerimientoId);
+    console.log('📝 DEBUG ASIGNACION: Estado actual asignacionesTemporales:', asignacionesTemporales);
+    
+    if (requerimientoId) {
+        asignacionesTemporales[edt] = requerimientoId;
+        console.log('✅ DEBUG ASIGNACION: Agregada asignación - edt:', edt, 'requerimiento:', requerimientoId);
+    } else {
+        delete asignacionesTemporales[edt];
+        console.log('🗑️ DEBUG ASIGNACION: Eliminada asignación para edt:', edt);
+    }
+    
+    console.log('📝 DEBUG ASIGNACION: Estado final asignacionesTemporales:', asignacionesTemporales);
+    console.log('📝 DEBUG ASIGNACION: Total asignaciones:', Object.keys(asignacionesTemporales).length);
+}
+
+function guardarAsignaciones() {
+    console.log('🎯 DEBUG GUARDAR: Función guardarAsignaciones() iniciada');
+    console.log('🎯 DEBUG GUARDAR: asignacionesTemporales:', asignacionesTemporales);
+    console.log('🎯 DEBUG GUARDAR: Object.keys(asignacionesTemporales):', Object.keys(asignacionesTemporales));
+    console.log('🎯 DEBUG GUARDAR: Object.keys(asignacionesTemporales).length:', Object.keys(asignacionesTemporales).length);
+    
+    if (Object.keys(asignacionesTemporales).length === 0) {
+        console.error('❌ DEBUG GUARDAR: No hay asignaciones temporales');
+        alert('Debe asignar al menos un proyecto a un requerimiento');
+        return;
+    }
+    
+    console.log('🎯 Enviando asignaciones:', asignacionesTemporales);
+    
+    // Obtener el token CSRF del formulario
+    const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
+    console.log('🎯 DEBUG GUARDAR: Elemento CSRF token:', csrfTokenElement);
+    
+    if (!csrfTokenElement) {
+        console.error('❌ DEBUG GUARDAR: No se encontró el token CSRF');
+        alert('Error: No se encontró el token CSRF');
+        return;
+    }
+    
+    const csrfToken = csrfTokenElement.value;
+    console.log('🎯 DEBUG GUARDAR: CSRF token:', csrfToken);
+    
+    const payload = {
+        asignaciones: asignacionesTemporales,
+        requerimiento_para_procesar: null, // Sin requerimiento principal - procesar todas las asignaciones
+        csrf_token: csrfToken
+    };
+    
+    console.log('🚀 DEBUG GUARDAR: Payload completo:', payload);
+    
+    console.log('🚀 DEBUG FETCH: Iniciando fetch a /guardar-asignaciones-proyecto');
+    
+    fetch('/guardar-asignaciones-proyecto', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        console.log('✅ DEBUG FETCH: Response recibido');
+        console.log('✅ DEBUG FETCH: Response status:', response.status);
+        console.log('✅ DEBUG FETCH: Response ok:', response.ok);
+        console.log('✅ DEBUG FETCH: Response headers:', response.headers);
+        console.log('✅ DEBUG FETCH: Response url:', response.url);
+        
+        if (!response.ok) {
+            console.error('❌ DEBUG FETCH: Response no ok, status:', response.status);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        console.log('🔍 DEBUG FETCH: Content-Type:', contentType);
+        
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('❌ DEBUG FETCH: Response no es JSON, Content-Type:', contentType);
+            throw new Error('Response is not JSON - possibly redirected to login');
+        }
+        
+        console.log('🔄 DEBUG FETCH: Convirtiendo response a JSON...');
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ DEBUG FETCH: JSON parseado exitosamente');
+        console.log('✅ DEBUG FETCH: Data recibida:', data);
+        
+        if (data.success) {
+            console.log('🎉 DEBUG FETCH: Success = true, recargando página...');
+            location.reload();
+        } else {
+            console.error('❌ DEBUG FETCH: Success = false, mensaje:', data.message);
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('❌ DEBUG CATCH: Error capturado en fetch');
+        console.error('❌ DEBUG CATCH: Error objeto completo:', error);
+        console.error('❌ DEBUG CATCH: Error message:', error.message);
+        console.error('❌ DEBUG CATCH: Error stack:', error.stack);
+        
+        let errorMessage = 'Error al guardar las asignaciones';
+        
+        if (error.message.includes('Response is not JSON')) {
+            console.error('❌ DEBUG CATCH: Error de JSON - posible redirección');
+            errorMessage = 'Sesión expirada. Por favor, recarga la página e inicia sesión nuevamente.';
+        } else if (error.message.includes('HTTP error! status: 403')) {
+            console.error('❌ DEBUG CATCH: Error 403 - permisos');
+            errorMessage = 'No tienes permisos para realizar esta acción.';
+        } else if (error.message.includes('HTTP error! status: 404')) {
+            console.error('❌ DEBUG CATCH: Error 404 - endpoint no encontrado');
+            errorMessage = 'Endpoint no encontrado. Contacta al administrador.';
+        }
+        
+        console.error('❌ DEBUG CATCH: Mensaje final de error:', errorMessage);
+        alert(errorMessage);
+        
+        // Si es un problema de sesión, recargar la página
+        if (error.message.includes('Response is not JSON')) {
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    });
+}
+
+function verDetalleProyecto(requerimientoId) {
+    fetch(`/obtener-detalle-proyecto/0`.replace('0', requerimientoId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarDetalleProyecto(data.actividades);
+        } else {
+            alert('Error al cargar los detalles');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar los detalles');
+    });
+}
+
+function mostrarDetalleProyecto(actividades) {
+    const container = document.getElementById('detalleProyectoContent');
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>EDT</th>
+                        <th>Tarea</th>
+                        <th>Nivel</th>
+                        <th>Duración</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Progreso</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    actividades.forEach(act => {
+        html += `
+            <tr>
+                <td>${act.edt}</td>
+                <td>${act.nombre_tarea}</td>
+                <td>${act.nivel_esquema}</td>
+                <td>${act.duracion} días</td>
+                <td>${act.fecha_inicio}</td>
+                <td>${act.fecha_fin}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: ${act.progreso}%" 
+                             aria-valuenow="${act.progreso}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            ${act.progreso}%
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('detalleProyectoModal'));
+    modal.show();
+}
+
+// Auto-dismiss alerts
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 DEBUG INIT: DOMContentLoaded ejecutado');
+    console.log('🔧 DEBUG INIT: Bootstrap disponible:', typeof bootstrap !== 'undefined');
+    console.log('🔧 DEBUG INIT: Bootstrap.Modal disponible:', typeof bootstrap?.Modal !== 'undefined');
+    console.log('🔧 DEBUG INIT: Modal asignarProyectoModal existe:', !!document.getElementById('asignarProyectoModal'));
+    
+    // Fix para dropdowns de Bootstrap que no funcionan
+    console.log('🔧 Inicializando dropdowns de Bootstrap...');
+    
+    // Verificar que Bootstrap esté cargado
+    if (typeof bootstrap !== 'undefined') {
+        // SOLUCIÓN DIRECTA: Forzar reinicialización completa de Bootstrap
+        console.log('🚀 APLICANDO FIX DIRECTO PARA MENÚ CONFIGURACIÓN');
+        
+        // Paso 1: Limpiar todos los event listeners de Bootstrap
+        const allDropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+        allDropdowns.forEach(dropdown => {
+            // Destruir instancia existente si existe
+            const existingInstance = bootstrap.Dropdown.getInstance(dropdown);
+            if (existingInstance) {
+                existingInstance.dispose();
+            }
+        });
+        
+        // Paso 2: Esperar un momento y crear nuevas instancias
+        setTimeout(() => {
+            document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(dropdown => {
+                new bootstrap.Dropdown(dropdown);
+            });
+            console.log('✅ Dropdowns de Bootstrap reinicializados completamente');
+        }, 500);
+        
+        console.log(`✅ ${allDropdowns.length} dropdowns procesados`);
+    } else {
+        console.error('❌ Bootstrap no está cargado');
+    }
+    
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+    
+    // Debug específico para el menú Configuración - EJECUTAR UNA SOLA VEZ
+    setTimeout(function() {
+        console.log('🔍 Verificando contenido del menú Configuración...');
+        const configDropdown = document.querySelector('[id*="dropdown-configuración"], [aria-labelledby*="configuración"]');
+        if (configDropdown) {
+            console.log('✅ Menú Configuración encontrado:', configDropdown);
+            const menuItems = configDropdown.querySelectorAll('.dropdown-item');
+            console.log(`📄 Items del menú: ${menuItems.length}`);
+            menuItems.forEach((item, index) => {
+                console.log(`   ${index + 1}. ${item.textContent.trim()} → ${item.href}`);
+            });
+        } else {
+            console.log('❌ Menú Configuración no encontrado');
+            // Listar todos los dropdowns disponibles
+            const allDropdowns = document.querySelectorAll('.dropdown-menu');
+            console.log(`📋 Dropdowns disponibles: ${allDropdowns.length}`);
+            allDropdowns.forEach((dropdown, index) => {
+                console.log(`   ${index + 1}. ID: ${dropdown.id}, Items: ${dropdown.querySelectorAll('.dropdown-item').length}`);
+            });
+        }
+    }, 2000); // Una sola verificación después de 2 segundos
+    
+    // DEBUG: Verificar que el CSS se está cargando
+    setTimeout(function() {
+        // Agregar clase para test de CSS
+        document.body.classList.add('proyecto-llenar-loaded');
+        console.log('🔍 CSS Test: Clase proyecto-llenar-loaded agregada al body');
+        
+        // Verificar si las reglas CSS se aplican
+        const testElement = document.createElement('div');
+        testElement.className = 'dropdown-menu';
+        testElement.style.position = 'absolute';
+        testElement.style.visibility = 'hidden';
+        document.body.appendChild(testElement);
+        
+        const zIndex = window.getComputedStyle(testElement).zIndex;
+        console.log(`🔍 CSS Test: z-index del .dropdown-menu = ${zIndex}`);
+        
+        if (zIndex === '1060' || zIndex > 1000) {
+            console.log('✅ CSS proyecto-llenar.css CARGADO CORRECTAMENTE');
+        } else {
+            console.log('❌ CSS proyecto-llenar.css NO SE ESTÁ APLICANDO');
+        }
+        
+        document.body.removeChild(testElement);
+    }, 500);
+    
+});
+</script>
+
+{% endblock %}

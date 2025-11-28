@@ -1,0 +1,488 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Aceptar/Rechazar Requerimientos{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS global para modales de la app -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+    <!-- CSS específico usando el mismo estilo que requerimientos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/requerimientos.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-clipboard-check me-2"></i>
+        Gestión de Requerimientos Pendientes
+    </h2>
+    <div>
+        <a href="{{ url_for('requerimientos.ruta_requerimientos') }}" class="btn btn-info me-2">
+            <i class="fas fa-list me-1"></i>
+            Ver Todos
+        </a>
+        <span class="badge bg-warning text-dark fs-6">
+            {{ requerimientos|length }} Pendientes
+        </span>
+    </div>
+</div>
+
+<!-- Filtros y búsqueda -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="sectorFilter">
+                    <option value="">Todos los sectores</option>
+                    {% for sector in sectores %}
+                    <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="fechaFilter">
+                        <option value="">Todas las fechas</option>
+                        <option value="hoy">Hoy</option>
+                        <option value="semana">Esta semana</option>
+                        <option value="mes">Este mes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de requerimientos -->
+    {% if requerimientos %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tablaRequerimientos">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="8%">ID</th>
+                            <th width="25%">Requerimiento</th>
+                            <th width="12%">Fecha</th>
+                            <th width="15%">Ubicación</th>
+                            <th width="15%">Sector</th>
+                            <th width="10%">Estado</th>
+                            <th width="15%" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for requerimiento in requerimientos %}
+                        <tr data-sector="{{ requerimiento.id_sector }}" class="requerimiento-row">
+                            <td><strong>#{{ requerimiento.id }}</strong></td>
+                            <td>
+                                <strong>{{ requerimiento.nombre }}</strong><br>
+                                <small class="text-muted description-cell" title="{{ requerimiento.descripcion }}">{{ requerimiento.descripcion }}</small>
+                            </td>
+                            <td>{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</td>
+                            <td>
+                                <small>{{ requerimiento.tiporecinto.nombre }}</small><br>
+                                <strong>{{ requerimiento.recinto.nombre }}</strong>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ requerimiento.sector.nombre }}</span></td>
+                            <td><span class="badge bg-warning text-dark">{{ requerimiento.estado.nombre }}</span></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                        onclick="abrirModalRevision({{ requerimiento.id }}, '{{ requerimiento.nombre }}', '{{ requerimiento.fecha.strftime('%d-%m-%Y') }}', '{{ requerimiento.estado.nombre }}', '{{ requerimiento.sector.nombre }}', '{{ requerimiento.tiporecinto.nombre }}', '{{ requerimiento.recinto.nombre }}', `{{ requerimiento.descripcion|replace('`', '\\`')|replace('\n', '\\n') }}`, '{{ requerimiento.observacion if requerimiento.observacion else '' }}')"
+                                        title="Revisar requerimiento">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center">
+            <i class="fas fa-inbox display-4 text-muted mb-3"></i>
+            <h5 class="text-muted">No hay requerimientos pendientes</h5>
+            <p class="text-muted">Todos los requerimientos han sido procesados.</p>
+            <a href="{{ url_for('requerimientos.ruta_requerimientos') }}" class="btn btn-outline-primary">
+                Ver todos los requerimientos
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+
+
+<script>
+// Función para abrir modal de revisión dinámicamente
+function abrirModalRevision(id, nombre, fecha, estado, sector, tiporecinto, recinto, descripcion, observacion) {
+    // Eliminar modal existente si existe
+    const existingModal = document.getElementById(`dynamicModalRequerimiento${id}`);
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Crear el modal HTML con sistema global de estilos
+    const modalHTML = `
+        <div class="modal fade modal-app modal-size-large modal-requerimiento" id="dynamicModalRequerimiento${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header modal-header-app">
+                        <div class="d-flex align-items-center">
+                            <div class="modal-icon me-3">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title mb-0">
+                                    <i class="fas fa-clipboard-check me-2"></i>
+                                    Revisar Requerimiento
+                                </h5>
+                                <small class="text-muted">ID: #${id} • ${fecha}</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body modal-body-app">
+                        <!-- Header del requerimiento -->
+                        <div class="card border-0 bg-light mb-4">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <h5 class="mb-1 fw-bold text-primary">${nombre}</h5>
+                                        <span class="badge bg-warning text-dark me-2">${estado}</span>
+                                        <span class="badge bg-secondary">${sector}</span>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="text-center">
+                                            <i class="fas fa-calendar-alt text-muted fa-lg"></i>
+                                            <div class="mt-1">
+                                                <small class="text-muted d-block">Fecha solicitud</small>
+                                                <span class="fw-bold">${fecha}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación y Clasificación - Barra superior compacta -->
+                        <div class="card bg-light border-0 mb-3">
+                            <div class="card-body py-2">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-auto">
+                                        <span class="text-muted small fw-bold">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            UBICACIÓN:
+                                        </span>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-building me-1 text-muted"></i>
+                                            <strong class="small me-3">${sector}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-home me-1 text-muted"></i>
+                                            <strong class="small me-3">${tiporecinto}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-door-open me-1 text-primary"></i>
+                                            <strong class="small text-primary">${recinto}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detalles del Requerimiento - Ancho completo -->
+                        <div class="card card-info-modal mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="text-primary mb-0 small">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Detalles del Requerimiento
+                                </h6>
+                            </div>
+                            <div class="card-body py-3">
+                                <div class="info-item">
+                                    <label class="form-label text-muted small fw-bold mb-2">DESCRIPCIÓN</label>
+                                    <div class="bg-light rounded p-3 descripcion-container" style="max-height: 200px; overflow-y: auto;">
+                                        <p class="mb-0">${descripcion}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones Previas - Si existen, ancho completo -->
+                        ${observacion ? `
+                        <div class="card border-warning mb-3">
+                            <div class="card-header bg-warning bg-opacity-10 py-2">
+                                <h6 class="text-warning-emphasis mb-0 small">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Observaciones Previas
+                                </h6>
+                            </div>
+                            <div class="card-body py-3">
+                                <div class="bg-warning bg-opacity-10 rounded p-2 observaciones-previas-container" style="height: 60px; overflow: hidden; line-height: 1.4;"
+                                    <p class="mb-0 text-dark">${observacion}</p>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                    </div>
+                    
+                    <!-- Observación de revisión - Tamaño optimizado -->
+                    <div class="border-top bg-light p-3">
+                        <div class="card border-0 bg-white">
+                            <div class="card-header bg-primary text-white py-2">
+                                <h6 class="mb-0 small">
+                                    <i class="fas fa-comment-alt me-2"></i>
+                                    Observación de Revisión
+                                </h6>
+                            </div>
+                            <div class="card-body py-3">
+                                <form class="modal-edit-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <div class="modal-input-group">
+                                        <textarea class="form-control observacion-textarea auto-resize" id="observacion${id}" 
+                                                  name="observacion" rows="3" required
+                                                  style="min-height: 80px; max-height: 300px; resize: none; overflow-y: auto;"
+                                                  oninput="autoResizeTextarea(this)"
+                                                  placeholder="Ingrese sus observaciones detalladas sobre la decisión tomada para este requerimiento...&#10;&#10;Incluya:&#10;• Motivos de la decisión (aceptación/rechazo)&#10;• Recomendaciones adicionales&#10;• Consideraciones especiales&#10;• Próximos pasos sugeridos&#10;&#10;Esta información será registrada permanentemente en el historial del requerimiento."></textarea>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle text-info me-1"></i>
+                                            <strong>Campo obligatorio:</strong> Esta observación quedará registrada en el historial del requerimiento.
+                                        </small>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer modal-footer-app">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </button>
+                            <div class="btn-group btn-group-modal" role="group">
+                                <button type="button" class="btn btn-danger btn-rechazar" 
+                                        onclick="procesarRequerimiento('${id}', 'rechazar')">
+                                    <i class="fas fa-times-circle me-2"></i>
+                                    Rechazar
+                                </button>
+                                <button type="button" class="btn btn-success btn-aceptar" 
+                                        onclick="procesarRequerimiento('${id}', 'aceptar')">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Aceptar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById(`dynamicModalRequerimiento${id}`));
+    modal.show();
+    
+    // Ajustar tamaños dinámicamente después de mostrar el modal
+    setTimeout(() => {
+        ajustarTamanosModal(id);
+    }, 100);
+    
+    // Limpiar modal cuando se cierre
+    document.getElementById(`dynamicModalRequerimiento${id}`).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// Función para ajustar tamaños dinámicamente según el contenido
+function ajustarTamanosModal(id) {
+    const modalElement = document.getElementById(`dynamicModalRequerimiento${id}`);
+    if (!modalElement) return;
+    
+    // Ajustar descripción
+    const descripcionContainer = modalElement.querySelector('.descripcion-container p');
+    if (descripcionContainer) {
+        const container = descripcionContainer.parentElement;
+        const textHeight = descripcionContainer.scrollHeight;
+        
+        // Ajustar altura de la descripción según el contenido
+        if (textHeight <= 50) {
+            container.style.minHeight = '60px';
+            container.style.height = 'auto';
+        } else if (textHeight <= 100) {
+            container.style.minHeight = '100px';
+            container.style.height = 'auto';
+        } else if (textHeight <= 150) {
+            container.style.minHeight = '150px';
+            container.style.height = 'auto';
+        } else {
+            container.style.minHeight = '200px';
+            container.style.maxHeight = '200px';
+        }
+    }
+    
+    // Las observaciones previas ahora tienen altura fija de 60px sin scroll
+    
+    // Ajustar el tamaño del modal según el contenido total
+    const modalDialog = modalElement.querySelector('.modal-dialog');
+    const modalContent = modalElement.querySelector('.modal-content');
+    const windowHeight = window.innerHeight;
+    const contentHeight = modalContent.scrollHeight;
+    
+    // Si el contenido es menor que 70% de la ventana, centrar mejor el modal
+    if (contentHeight < windowHeight * 0.7) {
+        modalDialog.style.display = 'flex';
+        modalDialog.style.alignItems = 'center';
+        modalDialog.style.minHeight = '100vh';
+    }
+}
+
+function procesarRequerimiento(id, accion) {
+    const observacion = document.getElementById('observacion' + id).value.trim();
+    
+    if (!observacion) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Observación requerida',
+            text: 'Por favor, ingrese una observación antes de continuar.',
+            confirmButtonColor: '#ffc107'
+        });
+        return;
+    }
+
+    const titulo = accion === 'aceptar' ? 'Aceptar Requerimiento' : 'Rechazar Requerimiento';
+    const texto = accion === 'aceptar' ? 
+        '¿Está seguro de que desea aceptar este requerimiento?' : 
+        '¿Está seguro de que desea rechazar este requerimiento?';
+    const icono = accion === 'aceptar' ? 'question' : 'warning';
+    const colorBoton = accion === 'aceptar' ? '#28a745' : '#dc3545';
+
+    Swal.fire({
+        title: titulo,
+        text: texto,
+        icon: icono,
+        showCancelButton: true,
+        confirmButtonColor: colorBoton,
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: accion === 'aceptar' ? 'Sí, aceptar' : 'Sí, rechazar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            
+            form.action = accion === 'aceptar' ? 
+                "{{ url_for('requerimientos.update_requerimiento_aceptar', id=0) }}".replace('0', id) :
+                "{{ url_for('requerimientos.update_requerimiento_rechazar', id=0) }}".replace('0', id);
+
+            // Agregar token CSRF
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+
+            const observacionInput = document.createElement('input');
+            observacionInput.type = 'hidden';
+            observacionInput.name = 'observacion';
+            observacionInput.value = observacion;
+            
+            form.appendChild(observacionInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// Funcionalidad de búsqueda y filtros
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const sectorFilter = document.getElementById('sectorFilter');
+
+    function filtrarRequerimientos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const sectorSeleccionado = sectorFilter.value;
+        const filas = document.querySelectorAll('.requerimiento-row');
+        let contadorVisible = 0;
+
+        filas.forEach(fila => {
+            const nombre = fila.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            const sector = fila.getAttribute('data-sector');
+            
+            const coincideBusqueda = nombre.includes(searchTerm);
+            const coincideSector = !sectorSeleccionado || sector === sectorSeleccionado;
+            
+            if (coincideBusqueda && coincideSector) {
+                fila.style.display = '';
+                contadorVisible++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+
+        // Actualizar el badge del header
+        const badge = document.querySelector('.badge-pendientes');
+        if (badge) {
+            badge.textContent = `${contadorVisible} Pendientes`;
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filtrarRequerimientos);
+    if (sectorFilter) sectorFilter.addEventListener('change', filtrarRequerimientos);
+
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+
+// Función para auto-redimensionar textarea según el contenido
+function autoResizeTextarea(textarea) {
+    // Resetear altura para obtener el scrollHeight real
+    textarea.style.height = 'auto';
+    
+    // Calcular nueva altura basada en el contenido
+    const scrollHeight = textarea.scrollHeight;
+    const minHeight = 80; // altura mínima
+    const maxHeight = 300; // altura máxima
+    
+    // Establecer la nueva altura
+    const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+    textarea.style.height = newHeight + 'px';
+    
+    // Mostrar/ocultar scroll según sea necesario
+    if (scrollHeight > maxHeight) {
+        textarea.style.overflowY = 'auto';
+    } else {
+        textarea.style.overflowY = 'hidden';
+    }
+}
+</script>
+
+<!-- SweetAlert2 para mejorar las confirmaciones -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% endblock %}

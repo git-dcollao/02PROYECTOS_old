@@ -1,0 +1,203 @@
+{% extends "base_layout.html" %}
+{% set active_page = "create_user" %}
+
+{% block title %}Crear Usuario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Crear Nuevo Usuario
+                </h5>
+                <a href="{{ url_for('auth.list_users') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Volver
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Nombre -->
+                            <div class="mb-3">
+                                {{ form.nombre.label(class="form-label required") }}
+                                {{ form.nombre(class="form-control" + (" is-invalid" if form.nombre.errors else "")) }}
+                                {% if form.nombre.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nombre.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Email -->
+                            <div class="mb-3">
+                                {{ form.email.label(class="form-label required") }}
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Profesión -->
+                            <div class="mb-3">
+                                {{ form.profesion.label(class="form-label") }}
+                                {{ form.profesion(class="form-control" + (" is-invalid" if form.profesion.errors else "")) }}
+                                {% if form.profesion.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.profesion.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            <div class="mb-3">
+                                {{ form.telefono.label(class="form-label") }}
+                                {{ form.telefono(class="form-control" + (" is-invalid" if form.telefono.errors else "")) }}
+                                {% if form.telefono.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.telefono.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <!-- Contraseña -->
+                            <div class="mb-3">
+                                {{ form.password.label(class="form-label required") }}
+                                <div class="input-group">
+                                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="password") }}
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">Debe tener al menos 6 caracteres</small>
+                            </div>
+                            
+                            <!-- Confirmar Contraseña -->
+                            <div class="mb-3">
+                                {{ form.confirm_password.label(class="form-label required") }}
+                                <div class="input-group">
+                                    {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), id="confirmPassword") }}
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                        <i class="fas fa-eye" id="toggleConfirmPasswordIcon"></i>
+                                    </button>
+                                </div>
+                                {% if form.confirm_password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.confirm_password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Rol -->
+                            <div class="mb-3">
+                                {{ form.rol.label(class="form-label required") }}
+                                {{ form.rol(class="form-select" + (" is-invalid" if form.rol.errors else "")) }}
+                                {% if form.rol.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.rol.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">Define el nivel de permisos del usuario</small>
+                            </div>
+                            
+                            <!-- Estado Activo -->
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.activo(class="form-check-input", checked="checked") }}
+                                    {{ form.activo.label(class="form-check-label") }}
+                                    <small class="text-muted d-block">Usuario puede iniciar sesión en el sistema</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('auth.list_users') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancelar
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle para contraseña
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+    togglePassword.addEventListener('click', function() {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        if (type === 'password') {
+            togglePasswordIcon.classList.remove('fa-eye-slash');
+            togglePasswordIcon.classList.add('fa-eye');
+        } else {
+            togglePasswordIcon.classList.remove('fa-eye');
+            togglePasswordIcon.classList.add('fa-eye-slash');
+        }
+    });
+
+    // Toggle para confirmar contraseña
+    const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const toggleConfirmPasswordIcon = document.getElementById('toggleConfirmPasswordIcon');
+
+    toggleConfirmPassword.addEventListener('click', function() {
+        const type = confirmPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPassword.setAttribute('type', type);
+        
+        if (type === 'password') {
+            toggleConfirmPasswordIcon.classList.remove('fa-eye-slash');
+            toggleConfirmPasswordIcon.classList.add('fa-eye');
+        } else {
+            toggleConfirmPasswordIcon.classList.remove('fa-eye');
+            toggleConfirmPasswordIcon.classList.add('fa-eye-slash');
+        }
+    });
+});
+</script>
+
+<style>
+.required::after {
+    content: " *";
+    color: red;
+}
+</style>
+{% endblock %}

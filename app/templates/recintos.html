@@ -1,144 +1,357 @@
-{% extends 'bases/base.html' %}
+{% extends 'base_layout.html' %}
 
-{% block title %}Recinto{% endblock %}
+{% block title %}Gestión de Recintos{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="well text-center">
-        <h1>Recinto - Crud</h1>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col md-12">
-                <h2>
-                    Lista de Recinto
-                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
-                            type="button">
-                        Nuevo Recinto
-                    </button>
-                </h2>
-                
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Tipo de Recinto</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {%for recinto in recintos%}
-                    <tr>
-                        <td>{{recinto.id}}</td>
-                        <td>{{recinto.nombre}}</td>
-                        <td>{{recinto.descripcion}}</td>
-                        <td>{{recinto.tiporecinto.nombre}}</td>
-
-                        <td>
-                            <a class="btn p-1 btn-primary btn-sm" 
-                               data-bs-target="#exampleModal1{{recinto.id}}"
-                               data-bs-toggle="modal"
-                               href="#">Editar</a> 
-                            <form action="{{ url_for('controllers.eliminar_recinto', id=recinto.id) }}"
-                                method="POST" style="display:inline;">
-                                <button class="btn p-1 btn-danger btn-sm" 
-                                type="submit">Eliminar</button>
-                            </form>
-                        </td>
-                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
-                             id="exampleModal1{{recinto.id}}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del recinto {{recinto.nombre}}</h1>
-                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
-                                                type="button"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form action="{{ url_for('controllers.update_recinto', id=recinto.id) }}" method="POST">   
-                                            <div class="form-group">
-                                                <label>Nombre:</label>
-                                                <input type="hidden" name="id" value="{{recinto.id}}">
-                                                <input class="form-control" name="nombre" value="{{recinto.nombre}}" required="1" type="text">
-                                                <label>Descripción:</label>
-                                                <input class="form-control" name="descripcion" value="{{recinto.descripcion}}" required="1" type="text">
-                                                <label>Tipo de Recinto:</label>
-                                                <select class="form-control" name="id_tiporecinto" required="1">
-                                                    {% for tiporecinto in tiposrecintos %}
-                                                    <option value="{{ tiporecinto.id }}" {% if tiporecinto.id == recinto.id_tiporecinto %}selected{% endif %}>
-                                                        {{ tiporecinto.nombre }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
-                                            Cerrar
-                                        </button>
-                                    </div>
+<div class="container-fluid py-4">
+    <!-- Header moderno -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Gestión de Recintos
+                            </h3>
+                            <p class="mb-0 opacity-75">Administra y configura los recintos específicos del sistema</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-center">
+                                    <div class="h4 mb-0">{{ recintos|length }}</div>
+                                    <small class="opacity-75">Total</small>
+                                </div>
+                                <div class="vr mx-2"></div>
+                                <div class="text-center">
+                                    <div class="h4 mb-0">{{ tiposrecintos|length }}</div>
+                                    <small class="opacity-75">Tipos</small>
                                 </div>
                             </div>
                         </div>
-                    </tr>
-                    {%endfor%}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para agregar nuevo estado -->
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Recinto</h1>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list me-2"></i>Lista de Recintos
+                            </h5>
+                        </div>
+                        <div class="text-muted">
+                            <small>{{ recintos|length }} registros</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form action="{{ url_for('controllers.add_recinto') }}" method="POST"> 
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input class="form-control" name="nombre" required="1" type="text">
-                            <label>Descripción:</label>
-                            <input class="form-control" name="descripcion" required="1" type="text">
-                            <label>Tipo de Recinto:</label>
-                            <select class="form-control" name="id_tiporecinto" required="1">
+                <div class="card-body p-0">
+                    {% if recintos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 px-4 py-3">ID</th>
+                                    <th class="border-0 px-4 py-3">Nombre</th>
+                                    <th class="border-0 px-4 py-3">Descripción</th>
+                                    <th class="border-0 px-4 py-3">Tipo de Recinto</th>
+                                    <th class="border-0 px-4 py-3 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for recinto in recintos %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-light text-dark">{{ recinto.id }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="fw-semibold text-dark">{{ recinto.nombre }}</div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-muted">{{ recinto.descripcion or 'Sin descripción' }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-primary">{{ recinto.tiporecinto.nombre }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="abrirModalEdicion({{ recinto.id }}, '{{ recinto.nombre }}', '{{ recinto.descripcion }}', {{ recinto.id_tiporecinto }})"
+                                                    title="Editar recinto">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ recinto.id }}, '{{ recinto.nombre }}')"
+                                                    title="Eliminar recinto">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-inbox fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No hay recintos registrados</h5>
+                        <p class="text-muted">Comienza agregando un nuevo recinto usando el formulario</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-plus me-2"></i>Añadir Recinto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_recinto') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="add_form_token" value="">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-semibold">Nombre del Recinto</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required 
+                                   placeholder="Ej: Laboratorio A, Aula 101, Oficina Central">
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label fw-semibold">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"
+                                      placeholder="Describe las características del recinto"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tiporecinto" class="form-label fw-semibold">Tipo de Recinto</label>
+                            <select class="form-select" id="tiporecinto" name="id_tiporecinto" required>
                                 <option value="">Seleccione un Tipo de Recinto</option>
                                 {% for tiporecinto in tiposrecintos %}
                                 <option value="{{ tiporecinto.id }}">{{ tiporecinto.nombre }}</option>
                                 {% endfor %}
-                            </select>                        
+                            </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Crear Recinto
+                            </button>
+                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+
+            <!-- Card de estadísticas -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-info">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Total de Recintos:</span>
+                            <span class="badge bg-primary">{{ recintos|length }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted fw-semibold">Distribución por Tipo:</small>
+                    </div>
+                    {% for tiporecinto in tiposrecintos %}
+                        {% set count = recintos|selectattr("id_tiporecinto", "equalto", tiporecinto.id)|list|length %}
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">{{ tiporecinto.nombre }}:</small>
+                            <span class="badge bg-light text-dark">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                    
+                    <hr class="my-3">
+                    <div class="text-center">
+                        <small class="text-muted">Los recintos son ubicaciones específicas donde se ejecutan los proyectos</small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="well container">
-    
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash-alt fa-3x text-danger opacity-50"></i>
+                </div>
+                <p class="text-center mb-3">
+                    ¿Está seguro de que desea eliminar el recinto 
+                    <strong class="text-primary" id="recintoNombre"></strong>?
+                </p>
+                <div class="alert alert-warning border-warning">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <small>Esta acción no se puede deshacer y puede afectar requerimientos relacionados.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Agregar al final del archivo -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Si necesitas alguna funcionalidad JavaScript adicional para el combo
-        const tiporecintoSelect = document.querySelector('select[name="id_tiporecinto"]');
-        
-        tiporecintoSelect.addEventListener('change', function() {
-            const selectedTipoRecinto = this.value;
-            console.log('Tipo de Recinto seleccionado:', selectedTipoRecinto);
-        });
+// Variable global para la URL base de actualización
+const updateRecintoBaseUrl = '{{ url_for("controllers.update_recinto", id=0) }}'.replace('/0', '');
+
+// Función para crear modal de edición dinámicamente
+function abrirModalEdicion(id, nombre, descripcion, idTipoRecinto) {
+    // Eliminar modal existente si existe
+    const existingModal = document.getElementById(`dynamicEditModal${id}`);
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Construir la URL usando la base generada por Jinja2
+    const updateUrl = updateRecintoBaseUrl + '/' + id;
+    
+    // Crear el modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="dynamicEditModal${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit"></i> Editar Recinto
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="${updateUrl}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="edit_form_token_${id}" value="">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="nombre${id}" class="form-label">Nombre del Recinto</label>
+                                <input type="text" class="form-control" 
+                                       id="nombre${id}" 
+                                       name="nombre" 
+                                       value="${nombre}" 
+                                       required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="descripcion${id}" class="form-label">Descripción</label>
+                                <textarea class="form-control" 
+                                          id="descripcion${id}" 
+                                          name="descripcion" 
+                                          rows="3">${descripcion || ''}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tiporecinto${id}" class="form-label">Tipo de Recinto</label>
+                                <select class="form-select" 
+                                        id="tiporecinto${id}" 
+                                        name="id_tiporecinto" required>
+                                    {% for tiporecinto in tiposrecintos %}
+                                    <option value="{{ tiporecinto.id }}">{{ tiporecinto.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Actualizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Actualizar el select con el valor correcto
+    const selectElement = document.getElementById(`tiporecinto${id}`);
+    if (selectElement) {
+        selectElement.value = idTipoRecinto;
+    }
+    
+    // Inicializar token para el formulario de edición
+    const editFormToken = document.getElementById(`edit_form_token_${id}`);
+    if (editFormToken) {
+        editFormToken.value = generateUniqueToken();
+    }
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById(`dynamicEditModal${id}`));
+    modal.show();
+    
+    // Limpiar modal cuando se cierre
+    document.getElementById(`dynamicEditModal${id}`).addEventListener('hidden.bs.modal', function() {
+        this.remove();
     });
-    </script>
+}
+
+// Generar token único para prevenir envíos duplicados
+function generateUniqueToken() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('recintoNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_recinto', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar token para formulario de agregar
+    const addFormToken = document.getElementById('add_form_token');
+    if (addFormToken) {
+        addFormToken.value = generateUniqueToken();
+    }
+    
+    // Optimizar para evitar parpadeo
+    requestAnimationFrame(() => {
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                if (alert.classList.contains('alert-dismissible')) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            });
+        }, 5000);
+    });
+});
+</script>
 {% endblock %}

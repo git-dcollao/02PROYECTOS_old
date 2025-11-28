@@ -1,0 +1,1685 @@
+﻿{% extends "base_layout.html" %}
+{% set active_page = "permissions" %}
+
+{% block title %}Gestión de Permisos{% endblock %}
+
+{% block head %}
+<style>
+/* Estilos personalizados para la tabla de permisos */
+#permissionsTable {
+    font-size: 0.9rem;
+}
+
+#permissionsTable th {
+    background-color: #343a40 !important;
+    color: white !important;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+    border: none;
+}
+
+#permissionsTable td {
+    vertical-align: middle;
+    border-color: #dee2e6;
+}
+
+/* Checkboxes más grandes y visibles */
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    border: 2px solid #6c757d;
+    border-radius: 0.25em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-input:hover {
+    border-color: #495057;
+    transform: scale(1.1);
+}
+
+.form-check-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Hover effect en las filas */
+#permissionsTable tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Badges más pequeños y elegantes */
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+}
+
+/* Códigos de ruta con mejor formato */
+code {
+    background-color: #f8f9fa;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    font-size: 0.85em;
+    color: #e83e8c;
+}
+
+/* Botones de acción más compactos */
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Animación para las notificaciones toast */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-notification {
+    animation: slideInRight 0.3s ease-out;
+}
+
+/* Estilos para organización de menú */
+.sortable-category {
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.sortable-category:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sortable-page {
+    transition: all 0.2s ease;
+    cursor: move;
+    background-color: #f8f9fa;
+}
+
+.sortable-page:hover {
+    background-color: #e9ecef;
+    transform: translateX(5px);
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.sortable-ghost {
+    opacity: 0.5;
+    background: #c8ebfb;
+}
+
+.sortable-chosen {
+    opacity: 0.8;
+}
+
+.sortable-drag {
+    opacity: 0.9;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.icon-selector {
+    width: 50px;
+    height: 50px;
+    margin: 2px;
+}
+
+.icon-selector:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Pestañas de permisos */
+#permissionsTabs .nav-link {
+    color: #495057;
+    border-bottom: 2px solid transparent;
+}
+
+#permissionsTabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+    background-color: transparent;
+}
+
+#permissionsTabs .nav-link:hover {
+    border-bottom-color: #adb5bd;
+}
+
+/* Indicadores de estado */
+.form-check-switch .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-switch .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-shield-alt me-2"></i>
+        Gestión de Permisos
+    </h2>
+    <div>
+        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addPageModal">
+            <i class="fas fa-plus me-1"></i>
+            Nueva Página
+        </button>
+        <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#categoriesModal">
+            <i class="fas fa-tags me-1"></i>
+            Categorías
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#rolesModal">
+            <i class="fas fa-users me-1"></i>
+            Roles
+        </button>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-primary">{{ total_categories or 0 }}</h4>
+                <p class="mb-0 text-muted">Categorías</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-success">{{ total_pages or 0 }}</h4>
+                <p class="mb-0 text-muted">Páginas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-info">{{ roles|length or 0 }}</h4>
+                <p class="mb-0 text-muted">Roles</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-warning">{{ total_permissions or 0 }}</h4>
+                <p class="mb-0 text-muted">Permisos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pestañas de navegación -->
+<ul class="nav nav-tabs mb-4" id="permissionsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content" type="button" role="tab">
+            <i class="fas fa-shield-alt me-1"></i>
+            Permisos
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="menu-organization-tab" data-bs-toggle="tab" data-bs-target="#menu-organization-content" type="button" role="tab">
+            <i class="fas fa-sort me-1"></i>
+            Organización de Menú
+        </button>
+    </li>
+</ul>
+
+<!-- Contenido de las pestañas -->
+<div class="tab-content" id="permissionsTabContent">
+    <!-- Pestaña de Permisos -->
+    <div class="tab-pane fade show active" id="permissions-content" role="tabpanel">
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="searchPages" class="form-label"><strong>Buscar Páginas</strong></label>
+                        <input type="text" class="form-control" id="searchPages" placeholder="Buscar por nombre o ruta...">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filterByCategory" class="form-label"><strong>Filtrar por Categoría</strong></label>
+                        <select class="form-select" id="filterByCategory">
+                            <option value="">Todas las categorías</option>
+                            {% for category in categories %}
+                            <option value="{{ category.name }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Páginas y Permisos -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Gestión de Permisos por Página</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="permissionsTable">
+                        <thead class="table-dark" id="permissionsTableHead">
+                            <!-- Las cabeceras se cargarán dinámicamente -->
+                        </thead>
+                        <tbody id="permissionsTableBody">
+                            <!-- Las filas se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Indicador de carga -->
+                <div id="loadingIndicator" class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">Cargando permisos...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestaña de Organización de Menú -->
+    <div class="tab-pane fade" id="menu-organization-content" role="tabpanel">
+        <!-- Controles de organización -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-sort me-2"></i>
+                    Organización del Menú
+                </h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-success" id="saveMenuOrganization">
+                        <i class="fas fa-save me-1"></i>
+                        Guardar Cambios
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="resetMenuOrganization">
+                        <i class="fas fa-undo me-1"></i>
+                        Restaurar
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Alertas -->
+                <div id="menuOrganizationAlerts"></div>
+                
+                <!-- Instrucciones -->
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Instrucciones:</strong>
+                    Arrastra las categorías y páginas para reorganizar el menú. Haz clic en los iconos para cambiarlos. 
+                    Usa los botones de visibilidad para mostrar/ocultar elementos del menú.
+                </div>
+
+                <!-- Contenedor de categorías organizable -->
+                <div id="sortableCategoriesContainer">
+                    <!-- Las categorías se cargarán dinámicamente aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros (código anterior removido y movido arriba) -->
+<!-- Comentado para evitar duplicación -->
+
+<!-- Tabla de Páginas y Permisos (código anterior removido y movido arriba) -->
+<!-- Comentado para evitar duplicación -->
+        
+        {% if not pages %}
+        <div class="text-center py-5" id="noDataMessage" style="display: none;">
+            <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay páginas registradas</h5>
+            <p class="text-muted">Comience creando la primera página del sistema</p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPageModal">
+                <i class="fas fa-plus me-1"></i>
+                Crear Página
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para agregar nueva página -->
+<div class="modal fade" id="addPageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Nueva Página
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPageForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="pageName" class="form-label">Nombre de la Página</label>
+                            <input type="text" class="form-control" id="pageName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="pageRoute" class="form-label">Ruta</label>
+                            <input type="text" class="form-control" id="pageRoute" placeholder="/ejemplo" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pageCategory" class="form-label">Categoría</label>
+                        <select class="form-select" id="pageCategory" required>
+                            <option value="">Seleccionar categoría...</option>
+                            {% for category in categories %}
+                            <option value="{{ category.name }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pageTemplate" class="form-label">Template (Opcional)</label>
+                        <input type="text" class="form-control" id="pageTemplate" placeholder="ejemplo/index.html">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Roles Permitidos</label>
+                        <div class="row">
+                            {% for role in roles %}
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="role_{{ loop.index }}" value="{{ role.name }}">
+                                    <label class="form-check-label" for="role_{{ loop.index }}">
+                                        {{ role.name }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="addPage()">
+                    <i class="fas fa-save me-1"></i>
+                    Guardar Página
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para gestionar categorías -->
+<div class="modal fade" id="categoriesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tags me-2"></i>
+                    Gestionar Categorías
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newCategoryName" class="form-label">Nueva Categoría</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newCategoryName" placeholder="Nombre de la categoría">
+                        <button class="btn btn-primary" type="button" onclick="addCategory()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="list-group" id="categoriesList">
+                    {% for category in categories %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="category-name" id="category-name-{{ category.id }}">{{ category.name }}</span>
+                        <input class="form-control category-edit d-none" id="category-edit-{{ category.id }}" 
+                               value="{{ category.name }}" style="max-width: 200px;">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary category-edit-btn" 
+                                    onclick="editCategory('{{ category.id }}', '{{ category.name }}')"
+                                    id="edit-btn-{{ category.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-success category-save-btn d-none" 
+                                    onclick="saveCategory('{{ category.id }}')"
+                                    id="save-btn-{{ category.id }}">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary category-cancel-btn d-none" 
+                                    onclick="cancelEditCategory('{{ category.id }}', '{{ category.name }}')"
+                                    id="cancel-btn-{{ category.id }}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteCategory('{{ category.id }}', '{{ category.name }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar página -->
+<div class="modal fade" id="editPageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>
+                    Editar Página
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPageForm">
+                    <input type="hidden" id="editOriginalRoute" value="">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editPageName" class="form-label">Nombre de la Página</label>
+                            <input type="text" class="form-control" id="editPageName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editPageRoute" class="form-label">Ruta</label>
+                            <input type="text" class="form-control" id="editPageRoute" placeholder="/ejemplo" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPageCategory" class="form-label">Categoría</label>
+                        <select class="form-select" id="editPageCategory" required>
+                            <option value="">Seleccionar categoría...</option>
+                            {% for category in categories %}
+                            <option value="{{ category.name }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPageTemplate" class="form-label">Template (Opcional)</label>
+                        <input type="text" class="form-control" id="editPageTemplate" placeholder="ejemplo/index.html">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Roles Permitidos</label>
+                        <div class="row" id="editRolesContainer">
+                            {% for role in roles %}
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="edit_role_{{ loop.index }}" value="{{ role.name }}">
+                                    <label class="form-check-label" for="edit_role_{{ loop.index }}">
+                                        {{ role.name }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="updatePage()">
+                    <i class="fas fa-save me-1"></i>
+                    Actualizar Página
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para gestionar roles -->
+<div class="modal fade" id="rolesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>
+                    Gestionar Roles
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newRoleName" class="form-label">Nuevo Rol Personalizado</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newRoleName" placeholder="Nombre del rol (ej: EDITOR)">
+                        <button class="btn btn-primary" type="button" onclick="addCustomRole()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="list-group" id="rolesList">
+                    <!-- Los roles se cargarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ============================================================================
+// HELPER PARA PROTECCIÓN CSRF EN TODAS LAS OPERACIONES AJAX
+// ============================================================================
+
+// Función helper para agregar CSRF token a requests fetch()
+function fetchWithCSRF(url, options = {}) {
+    // Configurar headers por defecto
+    const defaultHeaders = {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+    };
+    
+    // Combinar headers existentes con CSRF
+    options.headers = {
+        ...defaultHeaders,
+        ...(options.headers || {})
+    };
+    
+    return fetch(url, options);
+}
+
+// ============================================================================
+// CARGA DINÁMICA DE LA TABLA DE PERMISOS
+// ============================================================================
+
+// Variables globales para datos
+let currentPages = [];
+let currentRoles = [];
+
+// Cargar datos de la tabla al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadPermissionsData();
+});
+
+// Función para cargar los datos de permisos y generar la tabla
+function loadPermissionsData() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const table = document.getElementById('permissionsTable');
+    
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
+    if (table) table.style.display = 'none';
+    
+    api.get('/permissions/api/permissions-data')
+    .then(data => {
+        if (data.success) {
+            currentPages = data.pages;
+            currentRoles = data.roles;
+            generatePermissionsTable();
+        } else {
+            toast.error('Error al cargar datos: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al cargar la tabla de permisos');
+    })
+    .finally(() => {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        if (table) table.style.display = 'table';
+    });
+}
+
+// Función para generar la tabla completa
+function generatePermissionsTable() {
+    generateTableHeader();
+    generateTableBody();
+}
+
+// Función para generar las cabeceras de la tabla
+function generateTableHeader() {
+    const thead = document.getElementById('permissionsTableHead');
+    if (!thead) return;
+    
+    let headerHTML = `
+        <tr>
+            <th>Categoría</th>
+            <th>Nombre de la Página</th>
+            <th>Ruta de la Página</th>
+    `;
+    
+    // Agregar columnas para cada rol
+    currentRoles.forEach(role => {
+        headerHTML += `<th class="text-center">${role}</th>`;
+    });
+    
+    headerHTML += `
+            <th class="text-center">Acciones</th>
+        </tr>
+    `;
+    
+    thead.innerHTML = headerHTML;
+}
+
+// Función para generar el cuerpo de la tabla
+function generateTableBody() {
+    const tbody = document.getElementById('permissionsTableBody');
+    if (!tbody) return;
+    
+    let bodyHTML = '';
+    
+    console.log('🔍 Datos de páginas:', currentPages);
+    console.log('🔍 Roles actuales:', currentRoles);
+    
+    currentPages.forEach((page, pageIndex) => {
+        console.log(`📄 Página: ${page.name}, Permisos: [${page.permissions.join(', ')}]`);
+        
+        bodyHTML += `
+            <tr data-category="${page.category}">
+                <td>
+                    <span class="badge bg-secondary">${page.category}</span>
+                </td>
+                <td>
+                    <strong>${page.name}</strong>
+                </td>
+                <td>
+                    <code>${page.route}</code>
+                </td>
+        `;
+        
+        // Agregar checkboxes para cada rol
+        currentRoles.forEach(role => {
+            // Comparación case-insensitive
+            const isChecked = page.permissions.some(perm => perm.toUpperCase() === role.toUpperCase());
+            console.log(`🔐 Rol: ${role}, ¿Incluido en [${page.permissions.join(', ')}]? ${isChecked}`);
+            
+            bodyHTML += `
+                <td class="text-center">
+                    <div class="form-check d-flex justify-content-center">
+                        <input class="form-check-input" type="checkbox" 
+                               id="${role.toLowerCase()}_${pageIndex}"
+                               data-page="${page.route}" 
+                               data-role="${role}"
+                               ${isChecked ? 'checked' : ''}
+                               onchange="togglePermission(this)">
+                    </div>
+                </td>
+            `;
+        });
+        
+        // Agregar columna de acciones
+        bodyHTML += `
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" 
+                                onclick="editPage('${page.route}')" title="Editar página">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                onclick="deletePage('${page.route}')" title="Eliminar página">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = bodyHTML;
+}
+
+// ============================================================================
+// FUNCIONES PARA GESTIÓN DE PERMISOS
+// ============================================================================
+
+// Función para alternar permisos mediante checkboxes
+function togglePermission(checkbox) {
+    const pageRoute = checkbox.dataset.page;
+    const role = checkbox.dataset.role;
+    const enabled = checkbox.checked;
+    
+    // Mostrar indicador de carga
+    checkbox.disabled = true;
+    
+    api.post('/permissions/api/toggle-permission', {
+        route: pageRoute,
+        role: role,
+        enabled: enabled
+    })
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+        } else {
+            // Revertir el checkbox si hubo error
+            checkbox.checked = !enabled;
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revertir el checkbox si hubo error
+        checkbox.checked = !enabled;
+        toast.error('Error al cambiar el permiso');
+    })
+    .finally(() => {
+        // Rehabilitar el checkbox
+        checkbox.disabled = false;
+    });
+}
+
+// Funciones existentes para gestión de páginas
+function addPage() {
+    const formData = {
+        name: document.getElementById('pageName').value,
+        route: document.getElementById('pageRoute').value,
+        category: document.getElementById('pageCategory').value,
+        template_path: document.getElementById('pageTemplate').value,
+        roles: Array.from(document.querySelectorAll('#addPageModal input[type="checkbox"]:checked')).map(cb => cb.value)
+    };
+    
+    if (!formData.name || !formData.route || !formData.category || !formData.roles.length) {
+        toast.error('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    api.post('/permissions/api/add-page', formData)
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al crear la página');
+    });
+}
+
+function editPage(route) {
+    // Buscar la página en los datos actuales
+    const page = currentPages.find(p => p.route === route);
+    if (!page) {
+        toast.error('Página no encontrada');
+        return;
+    }
+    
+    // Llenar el formulario de edición
+    document.getElementById('editOriginalRoute').value = route;
+    document.getElementById('editPageName').value = page.name;
+    document.getElementById('editPageRoute').value = page.route;
+    document.getElementById('editPageCategory').value = page.category;
+    document.getElementById('editPageTemplate').value = page.template_path || '';
+    
+    // Marcar los roles permitidos
+    const roleCheckboxes = document.querySelectorAll('#editRolesContainer input[type="checkbox"]');
+    roleCheckboxes.forEach(checkbox => {
+        checkbox.checked = page.permissions.some(perm => perm.toUpperCase() === checkbox.value.toUpperCase());
+    });
+    
+    // Mostrar el modal
+    const editModal = new bootstrap.Modal(document.getElementById('editPageModal'));
+    editModal.show();
+}
+
+function updatePage() {
+    const originalRoute = document.getElementById('editOriginalRoute').value;
+    const formData = {
+        originalRoute: originalRoute,
+        name: document.getElementById('editPageName').value,
+        route: document.getElementById('editPageRoute').value,
+        category: document.getElementById('editPageCategory').value,
+        template_path: document.getElementById('editPageTemplate').value,
+        roles: Array.from(document.querySelectorAll('#editRolesContainer input[type="checkbox"]:checked')).map(cb => cb.value)
+    };
+    
+    if (!formData.name || !formData.route || !formData.category) {
+        toast.error('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    if (formData.roles.length === 0) {
+        toast.error('Debe seleccionar al menos un rol');
+        return;
+    }
+    
+    api.post('/permissions/api/update-page', formData)
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            // Cerrar el modal
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editPageModal'));
+            editModal.hide();
+            // Recargar la tabla
+            setTimeout(() => loadPermissionsData(), 1000);
+        } else {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al actualizar la página');
+    });
+}
+
+function deletePage(route) {
+    confirm.delete('¿Está seguro de eliminar esta página y todos sus permisos?')
+    .then(result => {
+        if (!result) return;
+        
+        return api.post('/permissions/api/delete-page', {route: route});
+    })
+    .then(data => {
+        if (data && data.success) {
+            toast.success(data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else if (data) {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al eliminar la página');
+    });
+}
+
+function addCategory() {
+    const name = document.getElementById('newCategoryName').value;
+    if (!name) {
+        toast.error('Por favor ingrese un nombre para la categoría');
+        return;
+    }
+    
+    api.post('/permissions/api/add-category', {name: name})
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al crear la categoría');
+    });
+}
+
+function deleteCategory(categoryId, categoryName) {
+    confirm.delete(`¿Está seguro de eliminar la categoría "${categoryName}"?`)
+    .then(result => {
+        if (!result) return;
+        
+        return api.post('/permissions/api/delete-category', {id: categoryId});
+    })
+    .then(data => {
+        if (data && data.success) {
+            toast.success(data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else if (data) {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al eliminar la categoría');
+    });
+}
+
+// Funciones para editar categorías
+function editCategory(categoryId, currentName) {
+    // Ocultar el texto y mostrar el input
+    document.getElementById(`category-name-${categoryId}`).classList.add('d-none');
+    document.getElementById(`category-edit-${categoryId}`).classList.remove('d-none');
+    
+    // Cambiar botones
+    document.getElementById(`edit-btn-${categoryId}`).classList.add('d-none');
+    document.getElementById(`save-btn-${categoryId}`).classList.remove('d-none');
+    document.getElementById(`cancel-btn-${categoryId}`).classList.remove('d-none');
+    
+    // Enfocar el input
+    document.getElementById(`category-edit-${categoryId}`).focus();
+    document.getElementById(`category-edit-${categoryId}`).select();
+    
+    // Agregar event listeners para Enter y Escape
+    const editInput = document.getElementById(`category-edit-${categoryId}`);
+    editInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveCategory(categoryId);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEditCategory(categoryId, currentName);
+        }
+    });
+}
+
+function cancelEditCategory(categoryId, originalName) {
+    // Restaurar el valor original
+    document.getElementById(`category-edit-${categoryId}`).value = originalName;
+    
+    // Mostrar el texto y ocultar el input
+    document.getElementById(`category-name-${categoryId}`).classList.remove('d-none');
+    document.getElementById(`category-edit-${categoryId}`).classList.add('d-none');
+    
+    // Cambiar botones
+    document.getElementById(`edit-btn-${categoryId}`).classList.remove('d-none');
+    document.getElementById(`save-btn-${categoryId}`).classList.add('d-none');
+    document.getElementById(`cancel-btn-${categoryId}`).classList.add('d-none');
+}
+
+function saveCategory(categoryId) {
+    const newName = document.getElementById(`category-edit-${categoryId}`).value.trim();
+    const currentName = document.getElementById(`category-name-${categoryId}`).textContent.trim();
+    
+    if (!newName) {
+        toast.error('El nombre de la categoría no puede estar vacío');
+        return;
+    }
+    
+    if (newName === currentName) {
+        // No hay cambios, solo cancelar la edición
+        cancelEditCategory(categoryId, currentName);
+        return;
+    }
+    
+    // Deshabilitar botones mientras se procesa
+    document.getElementById(`save-btn-${categoryId}`).disabled = true;
+    document.getElementById(`cancel-btn-${categoryId}`).disabled = true;
+    
+    api.post('/permissions/api/update-category', {
+        categoryId: categoryId,
+        oldName: currentName,
+        newName: newName
+    })
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            // Actualizar el texto en el DOM
+            document.getElementById(`category-name-${categoryId}`).textContent = newName;
+            // Cancelar el modo de edición
+            cancelEditCategory(categoryId, newName);
+        } else {
+            toast.error(data.message);
+            // Rehabilitar botones
+            document.getElementById(`save-btn-${categoryId}`).disabled = false;
+            document.getElementById(`cancel-btn-${categoryId}`).disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al actualizar la categoría');
+        // Rehabilitar botones
+        document.getElementById(`save-btn-${categoryId}`).disabled = false;
+        document.getElementById(`cancel-btn-${categoryId}`).disabled = false;
+    });
+}
+
+// Filtros de búsqueda
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchPages');
+    const categoryFilter = document.getElementById('filterByCategory');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#permissionsTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            const category = this.value;
+            const rows = document.querySelectorAll('#permissionsTable tbody tr');
+            
+            rows.forEach(row => {
+                const rowCategory = row.getAttribute('data-category');
+                row.style.display = (!category || rowCategory === category) ? '' : 'none';
+            });
+        });
+    }
+});
+
+// Función para seleccionar/deseleccionar todos los checkboxes de un rol
+function toggleAllRole(role) {
+    const checkboxes = document.querySelectorAll(`input[data-role="${role}"]`);
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked !== !allChecked) {
+            checkbox.checked = !allChecked;
+            togglePermission(checkbox);
+        }
+    });
+}
+
+// ============================================================================
+// FUNCIONES PARA GESTIÓN DE ROLES
+// ============================================================================
+
+// Cargar roles cuando se abre el modal
+document.getElementById('rolesModal').addEventListener('show.bs.modal', function() {
+    loadRoles();
+});
+
+// Función para cargar todos los roles
+function loadRoles() {
+    api.get('/permissions/api/roles')
+    .then(data => {
+        if (data.success) {
+            displayRoles(data.roles);
+        } else {
+            toast.error('Error al cargar roles: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al cargar roles');
+    });
+}
+
+// Función para mostrar los roles en la lista
+function displayRoles(roles) {
+    const rolesList = document.getElementById('rolesList');
+    rolesList.innerHTML = '';
+    
+    roles.forEach(role => {
+        const roleItem = document.createElement('div');
+        roleItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        roleItem.setAttribute('data-role-id', role.id);
+        
+        let actions = '';
+        if (role.deletable) {
+            // Solo roles personalizados tienen botones de acción (como las categorías)
+            actions = `
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary role-edit-btn" 
+                            onclick="editRole('${role.id}', '${role.name}')"
+                            id="role-edit-btn-${role.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-success role-save-btn d-none" 
+                            onclick="saveRole('${role.id}')"
+                            id="role-save-btn-${role.id}">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary role-cancel-btn d-none" 
+                            onclick="cancelEditRole('${role.id}', '${role.name}')"
+                            id="role-cancel-btn-${role.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteRole('${role.id}', '${role.name}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        } else {
+            // Roles del sistema solo muestran una etiqueta
+            actions = `<span class="badge bg-primary">Sistema</span>`;
+        }
+        
+        roleItem.innerHTML = `
+            <span class="role-name" id="role-name-${role.id}">${role.display_name}</span>
+            <input class="form-control role-edit d-none" id="role-edit-${role.id}" 
+                   value="${role.name}" style="max-width: 200px;">
+            ${actions}
+        `;
+        
+        rolesList.appendChild(roleItem);
+    });
+}
+
+// Función para agregar nuevo rol personalizado
+function addCustomRole() {
+    const nameInput = document.getElementById('newRoleName');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        toast.error('El nombre del rol es requerido');
+        nameInput.focus();
+        return;
+    }
+    
+    api.post('/permissions/api/roles', {
+        name: name,
+        description: `Rol personalizado: ${name}`
+    })
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            nameInput.value = '';
+            loadRoles(); // Recargar la lista de roles
+            loadPermissionsData(); // Recargar la tabla de permisos
+        } else {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al crear rol');
+    });
+}
+
+// Función para editar rol
+function editRole(roleId, roleName) {
+    // Ocultar elemento de solo lectura
+    document.getElementById(`role-name-${roleId}`).classList.add('d-none');
+    
+    // Mostrar elemento de edición
+    document.getElementById(`role-edit-${roleId}`).classList.remove('d-none');
+    
+    // Cambiar botones
+    document.getElementById(`role-edit-btn-${roleId}`).classList.add('d-none');
+    document.getElementById(`role-save-btn-${roleId}`).classList.remove('d-none');
+    document.getElementById(`role-cancel-btn-${roleId}`).classList.remove('d-none');
+    
+    // Enfocar en el campo
+    document.getElementById(`role-edit-${roleId}`).focus();
+}
+
+// Función para cancelar edición de rol
+function cancelEditRole(roleId, originalName) {
+    // Restaurar valor original
+    document.getElementById(`role-edit-${roleId}`).value = originalName;
+    
+    // Mostrar elemento de solo lectura
+    document.getElementById(`role-name-${roleId}`).classList.remove('d-none');
+    
+    // Ocultar elemento de edición
+    document.getElementById(`role-edit-${roleId}`).classList.add('d-none');
+    
+    // Cambiar botones
+    document.getElementById(`role-edit-btn-${roleId}`).classList.remove('d-none');
+    document.getElementById(`role-save-btn-${roleId}`).classList.add('d-none');
+    document.getElementById(`role-cancel-btn-${roleId}`).classList.add('d-none');
+}
+
+// Función para guardar rol editado
+function saveRole(roleId) {
+    const nameInput = document.getElementById(`role-edit-${roleId}`);
+    const newName = nameInput.value.trim();
+    
+    if (!newName) {
+        toast.error('El nombre del rol es requerido');
+        nameInput.focus();
+        return;
+    }
+    
+    // Deshabilitar botones
+    document.getElementById(`role-save-btn-${roleId}`).disabled = true;
+    document.getElementById(`role-cancel-btn-${roleId}`).disabled = true;
+    
+    fetchWithCSRF(`/permissions/api/roles/${roleId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            name: newName,
+            description: `Rol personalizado: ${newName}`
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            
+            // Actualizar elemento de solo lectura
+            document.getElementById(`role-name-${roleId}`).textContent = newName;
+            
+            // Mostrar elemento de solo lectura
+            document.getElementById(`role-name-${roleId}`).classList.remove('d-none');
+            
+            // Ocultar elemento de edición
+            document.getElementById(`role-edit-${roleId}`).classList.add('d-none');
+            
+            // Cambiar botones
+            document.getElementById(`role-edit-btn-${roleId}`).classList.remove('d-none');
+            document.getElementById(`role-save-btn-${roleId}`).classList.add('d-none');
+            document.getElementById(`role-cancel-btn-${roleId}`).classList.add('d-none');
+            
+            // Recargar la tabla de permisos para mostrar el rol actualizado
+            loadPermissionsData();
+            
+        } else {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al actualizar el rol');
+    })
+    .finally(() => {
+        // Rehabilitar botones
+        document.getElementById(`role-save-btn-${roleId}`).disabled = false;
+        document.getElementById(`role-cancel-btn-${roleId}`).disabled = false;
+    });
+}
+
+// Función para eliminar rol personalizado
+function deleteRole(roleId, roleName) {
+    if (!confirm(`¿Está seguro que desea eliminar el rol "${roleName}"?\n\nEsta acción no se puede deshacer.`)) {
+        return;
+    }
+    
+    fetchWithCSRF(`/permissions/api/roles/${roleId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            toast.success(data.message);
+            loadRoles(); // Recargar la lista
+            loadPermissionsData(); // Recargar la tabla de permisos
+        } else {
+            toast.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al eliminar rol');
+    });
+}
+
+// ============================================================================
+// FUNCIONALIDAD DE ORGANIZACIÓN DE MENÚ
+// ============================================================================
+
+// Variables globales para organización
+let availableIcons = [];
+let currentOrganizationData = {};
+
+// Cargar organización de menú al cambiar a la pestaña
+document.getElementById('menu-organization-tab').addEventListener('click', function() {
+    loadMenuOrganization();
+});
+
+// Cargar datos de organización de menú
+async function loadMenuOrganization() {
+    try {
+        showMenuOrganizationLoading(true);
+        
+        // Cargar iconos disponibles
+        const iconsResponse = await fetch('/permissions/api/menu/icons');
+        const iconsData = await iconsResponse.json();
+        availableIcons = iconsData.icons || [];
+        
+        // Cargar categorías y páginas organizadas
+        await loadOrganizationData();
+        
+        // Renderizar interfaz
+        renderMenuOrganization();
+        
+        // Inicializar sortable
+        initializeSortable();
+        
+    } catch (error) {
+        console.error('Error cargando organización de menú:', error);
+        showMenuOrganizationAlert('Error cargando datos de organización', 'danger');
+    } finally {
+        showMenuOrganizationLoading(false);
+    }
+}
+
+// Cargar datos de organización desde el servidor
+async function loadOrganizationData() {
+    // Cargar categorías
+    const categoriesResponse = await fetch('/permissions/api/categories');
+    const categoriesData = await categoriesResponse.json();
+    
+    if (!categoriesData.success) {
+        throw new Error('Error cargando categorías');
+    }
+    
+    // Cargar páginas por categoría
+    const categories = [];
+    for (const category of categoriesData.categories) {
+        const pagesResponse = await fetch(`/permissions/api/categories/${category.id}/pages`);
+        const pagesData = await pagesResponse.json();
+        
+        categories.push({
+            ...category,
+            pages: pagesData.success ? pagesData.pages : []
+        });
+    }
+    
+    // Ordenar por display_order
+    currentOrganizationData = {
+        categories: categories.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+    };
+}
+
+// Renderizar interfaz de organización
+function renderMenuOrganization() {
+    const container = document.getElementById('sortableCategoriesContainer');
+    container.innerHTML = '';
+    
+    currentOrganizationData.categories.forEach((category, categoryIndex) => {
+        const categoryElement = createCategoryElement(category, categoryIndex);
+        container.appendChild(categoryElement);
+    });
+}
+
+// Crear elemento de categoría
+function createCategoryElement(category, categoryIndex) {
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'card mb-3 sortable-category';
+    categoryDiv.dataset.categoryId = category.id;
+    categoryDiv.dataset.categoryIndex = categoryIndex;
+    
+    categoryDiv.innerHTML = `
+        <div class="card-header bg-light">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-grip-vertical text-muted me-2 drag-handle"></i>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="changeIcon('category', ${category.id})">
+                        <i class="${category.icon || 'fas fa-folder'}"></i>
+                    </button>
+                    <h6 class="mb-0 fw-bold">${category.name}</h6>
+                    <span class="badge bg-${category.color || 'primary'} ms-2">${category.pages?.length || 0} páginas</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="form-check form-switch me-2">
+                        <input class="form-check-input" type="checkbox" id="categoryVisible-${category.id}" 
+                               ${category.is_visible ? 'checked' : ''} 
+                               onchange="toggleVisibility('category', ${category.id}, this.checked)">
+                        <label class="form-check-label" for="categoryVisible-${category.id}">
+                            <small>Visible</small>
+                        </label>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#categoryPages-${category.id}">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="collapse show" id="categoryPages-${category.id}">
+            <div class="card-body">
+                <div class="sortable-pages" data-category-id="${category.id}">
+                    ${category.pages?.map((page, pageIndex) => createPageElement(page, pageIndex)).join('') || '<p class="text-muted mb-0">No hay páginas en esta categoría</p>'}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return categoryDiv;
+}
+
+// Crear elemento de página
+function createPageElement(page, pageIndex) {
+    return `
+        <div class="border rounded p-2 mb-2 sortable-page" data-page-id="${page.id}" data-page-index="${pageIndex}">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-grip-vertical text-muted me-2 drag-handle"></i>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="changeIcon('page', ${page.id})">
+                        <i class="${page.icon || 'fas fa-file'}"></i>
+                    </button>
+                    <div>
+                        <div class="fw-bold">${page.name}</div>
+                        <small class="text-muted">${page.route}</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="pageVisible-${page.id}" 
+                               ${page.is_visible ? 'checked' : ''} 
+                               onchange="toggleVisibility('page', ${page.id}, this.checked)">
+                        <label class="form-check-label" for="pageVisible-${page.id}">
+                            <small>Visible</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Inicializar funcionalidad de drag and drop
+function initializeSortable() {
+    // Sortable para categorías
+    new Sortable(document.getElementById('sortableCategoriesContainer'), {
+        animation: 150,
+        handle: '.drag-handle',
+        onEnd: function(evt) {
+            updateCategoryOrder();
+        }
+    });
+    
+    // Sortable para páginas dentro de cada categoría
+    document.querySelectorAll('.sortable-pages').forEach(container => {
+        new Sortable(container, {
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: function(evt) {
+                const categoryId = container.dataset.categoryId;
+                updatePageOrder(categoryId);
+            }
+        });
+    });
+}
+
+// Actualizar orden de categorías
+function updateCategoryOrder() {
+    const categories = [];
+    document.querySelectorAll('.sortable-category').forEach((element, index) => {
+        categories.push({
+            id: parseInt(element.dataset.categoryId),
+            order: index + 1
+        });
+    });
+    
+    fetchWithCSRF('/permissions/api/menu/categories/reorder', {
+        method: 'POST',
+        body: JSON.stringify({ categories })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMenuOrganizationAlert(data.message, 'success');
+        } else {
+            showMenuOrganizationAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error actualizando orden:', error);
+        showMenuOrganizationAlert('Error actualizando orden de categorías', 'danger');
+    });
+}
+
+// Actualizar orden de páginas
+function updatePageOrder(categoryId) {
+    const pages = [];
+    document.querySelector(`[data-category-id="${categoryId}"]`).querySelectorAll('.sortable-page').forEach((element, index) => {
+        pages.push({
+            id: parseInt(element.dataset.pageId),
+            order: index + 1
+        });
+    });
+    
+    fetchWithCSRF('/permissions/api/menu/pages/reorder', {
+        method: 'POST',
+        body: JSON.stringify({ pages, category_id: parseInt(categoryId) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMenuOrganizationAlert(data.message, 'success');
+        } else {
+            showMenuOrganizationAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error actualizando orden:', error);
+        showMenuOrganizationAlert('Error actualizando orden de páginas', 'danger');
+    });
+}
+
+// Cambiar icono
+function changeIcon(type, id) {
+    // Crear modal para selección de iconos
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Seleccionar Icono</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        ${availableIcons.map(icon => `
+                            <div class="col-2 text-center mb-3">
+                                <button class="btn btn-outline-secondary icon-selector" data-icon="${icon}">
+                                    <i class="${icon}"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+    
+    // Event listeners para selección
+    modal.querySelectorAll('.icon-selector').forEach(button => {
+        button.addEventListener('click', () => {
+            const selectedIcon = button.dataset.icon;
+            updateIcon(type, id, selectedIcon);
+            modalInstance.hide();
+        });
+    });
+    
+    // Limpiar modal al cerrar
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+// Actualizar icono
+function updateIcon(type, id, icon) {
+    const endpoint = `/permissions/api/menu/${type}/${id}/icon`;
+    
+    fetchWithCSRF(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify({ icon })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMenuOrganizationAlert(data.message, 'success');
+            // Actualizar visualmente el icono
+            const element = document.querySelector(`[data-${type}-id="${id}"] .btn-outline-secondary i`);
+            if (element) {
+                element.className = icon;
+            }
+        } else {
+            showMenuOrganizationAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error actualizando icono:', error);
+        showMenuOrganizationAlert('Error actualizando icono', 'danger');
+    });
+}
+
+// Cambiar visibilidad
+function toggleVisibility(type, id, isVisible) {
+    const endpoint = `/permissions/api/menu/${type}/${id}/visibility`;
+    
+    fetchWithCSRF(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify({ is_visible: isVisible })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMenuOrganizationAlert(data.message, 'success');
+        } else {
+            showMenuOrganizationAlert('Error: ' + data.error, 'danger');
+            // Revertir checkbox
+            document.getElementById(`${type}Visible-${id}`).checked = !isVisible;
+        }
+    })
+    .catch(error => {
+        console.error('Error cambiando visibilidad:', error);
+        showMenuOrganizationAlert('Error cambiando visibilidad', 'danger');
+        // Revertir checkbox
+        document.getElementById(`${type}Visible-${id}`).checked = !isVisible;
+    });
+}
+
+// Mostrar alertas de organización
+function showMenuOrganizationAlert(message, type) {
+    const alertsContainer = document.getElementById('menuOrganizationAlerts');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    alertsContainer.appendChild(alert);
+    
+    // Auto-dismissal después de 5 segundos
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Mostrar/ocultar loading de organización
+function showMenuOrganizationLoading(show) {
+    const container = document.getElementById('sortableCategoriesContainer');
+    if (show) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+                <p class="text-muted">Cargando organización del menú...</p>
+            </div>
+        `;
+    }
+}
+
+// Event listeners para botones de organización
+document.getElementById('saveMenuOrganization').addEventListener('click', function() {
+    showMenuOrganizationAlert('Cambios guardados automáticamente', 'success');
+});
+
+document.getElementById('resetMenuOrganization').addEventListener('click', function() {
+    if (confirm('¿Está seguro que desea restaurar la organización original del menú?')) {
+        loadMenuOrganization();
+    }
+});
+</script>
+
+<!-- Incluir SortableJS para drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+// Script adicional para inicialización después de cargar SortableJS
+document.addEventListener('DOMContentLoaded', function() {
+    // La funcionalidad ya está incluida arriba
+});
+</script>
+{% endblock %}

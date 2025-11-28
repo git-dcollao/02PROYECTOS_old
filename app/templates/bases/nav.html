@@ -1,81 +1,36 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="{{ url_for('controllers.ruta_inicio') }}">
-      <img class="img-fluid logo" src="{{url_for('static', filename ='imgs/logo_maho.png') }}" alt="Logo"/>
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-  
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('controllers.ruta_acerca_de_mi') }}">Acerca de mí</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('controllers.ruta_contacto') }}">Contacto</a>
-        </li>
-        <!-- Dropdown para Etapas -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="etapasDropdown" role="button" 
-             data-bs-toggle="dropdown" aria-expanded="false">
-            Etapas
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="etapasDropdown">
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_etapaN1') }}">Etapa N1</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_etapaN2') }}">Etapa N2</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_etapaN3') }}">Etapa N3</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_etapaN4') }}">Etapa N4</a></li>
-          </ul>
-        </li>
-        
-        <!-- Dropdown para Varios -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="variosDropdown" role="button" 
-             data-bs-toggle="dropdown" aria-expanded="false">
-            Mantenedores
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="variosDropdown">
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_estados') }}">Estados</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_tipoproyectos') }}">Tipo de Proyectos</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_fases') }}">Fases</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_equipos') }}">Equipos</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_tipologias') }}">Tipologías</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_especialidades') }}">Especialidad</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_financiamientos') }}">Financiamiento</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_trabajadores') }}">Trabajadores</a></li>
-            <!-- <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_etapas') }}">Etapas</a></li> -->
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_sectores') }}">Sectores</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_tiposrecintos') }}">Tipos de Recintos</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_recintos') }}">Recintos</a></li>
-          </ul>
-        <li>
-        <!-- Dropdown para Requerimientos -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="requerimientosDropdown" role="button" 
-             data-bs-toggle="dropdown" aria-expanded="false">
-            Requerimientos
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="requerimientosDropdown">
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_requerimientos') }}">Requerimientos</a></li>
-            <li><hr></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_requerimientos_aceptar') }}">Requerimientos Aceptar</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_requerimientos_completar') }}">Requerimientos Completar</a></li>
-            <li><hr></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_proyectos_aceptar') }}">Solicitud -> Proyecto</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_proyectos_completar') }}">Proyecto -> Agregar información</a></li>
-            <li><hr></li>
-            <li><a class="dropdown-item" href="{{ url_for('controllers.ruta_proyectos_etapas') }}">SOLO PRUEBA</a></li>
-            <li><hr></li>
-            <li><a class="dropdown-item" href="#">Proyecto -> Fase Intermedia</a></li>
-            <li><a class="dropdown-item" href="#">Fase Intermedia -> Agregar información</a></li>
-            <li><hr></li>
-            <li><a class="dropdown-item" href="#">Proyecto -> Proyecto en Curso</a></li>
-            <li><a class="dropdown-item" href="#">Proyecto en Curso -> Agregar información</a></li>
-            <li><hr></li>
-            <li><a class="dropdown-item" href="#">Proyecto en Curso -> Finalizado</a></li>
-          </ul>
-        <li>
-      </ul>
+<!-- Menú de navegación público (solo para usuarios no autenticados) -->
+{% set user = get_current_user() %}
+{% if not user %}
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+            <img class="img-fluid me-2" src="{{url_for('static', filename ='imgs/logo_maho.png') }}" alt="Logo" style="height: 40px;"/>
+            <span class="fw-bold text-primary">Sistema de Gestión</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav" 
+                aria-controls="publicNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="publicNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('controllers.ruta_acerca_de_mi') }}">
+                        <i class="fas fa-user me-1"></i>Acerca de mí
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('controllers.ruta_contacto') }}">
+                        <i class="fas fa-envelope me-1"></i>Contacto
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-primary ms-2" href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-  </nav>
+</nav>
+{% endif %}

@@ -1,143 +1,475 @@
-{% extends 'bases/base.html' %}
+{% extends 'base_layout.html' %}
 
-{% block title %}Tipologia{% endblock %}
+{% block title %}Gestión de Tipologías{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="well text-center">
-        <h1>Tipologia - Crud</h1>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col md-12">
-                <h2>
-                    Lista de Tipologia
-                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
-                            type="button">
-                        Nueva Tipologia
-                    </button>
-                </h2>
-                
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Nombre</th>
-                        <th>Nombre Corto</th>
-                        <th>Fase</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {%for tipologia in tipologias%}
-                    <tr>
-                        <td>{{tipologia.id}}</td>
-                        <td>{{tipologia.nombre}}</td>
-                        <td>{{tipologia.nombrecorto}}</td>
-                        <td>{{tipologia.fase.nombre}}</td>
-
-                        <td>
-                            <a class="btn p-1 btn-primary btn-sm" 
-                               data-bs-target="#exampleModal1{{tipologia.id}}"
-                               data-bs-toggle="modal"
-                               href="#">Editar</a> 
-                            <form action="{{ url_for('controllers.eliminar_tipologia', id=tipologia.id) }}"
-                                method="POST" style="display:inline;">
-                                <button class="btn p-1 btn-danger btn-sm" 
-                                type="submit">Eliminar</button>
-                            </form>
-                        </td>
-                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
-                             id="exampleModal1{{tipologia.id}}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del tipologia {{tipologia.nombre}}</h1>
-                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
-                                                type="button"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form action="{{ url_for('controllers.update_tipologia', id=tipologia.id) }}" method="POST">   
-                                            <div class="form-group">
-                                                <label>Nombre:</label>
-                                                <input type="hidden" name="id" value="{{tipologia.id}}">
-                                                <input class="form-control" name="nombre" value="{{tipologia.nombre}}" required="1" type="text">
-                                                <input class="form-control" name="nombrecorto" value="{{tipologia.nombrecorto}}" required="1" type="text">
-                                                <label>Fase:</label>
-                                                <select class="form-control" name="id_fase" required="1">
-                                                    {% for fase in fases %}
-                                                    <option value="{{ fase.id }}" {% if tipologia.id_fase == fase.id %}selected{% endif %}>
-                                                        {{ fase.nombre }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
-                                            Cerrar
-                                        </button>
-                                    </div>
+<div class="container-fluid py-4">
+    <!-- Header moderno -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-tags me-2"></i>
+                                Gestión de Tipologías
+                            </h3>
+                            <p class="mb-0 opacity-75">Administra y configura las tipologías organizadas por fases</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-center">
+                                    <div class="h4 mb-0">{{ tipologias|length }}</div>
+                                    <small class="opacity-75">Total</small>
+                                </div>
+                                <div class="vr mx-2"></div>
+                                <div class="text-center">
+                                    <div class="h4 mb-0">{{ fases|length }}</div>
+                                    <small class="opacity-75">Fases</small>
                                 </div>
                             </div>
                         </div>
-                    </tr>
-                    {%endfor%}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para agregar nuevo estado -->
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Tipologia</h1>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list me-2"></i>Lista de Tipologías
+                            </h5>
+                        </div>
+                        <div class="text-muted">
+                            <small>{{ tipologias|length }} registros</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form action="{{ url_for('controllers.add_tipologia') }}" method="POST"> 
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input class="form-control" name="nombre" required="1" type="text">
-                            <label>Nombre Corto:</label>
-                            <input class="form-control" name="nombrecorto" required="1" type="text">
-                            <label>Fase:</label>
-                            <select class="form-control" name="id_fase" required="1">
+                <div class="card-body p-0">
+                    {% if tipologias %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 px-4 py-3">ID</th>
+                                    <th class="border-0 px-4 py-3">Nombre</th>
+                                    <th class="border-0 px-4 py-3">Nombre Corto</th>
+                                    <th class="border-0 px-4 py-3">Fase</th>
+                                    <th class="border-0 px-4 py-3 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tipologia in tipologias %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-light text-dark">{{ tipologia.id }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="fw-semibold text-dark">{{ tipologia.nombre }}</div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-secondary">{{ tipologia.nombrecorto or 'N/A' }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-primary">{{ tipologia.fase.nombre }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    onclick="abrirModalDetalle({{ tipologia.id }}, '{{ tipologia.nombre }}', '{{ tipologia.nombrecorto or "" }}', '{{ tipologia.fase.nombre }}')"
+                                                    title="Ver detalle de la tipología">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="abrirModalEdicion({{ tipologia.id }}, '{{ tipologia.nombre }}', '{{ tipologia.nombrecorto or "" }}', {{ tipologia.id_fase }})"
+                                                    title="Editar tipología">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ tipologia.id }}, '{{ tipologia.nombre }}')"
+                                                    title="Eliminar tipología">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-inbox fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No hay tipologías registradas</h5>
+                        <p class="text-muted">Comienza agregando una nueva tipología usando el formulario</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-plus me-2"></i>Añadir Tipología
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_tipologia') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="add_form_token" value="">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-semibold">Nombre de la Tipología</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required 
+                                   placeholder="Ej: Desarrollo Web, Móvil, Infraestructura">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nombrecorto" class="form-label fw-semibold">Nombre Corto</label>
+                            <input type="text" class="form-control" id="nombrecorto" name="nombrecorto"
+                                   placeholder="Ej: WEB, MOV, INFRA">
+                        </div>
+                        <div class="mb-3">
+                            <label for="fase" class="form-label fw-semibold">Fase</label>
+                            <select class="form-select" id="fase" name="id_fase" required>
                                 <option value="">Seleccione una Fase</option>
                                 {% for fase in fases %}
                                 <option value="{{ fase.id }}">{{ fase.nombre }}</option>
                                 {% endfor %}
-                            </select>                        
+                            </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Crear Tipología
+                            </button>
+                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+
+            <!-- Card de estadísticas -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-info">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Total de Tipologías:</span>
+                            <span class="badge bg-primary">{{ tipologias|length }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted fw-semibold">Distribución por Fase:</small>
+                    </div>
+                    {% for fase in fases %}
+                        {% set count = tipologias|selectattr("id_fase", "equalto", fase.id)|list|length %}
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">{{ fase.nombre }}:</small>
+                            <span class="badge bg-light text-dark">{{ count }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="well container">
-    
+
+<!-- Modal dinámico para detalles -->
+<div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Detalle de la Tipología
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleContent">
+                <!-- Contenido dinámico aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Agregar al final del archivo -->
+<!-- Modal dinámico para edición -->
+<div class="modal fade" id="modalEdicion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Tipología
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEdicion">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="form_token" id="edit_form_token" value="">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label fw-semibold">Nombre de la Tipología</label>
+                        <input type="text" class="form-control" id="editNombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNombreCorto" class="form-label fw-semibold">Nombre Corto</label>
+                        <input type="text" class="form-control" id="editNombreCorto" name="nombrecorto"
+                               placeholder="Abreviatura">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFase" class="form-label fw-semibold">Fase</label>
+                        <select class="form-select" id="editFase" name="id_fase" required>
+                            {% for fase in fases %}
+                            <option value="{{ fase.id }}">{{ fase.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dinámico para confirmación de eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash-alt fa-3x text-danger opacity-50"></i>
+                </div>
+                <p class="text-center mb-3">
+                    ¿Está seguro de que desea eliminar la tipología 
+                    <strong class="text-primary" id="tipologiaNombre"></strong>?
+                </p>
+                <div class="alert alert-warning border-warning">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <small>Esta acción no se puede deshacer y puede afectar proyectos existentes.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Si necesitas alguna funcionalidad JavaScript adicional para el combo
-        const faseSelect = document.querySelector('select[name="id_fase"]');
-        
-       faseSelect.addEventListener('change', function() {
-            const selectedfase = this.value;
-            console.log('Fase seleccionada:', selectedfase);
+// Función para generar token único
+function generateUniqueToken() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Variables globales para los modales
+let modalDetalle, modalEdicion, modalEliminar;
+
+// Variable global para la URL base de actualización
+const updateTipologiaBaseUrl = '{{ url_for("controllers.update_tipologia", id=0) }}'.replace('/0', '');
+
+// Inicialización optimizada
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar modales una sola vez
+    modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
+    modalEdicion = new bootstrap.Modal(document.getElementById('modalEdicion'));
+    modalEliminar = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    // Generar token para formulario de creación
+    document.getElementById('add_form_token').value = generateUniqueToken();
+    
+    // Mejorar formulario principal
+    const formularioPrincipal = document.querySelector('form[action*="add_tipologia"]');
+    if (formularioPrincipal) {
+        formularioPrincipal.addEventListener('submit', function(e) {
+            const nombre = this.querySelector('input[name="nombre"]');
+            const fase = this.querySelector('select[name="id_fase"]');
+            
+            if (!nombre.value.trim()) {
+                e.preventDefault();
+                mostrarAlerta('Por favor, ingresa un nombre válido para la tipología', 'warning');
+                nombre.focus();
+                return;
+            }
+            
+            if (!fase.value) {
+                e.preventDefault();
+                mostrarAlerta('Por favor, selecciona una fase', 'warning');
+                fase.focus();
+                return;
+            }
         });
+    }
+    
+    // Auto-dismissal de alertas después de 5 segundos
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            try {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            } catch (e) {
+                console.log('Alert ya cerrada');
+            }
+        });
+    }, 5000);
+});
+
+// Función optimizada para abrir modal de detalle
+function abrirModalDetalle(id, nombre, nombreCorto, fase) {
+    requestAnimationFrame(() => {
+        const contenido = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-primary"><i class="fas fa-tag me-2"></i>Información General</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-semibold">ID:</td>
+                                    <td><span class="badge bg-light text-dark">${id}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Nombre:</td>
+                                    <td class="fw-bold">${nombre}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Nombre Corto:</td>
+                                    <td><span class="badge bg-secondary">${nombreCorto || 'N/A'}</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-primary"><i class="fas fa-layer-group me-2"></i>Información de Fase</h6>
+                            <div class="text-center py-3">
+                                <div class="mb-2">
+                                    <span class="badge bg-primary fs-6">${fase}</span>
+                                </div>
+                                <p class="text-muted mb-0">Fase asociada a la tipología</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('detalleContent').innerHTML = contenido;
+        modalDetalle.show();
     });
-    </script>
+}
+
+// Función optimizada para abrir modal de edición
+function abrirModalEdicion(id, nombre, nombreCorto, idFase) {
+    requestAnimationFrame(() => {
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('editNombreCorto').value = nombreCorto || '';
+        document.getElementById('editFase').value = idFase;
+        
+        document.getElementById('formEdicion').action = updateTipologiaBaseUrl + '/' + id;
+        document.getElementById('formEdicion').method = 'POST';
+        
+        // Generar nuevo token para edición
+        document.getElementById('edit_form_token').value = generateUniqueToken();
+        
+        // Agregar evento de submit
+        const form = document.getElementById('formEdicion');
+        form.onsubmit = function(e) {
+            const nombre = document.getElementById('editNombre');
+            const fase = document.getElementById('editFase');
+            
+            if (!nombre.value.trim()) {
+                e.preventDefault();
+                mostrarAlerta('El nombre no puede estar vacío', 'warning');
+                nombre.focus();
+                return false;
+            }
+            
+            if (!fase.value) {
+                e.preventDefault();
+                mostrarAlerta('Debe seleccionar una fase', 'warning');
+                fase.focus();
+                return false;
+            }
+        };
+        
+        modalEdicion.show();
+        
+        // Enfocar y seleccionar texto después de que se muestre el modal
+        setTimeout(() => {
+            const input = document.getElementById('editNombre');
+            input.focus();
+            input.select();
+        }, 150);
+    });
+}
+
+// Función para confirmar eliminación (usando modal estático mejorado)
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('tipologiaNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_tipologia', id=0) }}".replace('0', id);
+    
+    modalEliminar.show();
+}
+
+// Función auxiliar para mostrar alertas
+function mostrarAlerta(mensaje, tipo = 'info') {
+    const alertContainer = document.createElement('div');
+    alertContainer.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertContainer.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertContainer.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertContainer);
+    
+    // Remover automáticamente después de 5 segundos
+    setTimeout(() => {
+        if (alertContainer.parentNode) {
+            alertContainer.remove();
+        }
+    }, 5000);
+}
+</script>
 {% endblock %}

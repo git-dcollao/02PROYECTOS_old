@@ -1,0 +1,485 @@
+/* ========================================
+   ESTILOS GLOBALES PARA MODALES DE LA APP
+   ======================================== */
+
+/* Variables CSS para consistencia */
+:root {
+    --modal-border-radius: 0.75rem;
+    --modal-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    --modal-backdrop: rgba(0, 0, 0, 0.5);
+    --modal-header-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    --modal-padding: 1rem;
+    --modal-font-size: 0.75rem;  /* Tamaño pequeño consistente */
+    --modal-title-size: 0.875rem;
+    --modal-max-width-small: 450px;
+    --modal-max-width-medium: 800px;
+    --modal-max-width-large: 1200px;
+    --modal-max-width-fullscreen: 95%;
+}
+
+/* ========================================
+   MODALES BASE - ESTILOS COMUNES
+   ======================================== */
+
+/* Todos los modales de la app */
+.modal-app {
+    font-size: var(--modal-font-size);
+}
+
+.modal-app .modal-content {
+    border-radius: var(--modal-border-radius);
+    box-shadow: var(--modal-shadow);
+    overflow: hidden;
+}
+
+.modal-app .modal-header {
+    background: var(--modal-header-bg);
+    padding: var(--modal-padding);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-app .modal-title {
+    font-size: var(--modal-title-size);
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-app .modal-body {
+    padding: var(--modal-padding);
+    font-size: var(--modal-font-size);
+}
+
+.modal-app .modal-footer {
+    padding: var(--modal-padding);
+    border-top: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+/* ========================================
+   TAMAÑOS DE MODALES ESTANDARIZADOS
+   ======================================== */
+
+/* Modal pequeño - Para confirmaciones, alertas */
+.modal-app.modal-size-small .modal-dialog {
+    max-width: var(--modal-max-width-small);
+    width: auto;
+    min-width: 350px;
+    height: auto;
+}
+
+/* Modal mediano - Para formularios simples */
+.modal-app.modal-size-medium .modal-dialog {
+    max-width: var(--modal-max-width-medium);
+}
+
+/* Modal grande - Para formularios complejos */
+.modal-app.modal-size-large .modal-dialog {
+    max-width: var(--modal-max-width-large);
+}
+
+/* Modal pantalla completa - Para edición avanzada */
+.modal-app.modal-size-fullscreen .modal-dialog {
+    max-width: var(--modal-max-width-fullscreen);
+    margin: 1rem auto;
+}
+
+/* ========================================
+   MODALES CON ALTURA AUTOMÁTICA
+   ======================================== */
+
+/* Solo aplicar altura completa a modales GRANDES SIN FORMULARIOS */
+.modal-app.modal-auto-height:not(.modal-size-small):not(.modal-edit-form) .modal-dialog {
+    height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-app.modal-auto-height:not(.modal-size-small):not(.modal-edit-form) .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-app.modal-auto-height:not(.modal-size-small):not(.modal-edit-form) .modal-header {
+    flex-shrink: 0;
+}
+
+.modal-app.modal-auto-height:not(.modal-size-small):not(.modal-edit-form) .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-app.modal-auto-height:not(.modal-size-small):not(.modal-edit-form) .modal-footer {
+    flex-shrink: 0;
+}
+
+/* ANULAR COMPLETAMENTE altura automática para modales pequeños */
+.modal-app.modal-size-small.modal-auto-height .modal-dialog {
+    height: auto !important;
+    display: block !important;
+    flex-direction: initial !important;
+    max-height: none !important;
+}
+
+.modal-app.modal-size-small.modal-auto-height .modal-content {
+    height: auto !important;
+    display: block !important;
+    flex-direction: initial !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.modal-app.modal-size-small.modal-auto-height .modal-body {
+    flex: none !important;
+    overflow: visible !important;
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+/* ========================================
+   FORMULARIOS EN MODALES
+   ======================================== */
+
+.modal-app .form-control,
+.modal-app .form-select {
+    font-size: var(--modal-font-size);
+    padding: 0.2rem 0.4rem;
+    min-height: 26px;
+    line-height: 1;
+}
+
+.modal-app .form-label {
+    font-size: var(--modal-font-size);
+    margin-bottom: 0.15rem;
+    font-weight: 600;
+}
+
+.modal-app .btn {
+    font-size: var(--modal-font-size);
+    padding: 0.25rem 0.75rem;
+}
+
+.modal-app textarea {
+    font-size: var(--modal-font-size);
+    resize: vertical;
+}
+
+/* ========================================
+   FORMULARIOS DE EDICIÓN EXPANDIBLES
+   ======================================== */
+
+.modal-app.modal-edit-form .modal-body {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.modal-app.modal-edit-form .form-fields-section {
+    flex-shrink: 0;
+    margin-bottom: 1rem;
+}
+
+.modal-app.modal-edit-form .form-description-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+.modal-app.modal-edit-form .form-description-section textarea {
+    flex: 1;
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* Ajuste específico para modales large con formularios - ALTURA AUTOMÁTICA */
+.modal-app.modal-size-large.modal-edit-form .modal-dialog {
+    height: auto !important;
+    max-height: calc(100vh - 3rem) !important;
+    min-height: auto !important;
+}
+
+.modal-app.modal-size-large.modal-edit-form .modal-content {
+    height: auto !important;
+    max-height: calc(100vh - 3rem) !important;
+    min-height: auto !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-app.modal-size-large.modal-edit-form .modal-body {
+    overflow-y: auto;
+    flex: 1;
+    min-height: auto !important;
+    height: auto !important;
+}
+
+/* Asegurar que los modales de formulario no ocupen altura completa a menos que sea necesario */
+.modal-app.modal-size-large.modal-edit-form .modal-header {
+    flex-shrink: 0;
+}
+
+.modal-app.modal-size-large.modal-edit-form .modal-footer {
+    flex-shrink: 0;
+}
+
+/* ========================================
+   DISTRIBUCIÓN DE CAMPOS RESPONSIVA
+   ======================================== */
+
+.modal-app .form-row-responsive {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.modal-app .form-group {
+    margin-bottom: 0.75rem;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .modal-app.modal-size-fullscreen .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+        height: 100vh;
+    }
+    
+    .modal-app.modal-auto-height .modal-dialog {
+        height: 100vh;
+        margin: 0;
+    }
+    
+    .modal-app .form-row-responsive {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1200px) {
+    .modal-app.modal-size-large .modal-dialog {
+        max-width: var(--modal-max-width-large);
+    }
+}
+
+/* ========================================
+   ICONOS Y ELEMENTOS VISUALES
+   ======================================== */
+
+.modal-app .modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    margin-right: 1rem;
+}
+
+.modal-app .modal-title-with-icon {
+    display: flex;
+    align-items: center;
+}
+
+/* ========================================
+   ESTILOS PARA MODALES DE CONFIRMACIÓN
+   ======================================== */
+
+.modal-app .modal-confirmation-content {
+    text-align: center;
+    padding: 1rem;
+}
+
+.modal-app .modal-confirmation-text {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.modal-app .modal-warning-alert {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    color: #856404;
+    font-size: var(--modal-font-size);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-app .modal-warning-alert i {
+    color: #f39c12;
+    flex-shrink: 0;
+}
+
+/* ========================================
+   ICONOS ESPECÍFICOS POR TIPO DE MODAL
+   ======================================== */
+
+.modal-app .modal-icon.modal-icon-danger {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.modal-app .modal-icon.modal-icon-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.modal-app .modal-icon.modal-icon-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+/* ========================================
+   UTILIDADES ESPECÍFICAS
+   ======================================== */
+
+.modal-app .text-truncate-description {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.modal-app .bg-gradient-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+}
+
+/* ========================================
+   MODALES PEQUEÑOS - COMPACTOS Y AUTO-DIMENSIONADOS
+   ======================================== */
+
+/* REGLAS PRINCIPALES para modales pequeños - MÁXIMA PRIORIDAD */
+.modal-app.modal-size-small .modal-dialog {
+    width: auto !important;
+    max-width: 450px !important;
+    min-width: 350px !important;
+    margin: 1.75rem auto !important;
+    height: auto !important;
+    display: block !important;
+    max-height: fit-content !important;
+    flex-direction: initial !important;
+}
+
+.modal-app.modal-size-small .modal-content {
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
+    max-height: fit-content !important;
+    flex-direction: initial !important;
+    width: 100% !important;
+}
+
+/* ANULAR todas las reglas de flexbox para modales pequeños */
+.modal-app.modal-size-small .modal-header {
+    padding: 1rem 1.5rem 0.5rem 1.5rem !important;
+    height: auto !important;
+    flex-shrink: initial !important;
+}
+
+.modal-app.modal-size-small .modal-body {
+    padding: 0.5rem 1.5rem 1rem 1.5rem !important;
+    overflow: visible !important;
+    display: block !important;
+    flex: none !important;
+    height: auto !important;
+    max-height: fit-content !important;
+}
+
+.modal-app.modal-size-small .modal-footer {
+    padding: 0.5rem 1.5rem 1rem 1.5rem !important;
+    height: auto !important;
+    flex-shrink: initial !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+}
+
+/* Contenido de confirmación optimizado */
+.modal-app.modal-size-small .modal-confirmation-content {
+    text-align: center;
+    padding: 0.5rem;
+}
+
+/* OVERRIDE específico para Bootstrap modal backdrop */
+.modal-app.modal-size-small {
+    --bs-modal-width: auto !important;
+}
+
+/* Forzar dimensiones naturales para modales pequeños */
+.modal-app.modal-size-small.modal-auto-height .modal-dialog,
+.modal-app.modal-size-small.modal-auto-height .modal-content {
+    height: auto !important;
+    max-height: fit-content !important;
+    min-height: auto !important;
+}
+
+/* MODALES DE FORMULARIO - Se ajustan al contenido con límite máximo */
+.modal-app.modal-edit-form.modal-auto-height .modal-dialog {
+    height: auto !important;
+    max-height: calc(100vh - 3rem) !important;
+    min-height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.modal-app.modal-edit-form.modal-auto-height .modal-content {
+    height: auto !important;
+    max-height: calc(100vh - 3rem) !important;
+    min-height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* ========================================
+   MODAL DE RESTAURACIÓN - ESTILOS ESPECÍFICOS
+   ======================================== */
+
+/* Asegurar que el modal de restauración esté bien posicionado */
+#restoreOptionsModal .modal-dialog {
+    margin: 1.75rem auto !important;
+    max-width: 600px !important;
+    width: 95% !important;
+}
+
+#restoreOptionsModal .modal-content {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0,0,0,.2) !important;
+    border-radius: var(--modal-border-radius) !important;
+}
+
+#restoreOptionsModal .modal-body {
+    position: relative !important;
+    padding: var(--modal-padding) !important;
+}
+
+#restoreOptionsModal .modal-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding: var(--modal-padding) !important;
+    gap: 0.5rem !important;
+}
+
+/* Asegurar que los botones estén bien alineados */
+#restoreOptionsModal .modal-footer .btn {
+    position: relative !important;
+    z-index: 1 !important;
+}

@@ -1,0 +1,34 @@
+🔑 CREDENCIALES DE ADMINISTRADOR
+🎯 Cuenta Principal (SUPERADMIN):
+📧 Email: admin@sistema.local
+🔒 Contraseña: Maho#2024
+👑 Rol: SUPERADMIN
+🆔 RUT: 11111111-1
+
+🔧 Cuentas Alternativas:
+Administrador General:
+📧 Email: administrador@sistema.local
+🔒 Contraseña: Admin#2024
+👤 Rol: ADMIN
+
+Cuentas de Testing:
+📧 Email: admin@test.com
+🔒 Contraseña: admin123
+👤 Rol: SUPERADMIN
+
+
+🚀 CÓMO ACCEDER:
+Ir a la página de login: http://localhost:5050/auth/login
+Usar credenciales principales:
+Email: admin@sistema.local
+Contraseña: Maho#2024
+
+
+Hacer clic en "Iniciar Sesión"
+🛡️ PERMISOS DEL SUPERADMIN:
+✅ Gestión completa de usuarios
+✅ Configuración del sistema
+✅ Acceso a todas las páginas
+✅ Gestión de roles y permisos
+✅ Administración de áreas y recintos
+✅ Control total del sistema   

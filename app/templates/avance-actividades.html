@@ -1,0 +1,869 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Registro de Avance de Actividades{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS específico para avance-actividades -->
+    <style>
+        .actividad-row {
+            transition: background-color 0.3s ease;
+        }
+        .actividad-row:hover {
+            background-color: #f8f9fa !important;
+        }
+        .actividad-row.table-warning {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+        .progreso-input {
+            max-width: 80px;
+        }
+        .trabajador-card {
+            border-left: 4px solid #007bff;
+        }
+        .proyecto-badge {
+            margin: 2px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-success text-black shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-chart-line"></i> Registro de Avance de Actividades - Mis Proyectos</h2>
+                            <p class="mb-0">Actualizar el progreso de las actividades en proyectos asignados</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <i class="fas fa-users fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del trabajador logueado -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-success trabajador-card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-user-check"></i> Trabajador Actual (Auto-selección)</h6>
+                </div>
+                <div class="card-body" id="infoTrabajador">
+                    {% if trabajador_actual %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-success">
+                                <i class="fas fa-user"></i> 
+                                {{ trabajador_actual.nombrecorto or trabajador_actual.nombre }}
+                            </h6>
+                            <p class="mb-1"><strong>Nombre Completo:</strong> {{ trabajador_actual.nombre }}</p>
+                            <p class="mb-1"><strong>Email:</strong> {{ trabajador_actual.email or 'No especificado' }}</p>
+                            <p class="mb-1"><strong>Cargo:</strong> {{ trabajador_actual.profesion or 'No especificado' }}</p>
+                            <small class="text-muted">ID: {{ trabajador_actual.id }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mt-3">
+                                {% if tiene_proyectos %}
+                                <div class="alert alert-success p-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>Proyectos disponibles</strong>
+                                    <br><small>Se cargarán automáticamente sus proyectos asignados</small>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning p-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Sin proyectos asignados</strong>
+                                    <br><small>No tiene proyectos asignados actualmente</small>
+                                </div>
+                                {% endif %}
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border spinner-border-sm text-success me-2" role="status" id="loadingSpinner" style="display: none;"></div>
+                                    <span class="text-muted" id="loadingText">Listo para cargar proyectos...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Error de autenticación</strong>
+                        <br>No se pudo identificar el trabajador actual. Por favor, inicie sesión nuevamente.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Instrucciones</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <i class="fas fa-lightbulb fa-2x text-warning mb-2"></i>
+                        <h6>¿Cómo usar esta página?</h6>
+                        <ol class="text-start small">
+                            <li>Sus proyectos se cargarán automáticamente</li>
+                            <li>Haga clic en cualquier proyecto para ver actividades</li>
+                            <li>Actualice el progreso de las actividades</li>
+                            <li>Guarde los cambios cuando termine</li>
+                        </ol>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> Solo verá sus proyectos asignados
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividades del proyecto seleccionado -->
+    <div id="actividadesContainer" style="display: none;">
+        <div class="card shadow">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Actividades del Trabajador en el Proyecto</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-success btn-sm" onclick="guardarTodosLosAvances()">
+                        <i class="fas fa-save"></i> Guardar Todos los Avances
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="exportarAvances()">
+                        <i class="fas fa-download"></i> Exportar Avances
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- Toolbar de acciones rápidas -->
+                <div class="p-3 bg-light border-bottom">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="buscarActividad" placeholder="Buscar actividad...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="filtrarPorEstado('pendientes')">
+                                    <i class="fas fa-clock"></i> Pendientes
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="filtrarPorEstado('en_progreso')">
+                                    <i class="fas fa-spinner"></i> En Progreso
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" onclick="filtrarPorEstado('completadas')">
+                                    <i class="fas fa-check"></i> Completadas
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="filtrarPorEstado('todas')">
+                                    <i class="fas fa-list"></i> Todas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de actividades -->
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="tablaActividades">
+                        <thead class="table-success">
+                            <tr>
+                                <th width="8%">EDT</th>
+                                <th width="30%">Actividad</th>
+                                <th width="12%">Fecha Inicio</th>
+                                <th width="12%">Fecha Fin</th>
+                                <th width="8%">Duración</th>
+                                <th width="15%">Progreso Actual</th>
+                                <th width="15%">Nuevo Progreso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actividadesTableBody">
+                            <!-- Las actividades se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen de avances -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card text-center border-secondary">
+                    <div class="card-body">
+                        <i class="fas fa-tasks fa-2x text-secondary mb-2"></i>
+                        <h4 class="text-secondary" id="totalActividades">0</h4>
+                        <small class="text-muted">Total Actividades</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <i class="fas fa-spinner fa-2x text-warning mb-2"></i>
+                        <h4 class="text-warning" id="actividadesEnProgreso">0</h4>
+                        <small class="text-muted">En Progreso</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h4 class="text-success" id="actividadesCompletadas">0</h4>
+                        <small class="text-muted">Completadas</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                        <h4 class="text-info" id="progresoGeneral">0%</h4>
+                        <small class="text-muted">Progreso General</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar guardado -->
+<div class="modal fade" id="modalConfirmarGuardado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-save"></i> Confirmar Guardado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea guardar los avances registrados?</p>
+                <div id="resumenCambios"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmarGuardado()">
+                    <i class="fas fa-save"></i> Guardar Avances
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let actividadesData = [];
+let trabajadorSeleccionado = {{ trabajador_actual.id if trabajador_actual else 'null' }};
+let proyectoSeleccionado = null;
+
+// Helper function para obtener CSRF token
+function getCSRFToken() {
+    // Intentar desde meta tag primero
+    const metaTag = document.querySelector('meta[name=csrf-token]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    
+    // Intentar desde input hidden como backup
+    const inputTag = document.querySelector('input[name=csrf_token]');
+    if (inputTag) {
+        return inputTag.value;
+    }
+    
+    console.error('❌ No se pudo obtener CSRF token');
+    return null;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar disponibilidad de CSRF token
+    const csrfToken = getCSRFToken();
+    if (csrfToken) {
+        console.log('✅ CSRF Token disponible:', csrfToken.substring(0, 20) + '...');
+    } else {
+        console.error('❌ CSRF Token no disponible - las operaciones POST fallarán');
+    }
+    
+    {% if trabajador_actual and tiene_proyectos %}
+    // Auto-inicializar con el trabajador actual
+    console.log(`👤 Trabajador auto-seleccionado: ${trabajadorSeleccionado} ({{ trabajador_actual.nombre }})`);
+    
+    // Configurar eventos de filtrado
+    document.getElementById('buscarActividad').addEventListener('input', filtrarActividades);
+    
+    // Cargar proyectos automáticamente
+    cargarProyectosPorTrabajador();
+    {% else %}
+    console.warn('⚠️ Trabajador actual no encontrado o sin proyectos asignados');
+    {% if not trabajador_actual %}
+    mostrarAlerta('Error de autenticación. Por favor, inicie sesión nuevamente.', 'danger');
+    {% else %}
+    mostrarAlerta('No tiene proyectos asignados actualmente.', 'warning');
+    {% endif %}
+    {% endif %}
+});
+
+function limpiarDatosAnteriores() {
+    // Limpiar variables globales
+    actividadesData = [];
+    proyectoSeleccionado = null;
+    
+    // Ocultar contenedor de actividades
+    document.getElementById('actividadesContainer').style.display = 'none';
+    
+    // Resetear resumen
+    document.getElementById('totalActividades').textContent = '0';
+    document.getElementById('actividadesEnProgreso').textContent = '0';
+    document.getElementById('actividadesCompletadas').textContent = '0';
+    document.getElementById('progresoGeneral').textContent = '0%';
+    
+    console.log('🧹 Datos anteriores limpiados');
+}
+
+function limpiarActividadesAnteriores() {
+    actividadesData = [];
+    document.getElementById('actividadesContainer').style.display = 'none';
+    document.getElementById('totalActividades').textContent = '0';
+    document.getElementById('actividadesEnProgreso').textContent = '0';
+    document.getElementById('actividadesCompletadas').textContent = '0';
+    document.getElementById('progresoGeneral').textContent = '0%';
+}
+
+async function cargarProyectosPorTrabajador() {
+    if (!trabajadorSeleccionado) {
+        console.error('❌ No hay trabajador seleccionado');
+        return;
+    }
+
+    // Mostrar indicador de carga
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const loadingText = document.getElementById('loadingText');
+    
+    if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+    if (loadingText) loadingText.textContent = 'Cargando proyectos asignados...';
+    
+    try {
+        // Cargar proyectos del trabajador actual
+        console.log(`👤 Cargando proyectos para trabajador ID: ${trabajadorSeleccionado}`);
+        const response = await fetch(`/proyectos_por_trabajador/${trabajadorSeleccionado}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Actualizar información del trabajador con proyectos
+        let proyectosHtml = '';
+        const infoContainer = document.querySelector('#infoTrabajador .row .col-md-6:last-child .mt-3');
+        
+        if (data.success && data.proyectos && data.proyectos.length > 0) {
+            // Crear lista visual de proyectos
+            proyectosHtml = `
+                <div class="alert alert-success p-2">
+                    <i class="fas fa-project-diagram"></i>
+                    <strong>Proyectos Asignados (${data.proyectos.length})</strong>
+                </div>
+                <div class="row g-2" style="max-height: 300px; overflow-y: auto;">
+            `;
+            
+            data.proyectos.forEach((proyecto, index) => {
+                // Determinar color según estado
+                let estadoColor = 'secondary';
+                if (proyecto.estado === 'En Desarrollo - Ejecución') estadoColor = 'success';
+                else if (proyecto.estado === 'En Desarrollo - Preparación') estadoColor = 'warning';
+                else if (proyecto.estado === 'Finalizado') estadoColor = 'info';
+                
+                proyectosHtml += `
+                    <div class="col-12">
+                        <div class="card card-body p-2 border-start border-${estadoColor} border-3 mb-2" 
+                             style="cursor: pointer; transition: all 0.2s;" 
+                             onclick="seleccionarProyectoDesdeCard(${proyecto.id})"
+                             onmouseover="this.style.backgroundColor='#f8f9fa'"
+                             onmouseout="this.style.backgroundColor='white'">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 text-primary fw-bold" style="font-size: 0.85rem;">${proyecto.nombre}</h6>
+                                    <div class="d-flex flex-wrap gap-1 mb-1">
+                                        <span class="badge bg-${estadoColor} text-white" style="font-size: 0.7rem;">${proyecto.estado}</span>
+                                        <span class="badge bg-outline-secondary" style="font-size: 0.7rem;">${proyecto.sector}</span>
+                                    </div>
+                                    <small class="text-muted" style="font-size: 0.75rem;">${proyecto.descripcion.substring(0, 60)}${proyecto.descripcion.length > 60 ? '...' : ''}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted d-block" style="font-size: 0.7rem;">${proyecto.fecha}</small>
+                                    <span class="badge bg-primary" style="font-size: 0.7rem;">ID: ${proyecto.id}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            proyectosHtml += `
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Haga clic en cualquier proyecto para cargar las actividades
+                    </small>
+                </div>
+            `;
+            
+            console.log(`✅ ${data.proyectos.length} proyectos cargados para trabajador ${trabajadorSeleccionado}`);
+            
+            if (loadingText) loadingText.textContent = `${data.proyectos.length} proyectos cargados exitosamente`;
+        } else {
+            proyectosHtml = `
+                <div class="alert alert-warning p-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Sin proyectos asignados</strong>
+                    <br><small>No tiene proyectos asignados actualmente.</small>
+                </div>
+            `;
+            console.warn(`⚠️ No hay proyectos para trabajador ${trabajadorSeleccionado}`);
+            
+            if (loadingText) loadingText.textContent = 'Sin proyectos asignados';
+        }
+        
+        // Actualizar la información de proyectos en el DOM
+        if (infoContainer) {
+            infoContainer.innerHTML = proyectosHtml;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar proyectos del trabajador:', error);
+        
+        const infoContainer = document.querySelector('#infoTrabajador .row .col-md-6:last-child .mt-3');
+        if (infoContainer) {
+            infoContainer.innerHTML = `
+                <div class="alert alert-danger p-2">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Error al cargar proyectos</strong>
+                    <br><small>${error.message}</small>
+                </div>
+            `;
+        }
+        
+        if (loadingText) loadingText.textContent = 'Error al cargar proyectos';
+    } finally {
+        // Ocultar indicador de carga
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+    }
+}
+
+// Nueva función para seleccionar proyecto desde la tarjeta
+function seleccionarProyectoDesdeCard(proyectoId) {
+    // Establecer el proyecto seleccionado
+    proyectoSeleccionado = proyectoId;
+    
+    // Agregar efecto visual de selección
+    const cards = document.querySelectorAll('.card-body');
+    cards.forEach(card => {
+        card.style.backgroundColor = 'white';
+        card.style.boxShadow = 'none';
+    });
+    
+    // Resaltar la tarjeta seleccionada
+    event.currentTarget.style.backgroundColor = '#e3f2fd';
+    event.currentTarget.style.boxShadow = '0 2px 8px rgba(0,123,255,0.3)';
+    
+    // Cargar actividades directamente
+    cargarActividadesPorTrabajadorYProyecto();
+    
+    // Mostrar mensaje de confirmación
+    mostrarAlerta(`Proyecto "${event.currentTarget.querySelector('h6').textContent}" seleccionado`, 'info');
+}
+
+async function cargarActividadesPorTrabajadorYProyecto() {
+    if (!proyectoSeleccionado || !trabajadorSeleccionado) {
+        document.getElementById('actividadesContainer').style.display = 'none';
+        return;
+    }
+    
+    try {
+        // Cargar actividades del trabajador en el proyecto específico
+        console.log(`📊 Cargando actividades para trabajador ${trabajadorSeleccionado} en proyecto ${proyectoSeleccionado}`);
+        const response = await fetch(`/actividades_trabajador_proyecto/${trabajadorSeleccionado}/${proyectoSeleccionado}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.actividades && data.actividades.length > 0) {
+            actividadesData = procesarActividadesParaAvance(data.actividades);
+            mostrarActividades(actividadesData);
+            document.getElementById('actividadesContainer').style.display = 'block';
+            actualizarResumen();
+            console.log(`✅ ${actividadesData.length} actividades cargadas`);
+        } else {
+            mostrarErrorEnTabla('No se encontraron actividades asignadas a este trabajador en el proyecto seleccionado');
+            console.warn(`⚠️ No hay actividades para trabajador ${trabajadorSeleccionado} en proyecto ${proyectoSeleccionado}`);
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar actividades:', error);
+        mostrarErrorEnTabla('Error al cargar las actividades: ' + error.message);
+    }
+}
+
+function mostrarErrorEnTabla(mensaje) {
+    const tbody = document.getElementById('actividadesTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center p-4">
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> ${mensaje}
+                    <br><small class="text-muted">Verifique que el trabajador tenga actividades asignadas en este proyecto.</small>
+                </div>
+            </td>
+        </tr>
+    `;
+    document.getElementById('actividadesContainer').style.display = 'block';
+}
+
+function procesarActividadesParaAvance(actividades) {
+    return actividades.map((act, index) => {
+        const fechaInicio = formatearFecha(act['Inicio'] || act['Comienzo'] || act['Start'] || act['Fecha Inicio']);
+        const fechaFin = formatearFecha(act['Fin'] || act['End'] || act['Fecha Fin']);
+        const progreso = determinarProgreso(act);
+        
+        return {
+            id: index + 1,
+            edt: act['EDT'] || act['E.D.T.'] || act['Edt'] || (index + 1),
+            nombre: act['Nombre de tarea'] || act['Actividad'] || act['Nombre'] || `Actividad ${index + 1}`,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            duracion: act['Duración'] || act['Duration'] || calcularDuracion(fechaInicio, fechaFin),
+            progresoActual: progreso,
+            nuevoProgreso: progreso,
+            nivel: act['Nivel de esquema'] || act['Nivel'] || 1,
+            recursos: act['Recursos'] || act['Resource Names'] || '',
+            modificado: false
+        };
+    }).filter(act => act.fechaInicio && act.fechaFin);
+}
+
+function mostrarActividades(actividades) {
+    const tbody = document.getElementById('actividadesTableBody');
+    tbody.innerHTML = '';
+
+    if (!actividades || actividades.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center p-4">
+                    <div class="text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <br>No hay actividades disponibles
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    actividades.forEach(actividad => {
+        const fila = crearFilaActividad(actividad);
+        tbody.appendChild(fila);
+    });
+    
+    console.log(`📋 ${actividades.length} actividades mostradas en la tabla`);
+}
+
+function crearFilaActividad(actividad) {
+    const tr = document.createElement('tr');
+    tr.className = `actividad-row ${actividad.modificado ? 'table-warning' : ''}`;
+    tr.dataset.actividadId = actividad.id;
+    
+    // Determinar clase según nivel
+    let claseNivel = '';
+    if (actividad.nivel === 1) claseNivel = 'fw-bold text-primary';
+    else if (actividad.nivel === 2) claseNivel = 'fw-semibold text-secondary';
+    
+    tr.innerHTML = `
+        <td>
+            <span class="badge bg-primary">${actividad.edt}</span>
+        </td>
+        <td>
+            <div class="${claseNivel}" style="padding-left: ${(actividad.nivel - 1) * 20}px;">
+                ${actividad.nivel === 1 ? '<i class="fas fa-folder-open me-1"></i>' : 
+                  actividad.nivel === 2 ? '<i class="fas fa-folder me-1"></i>' : 
+                  '<i class="fas fa-tasks me-1"></i>'}
+                ${actividad.nombre}
+            </div>
+            ${actividad.recursos ? `<small class="text-muted">Recursos: ${actividad.recursos}</small>` : ''}
+        </td>
+        <td>
+            <small class="text-success">${actividad.fechaInicio}</small>
+        </td>
+        <td>
+            <small class="text-danger">${actividad.fechaFin}</small>
+        </td>
+        <td>
+            <span class="badge bg-secondary">${actividad.duracion} días</span>
+        </td>
+        <td>
+            <div class="d-flex align-items-center">
+                <div class="progress me-2" style="width: 60px; height: 8px;">
+                    <div class="progress-bar ${getColorProgreso(actividad.progresoActual)}" 
+                         style="width: ${actividad.progresoActual}%"></div>
+                </div>
+                <small class="fw-bold">${actividad.progresoActual}%</small>
+            </div>
+        </td>
+        <td>
+            <div class="input-group input-group-sm">
+                <input type="number" 
+                       class="form-control progreso-input" 
+                       min="0" 
+                       max="100" 
+                       value="${actividad.nuevoProgreso}"
+                       data-actividad-id="${actividad.id}"
+                       onchange="actualizarProgreso(${actividad.id}, this.value)">
+                <span class="input-group-text">%</span>
+            </div>
+        </td>
+    `;
+    
+    return tr;
+}
+
+function actualizarProgreso(actividadId, nuevoProgreso) {
+    const actividad = actividadesData.find(a => a.id === actividadId);
+    if (actividad) {
+        const progreso = Math.max(0, Math.min(100, parseInt(nuevoProgreso) || 0));
+        actividad.nuevoProgreso = progreso;
+        actividad.modificado = actividad.progresoActual !== progreso;
+        
+        // Actualizar la fila visualmente
+        const fila = document.querySelector(`tr[data-actividad-id="${actividadId}"]`);
+        if (fila) {
+            if (actividad.modificado) {
+                fila.classList.add('table-warning');
+            } else {
+                fila.classList.remove('table-warning');
+            }
+        }
+        
+        actualizarResumen();
+        console.log(`📊 Progreso actualizado para actividad ${actividadId}: ${progreso}%`);
+    }
+}
+
+function actualizarResumen() {
+    const total = actividadesData.length;
+    const enProgreso = actividadesData.filter(a => a.nuevoProgreso > 0 && a.nuevoProgreso < 100).length;
+    const completadas = actividadesData.filter(a => a.nuevoProgreso >= 100).length;
+    const progresoGeneral = Math.round(actividadesData.reduce((sum, a) => sum + a.nuevoProgreso, 0) / total);
+    
+    document.getElementById('totalActividades').textContent = total;
+    document.getElementById('actividadesEnProgreso').textContent = enProgreso;
+    document.getElementById('actividadesCompletadas').textContent = completadas;
+    document.getElementById('progresoGeneral').textContent = `${progresoGeneral}%`;
+}
+
+function filtrarActividades() {
+    const busqueda = document.getElementById('buscarActividad').value.toLowerCase();
+    const filas = document.querySelectorAll('.actividad-row');
+    
+    filas.forEach(fila => {
+        const texto = fila.textContent.toLowerCase();
+        fila.style.display = texto.includes(busqueda) ? '' : 'none';
+    });
+}
+
+function filtrarPorEstado(estado) {
+    const filas = document.querySelectorAll('.actividad-row');
+    
+    filas.forEach(fila => {
+        const actividadId = parseInt(fila.dataset.actividadId);
+        const actividad = actividadesData.find(a => a.id === actividadId);
+        
+        let mostrar = true;
+        if (estado === 'pendientes') mostrar = actividad.nuevoProgreso === 0;
+        else if (estado === 'en_progreso') mostrar = actividad.nuevoProgreso > 0 && actividad.nuevoProgreso < 100;
+        else if (estado === 'completadas') mostrar = actividad.nuevoProgreso >= 100;
+        
+        fila.style.display = mostrar ? '' : 'none';
+    });
+}
+
+async function guardarTodosLosAvances() {
+    if (!trabajadorSeleccionado || !proyectoSeleccionado) {
+        mostrarAlerta('Seleccione un trabajador y un proyecto', 'warning');
+        return;
+    }
+    
+    const cambios = actividadesData.filter(a => a.modificado);
+    
+    if (cambios.length === 0) {
+        mostrarAlerta('No hay cambios para guardar', 'warning');
+        return;
+    }
+    
+    // Mostrar resumen de cambios
+    const resumen = document.getElementById('resumenCambios');
+    resumen.innerHTML = `
+        <div class="alert alert-info">
+            <h6>Se guardarán ${cambios.length} cambios para el trabajador ${trabajadorSeleccionado} en proyecto ${proyectoSeleccionado}:</h6>
+            <ul class="mb-0" style="max-height: 200px; overflow-y: auto;">
+                ${cambios.map(c => `<li><strong>${c.edt}</strong> - ${c.nombre}: ${c.progresoActual}% → <strong>${c.nuevoProgreso}%</strong></li>`).join('')}
+            </ul>
+        </div>
+    `;
+    
+    // Mostrar modal de confirmación
+    const modal = new bootstrap.Modal(document.getElementById('modalConfirmarGuardado'));
+    modal.show();
+}
+
+async function confirmarGuardado() {
+    const cambios = actividadesData.filter(a => a.modificado);
+    
+    // Obtener CSRF token con función helper
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        mostrarError('Error de seguridad: No se pudo obtener token CSRF. Recarga la página.');
+        return;
+    }
+    
+    console.log('🔐 CSRF Token obtenido:', csrfToken.substring(0, 20) + '...');
+    
+    try {
+        const response = await fetch('/guardar_avances_trabajador', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                trabajador_id: trabajadorSeleccionado,
+                proyecto_id: proyectoSeleccionado,
+                fecha_registro: new Date().toISOString().split('T')[0], // Usar fecha actual
+                csrf_token: csrfToken, // También enviar en el body como backup
+                avances: cambios.map(c => ({
+                    edt: c.edt,
+                    progreso_anterior: c.progresoActual,
+                    progreso_nuevo: c.nuevoProgreso
+                }))
+            })
+        });
+        
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response headers:', response.headers);
+        
+        // Manejar errores HTTP específicos
+        if (!response.ok) {
+            if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({ error: 'Error de validación' }));
+                if (errorData.csrf_error) {
+                    mostrarError('Error de seguridad: Token CSRF inválido. Recarga la página e inicia sesión nuevamente.');
+                    // Recargar la página después de 3 segundos
+                    setTimeout(() => window.location.reload(), 3000);
+                    return;
+                }
+                mostrarError('Error de validación: ' + (errorData.error || 'Datos incorrectos'));
+                return;
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarAlerta('Avances guardados correctamente', 'success');
+            
+            // Actualizar datos
+            cambios.forEach(c => {
+                c.progresoActual = c.nuevoProgreso;
+                c.modificado = false;
+            });
+            
+            // Actualizar tabla
+            mostrarActividades(actividadesData);
+            
+            // Cerrar modal
+            bootstrap.Modal.getInstance(document.getElementById('modalConfirmarGuardado')).hide();
+        } else {
+            mostrarError('Error al guardar: ' + result.error);
+        }
+    } catch (error) {
+        mostrarError('Error al guardar los avances: ' + error.message);
+    }
+}
+
+function exportarAvances() {
+    if (!trabajadorSeleccionado || !proyectoSeleccionado) {
+        mostrarAlerta('Seleccione un trabajador y un proyecto primero', 'warning');
+        return;
+    }
+    
+    console.log(`📤 Exportando avances para trabajador ${trabajadorSeleccionado} en proyecto ${proyectoSeleccionado}`);
+    window.open(`/exportar_avances_trabajador/${trabajadorSeleccionado}/${proyectoSeleccionado}`, '_blank');
+}
+
+// Funciones auxiliares
+function formatearFecha(fecha) {
+    if (!fecha) return '';
+    try {
+        const fechaObj = new Date(fecha);
+        return fechaObj.toLocaleDateString('es-ES');
+    } catch (e) {
+        return fecha.toString().substring(0, 10);
+    }
+}
+
+function determinarProgreso(actividad) {
+    const progreso = actividad['Progreso'] || actividad['% Completado'] || actividad['Progress'] || 0;
+    return Math.max(0, Math.min(100, parseInt(progreso) || 0));
+}
+
+function calcularDuracion(fechaInicio, fechaFin) {
+    try {
+        const inicio = new Date(fechaInicio);
+        const fin = new Date(fechaFin);
+        const diffTime = Math.abs(fin - inicio);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+        return 0;
+    }
+}
+
+function getColorProgreso(progreso) {
+    if (progreso >= 100) return 'bg-success';
+    if (progreso >= 75) return 'bg-info';
+    if (progreso >= 50) return 'bg-primary';
+    if (progreso > 0) return 'bg-warning';
+    return 'bg-light';
+}
+
+function mostrarAlerta(mensaje, tipo) {
+    const alertaDiv = document.createElement('div');
+    alertaDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alertaDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertaDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertaDiv.remove();
+    }, 5000);
+}
+
+function mostrarError(mensaje) {
+    mostrarAlerta(mensaje, 'danger');
+}
+</script>
+{% endblock content %}
+
+
+<!-- 
+necesito que al ir a "avance-actividades.html" que deberia ser direccionado desde el link del nav "http://localhost:5050/avance-actividades" en esta pagina debe mostrar un combo con los trabajadores
+-->

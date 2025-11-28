@@ -1,0 +1,372 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Historial de Avances{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS Global Obligatorio -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+    <!-- CSS Específico de Página -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/historial-avances.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-info text-black shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-history"></i> Historial de Avances</h2>
+                            <p class="mb-0">Registro de cambios en avances de actividades</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <i class="fas fa-chart-line fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filtrosForm">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Proyecto</label>
+                                <select class="form-select" id="filtroProyecto" name="proyecto_id">
+                                    <option value="">Todos los proyectos</option>
+                                    {% for proyecto in proyectos %}
+                                        <option value="{{ proyecto.id }}" {% if proyecto.id == proyecto_id %}selected{% endif %}>
+                                            {{ proyecto.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Trabajador</label>
+                                <select class="form-select" id="filtroTrabajador" name="trabajador_id">
+                                    <option value="">Todos los trabajadores</option>
+                                    {% for trabajador in trabajadores %}
+                                        <option value="{{ trabajador.id }}" {% if trabajador.id == trabajador_id %}selected{% endif %}>
+                                            {{ trabajador.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Fecha Desde</label>
+                                <input type="date" class="form-control" id="fechaDesde" name="fecha_desde" value="{{ fecha_desde or '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Fecha Hasta</label>
+                                <input type="date" class="form-control" id="fechaHasta" name="fecha_hasta" value="{{ fecha_hasta or '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button type="button" class="btn btn-primary" onclick="aplicarFiltros()">
+                                        <i class="fas fa-search"></i> Filtrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor del historial -->
+    <div id="historialContainer">
+        <!-- Loading spinner inicial -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="text-center">
+                <div class="spinner-border text-primary spinner-large" role="status">
+                    <span class="visually-hidden">Cargando historial...</span>
+                </div>
+                <p class="mt-3 text-muted">Cargando historial de avances...</p>
+            </div>
+        </div>
+
+        <!-- Contenedor de sesiones -->
+        <div id="sesionesContainer" class="hidden-initial">
+            <!-- Las sesiones se cargarán dinámicamente aquí -->
+        </div>
+
+        <!-- Mensaje cuando no hay historial -->
+        <div id="noHistorial" class="hidden-initial">
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay historial disponible</h4>
+                <p class="text-muted">No se encontraron cambios de avances con los filtros aplicados</p>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+let historialData = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar historial al iniciar la página
+    cargarHistorial();
+    
+    // Configurar eventos
+    document.getElementById('filtroProyecto').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroTrabajador').addEventListener('change', aplicarFiltros);
+    document.getElementById('fechaDesde').addEventListener('change', aplicarFiltros);
+    document.getElementById('fechaHasta').addEventListener('change', aplicarFiltros);
+});
+
+async function cargarHistorial() {
+    try {
+        console.log('🔄 Cargando historial de avances...');
+        
+        // Verificar que los elementos del formulario existen
+        const filtroProyecto = document.getElementById('filtroProyecto');
+        const filtroTrabajador = document.getElementById('filtroTrabajador');
+        const fechaDesde = document.getElementById('fechaDesde');
+        const fechaHasta = document.getElementById('fechaHasta');
+        
+        if (!filtroProyecto || !filtroTrabajador || !fechaDesde || !fechaHasta) {
+            throw new Error('No se encontraron todos los elementos del formulario de filtros');
+        }
+        
+        // Construir URL con filtros
+        const params = new URLSearchParams();
+        
+        const proyecto = filtroProyecto.value;
+        const trabajador = filtroTrabajador.value;
+        const fechaDesdeVal = fechaDesde.value;
+        const fechaHastaVal = fechaHasta.value;
+        
+        if (proyecto) params.append('proyecto_id', proyecto);
+        if (trabajador) params.append('trabajador_id', trabajador);
+        if (fechaDesdeVal) params.append('fecha_desde', fechaDesdeVal);
+        if (fechaHastaVal) params.append('fecha_hasta', fechaHastaVal);
+        
+        const url = `/api/historial-avances?${params.toString()}`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.sesiones && data.sesiones.length > 0) {
+            historialData = data.sesiones;
+            mostrarHistorial(historialData);
+            actualizarEstadisticas(data);
+            console.log(`✅ ${data.total_sesiones} sesiones cargadas con ${data.total_cambios} cambios`);
+        } else {
+            mostrarSinHistorial();
+            console.warn('⚠️ No se encontró historial');
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar historial:', error);
+        mostrarError('Error al cargar el historial: ' + error.message);
+    } finally {
+        // Ocultar loading spinner
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+    }
+}
+
+function mostrarHistorial(sesiones) {
+    const container = document.getElementById('sesionesContainer');
+    if (!container) {
+        console.error('❌ No se encontró el contenedor sesionesContainer');
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // Crear tabla principal
+    const tablaDiv = document.createElement('div');
+    tablaDiv.className = 'table-responsive';
+    
+    let tablaHtml = `
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th class="col-fecha">Fecha/Hora</th>
+                    <th class="col-trabajador">Trabajador</th>
+                    <th class="col-proyecto">Proyecto</th>
+                    <th class="col-edt">EDT</th>
+                    <th class="col-actividad">Actividad</th>
+                    <th class="col-anterior text-center">Anterior</th>
+                    <th class="col-nuevo text-center">Nuevo</th>
+                    <th class="col-diferencia text-center">Diferencia</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    sesiones.forEach(sesion => {
+        const fechaFormateada = formatearFechaCompleta(sesion.fecha_cambio);
+        
+        sesion.cambios.forEach((cambio, index) => {
+            const esPositivo = cambio.diferencia > 0;
+            const colorFila = esPositivo ? 'table-success' : (cambio.diferencia < 0 ? 'table-danger' : '');
+            const colorBadge = esPositivo ? 'bg-success' : (cambio.diferencia < 0 ? 'bg-danger' : 'bg-secondary');
+            
+            tablaHtml += `
+                <tr class="${colorFila}">
+                    <td class="small">
+                        ${index === 0 ? `<small>${fechaFormateada}</small>` : ''}
+                    </td>
+                    <td class="small">
+                        ${index === 0 ? `<small>${sesion.trabajador}</small>` : ''}
+                    </td>
+                    <td class="small">
+                        ${index === 0 ? `<small title="${sesion.proyecto}">${sesion.proyecto.length > 20 ? sesion.proyecto.substring(0, 20) + '...' : sesion.proyecto}</small>` : ''}
+                    </td>
+                    <td class="small">
+                        <strong>${cambio.actividad_edt}</strong>
+                    </td>
+                    <td class="small">
+                        <span title="${cambio.actividad_nombre}">
+                            ${cambio.actividad_nombre.length > 35 ? cambio.actividad_nombre.substring(0, 35) + '...' : cambio.actividad_nombre}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark small">${cambio.progreso_anterior}%</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-primary small">${cambio.progreso_nuevo}%</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${colorBadge} small">
+                            ${cambio.diferencia > 0 ? '+' : ''}${cambio.diferencia.toFixed(1)}%
+                        </span>
+                        ${cambio.comentarios ? `<i class="fas fa-comment text-info ms-1" title="${cambio.comentarios}"></i>` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+        
+        // Separador entre sesiones
+        if (sesion !== sesiones[sesiones.length - 1]) {
+            tablaHtml += `
+                <tr>
+                    <td colspan="8" class="border-top border-2 border-secondary p-1"></td>
+                </tr>
+            `;
+        }
+    });
+    
+    tablaHtml += `
+            </tbody>
+        </table>
+    `;
+    
+    tablaDiv.innerHTML = tablaHtml;
+    container.appendChild(tablaDiv);
+    
+    const sesionesContainer = document.getElementById('sesionesContainer');
+    const noHistorial = document.getElementById('noHistorial');
+    const estadisticas = document.getElementById('estadisticas');
+    
+    if (sesionesContainer) sesionesContainer.style.display = 'block';
+    if (noHistorial) noHistorial.style.display = 'none';
+    if (estadisticas) estadisticas.style.display = 'block';
+}
+
+function actualizarEstadisticas(data) {
+    const totalSesiones = document.getElementById('totalSesiones');
+    const totalCambios = document.getElementById('totalCambios');
+    const ultimaActualizacion = document.getElementById('ultimaActualizacion');
+    
+    if (totalSesiones) totalSesiones.textContent = data.total_sesiones || 0;
+    if (totalCambios) totalCambios.textContent = data.total_cambios || 0;
+    
+    // Calcular última actualización
+    if (ultimaActualizacion && data.sesiones && data.sesiones.length > 0) {
+        const ultimaFecha = new Date(data.sesiones[0].fecha_cambio);
+        ultimaActualizacion.textContent = formatearFecha(ultimaFecha);
+    }
+}
+
+function mostrarSinHistorial() {
+    const sesionesContainer = document.getElementById('sesionesContainer');
+    const noHistorial = document.getElementById('noHistorial');
+    const estadisticas = document.getElementById('estadisticas');
+    
+    if (sesionesContainer) sesionesContainer.style.display = 'none';
+    if (noHistorial) noHistorial.style.display = 'block';
+    if (estadisticas) estadisticas.style.display = 'none';
+}
+
+function aplicarFiltros() {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const sesionesContainer = document.getElementById('sesionesContainer');
+    const noHistorial = document.getElementById('noHistorial');
+    
+    // Mostrar loading spinner
+    if (loadingSpinner) loadingSpinner.style.display = 'flex';
+    if (sesionesContainer) sesionesContainer.style.display = 'none';
+    if (noHistorial) noHistorial.style.display = 'none';
+    
+    // Recargar historial con nuevos filtros
+    cargarHistorial();
+}
+
+// Funciones auxiliares
+function formatearFecha(fecha) {
+    if (!fecha) return 'No especificada';
+    try {
+        const fechaObj = new Date(fecha);
+        return fechaObj.toLocaleDateString('es-ES');
+    } catch (e) {
+        return fecha.toString();
+    }
+}
+
+function formatearFechaCompleta(fecha) {
+    if (!fecha) return 'No especificada';
+    try {
+        const fechaObj = new Date(fecha);
+        return fechaObj.toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return fecha.toString();
+    }
+}
+
+function mostrarError(mensaje) {
+    const alertaDiv = document.createElement('div');
+    alertaDiv.className = 'alert alert-danger alert-dismissible fade show';
+    alertaDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertaDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertaDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock content %}
+

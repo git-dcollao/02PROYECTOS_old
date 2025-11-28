@@ -1,0 +1,322 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Resumen Ejecutivo de Proyectos{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS Global Obligatorio -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+    <!-- CSS Específico de Página -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resumen.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-black shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-chart-line"></i> Resumen Ejecutivo de Proyectos</h2>
+                            <p class="mb-0">Vista consolidada del estado de actividades por proyecto</p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-light" onclick="cargarResumen()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                            <button class="btn btn-success" onclick="exportarExcel()">
+                                <i class="fas fa-file-excel"></i> Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Globales -->
+    <div class="row mb-4" id="estadisticas" style="display: none;">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-project-diagram fa-2x text-primary mb-2"></i>
+                    <h3 class="mb-0" id="totalProyectos">0</h3>
+                    <small class="text-muted">Proyectos Activos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-tasks fa-2x text-info mb-2"></i>
+                    <h3 class="mb-0" id="totalActividades">0</h3>
+                    <small class="text-muted">Total Actividades</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                    <h3 class="mb-0 text-danger" id="totalAtrasadas">0</h3>
+                    <small class="text-muted">Actividades Atrasadas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h3 class="mb-0 text-success" id="totalEnFecha">0</h3>
+                    <small class="text-muted">Actividades en Fecha</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor del resumen -->
+    <div id="resumenContainer">
+        <!-- Loading spinner inicial -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="text-center">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Cargando resumen...</span>
+                </div>
+                <p class="mt-3 text-muted">Cargando resumen de proyectos...</p>
+            </div>
+        </div>
+
+        <!-- Contenedor de proyectos -->
+        <div id="proyectosContainer" class="hidden-initial">
+            <!-- Los proyectos se cargarán dinámicamente aquí -->
+        </div>
+
+        <!-- Mensaje cuando no hay proyectos -->
+        <div id="noProyectos" class="hidden-initial">
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay proyectos disponibles</h4>
+                <p class="text-muted">No se encontraron proyectos en estado "Desarrollo Completado" con actividades.</p>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+let proyectosData = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📊 Página de resumen cargada');
+    cargarResumen();
+});
+
+async function cargarResumen() {
+    try {
+        console.log('🔄 Cargando resumen de proyectos...');
+        
+        // Mostrar loading
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const proyectosContainer = document.getElementById('proyectosContainer');
+        const noProyectos = document.getElementById('noProyectos');
+        const estadisticas = document.getElementById('estadisticas');
+        
+        if (loadingSpinner) loadingSpinner.style.display = 'block';
+        if (proyectosContainer) {
+            proyectosContainer.style.display = 'none';
+            proyectosContainer.innerHTML = '';
+        }
+        if (noProyectos) noProyectos.style.display = 'none';
+        if (estadisticas) estadisticas.style.display = 'none';
+        
+        const response = await fetch('/api/resumen_proyectos');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.proyectos && data.proyectos.length > 0) {
+            proyectosData = data.proyectos;
+            mostrarProyectos(proyectosData);
+            actualizarEstadisticas(proyectosData);
+        } else {
+            if (noProyectos) noProyectos.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar resumen:', error);
+        alert('Error al cargar el resumen: ' + error.message);
+    } finally {
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+    }
+}
+
+function mostrarProyectos(proyectos) {
+    const container = document.getElementById('proyectosContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    proyectos.forEach((proyecto, indexProyecto) => {
+        // Card del proyecto
+        const proyectoCard = document.createElement('div');
+        proyectoCard.className = 'card mb-4 shadow-sm';
+        
+        // Header del proyecto
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'card-header bg-primary text-white';
+        cardHeader.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram"></i> ${proyecto.nombre}
+                    </h5>
+                    <small>${proyecto.sector} | ${proyecto.estado}</small>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-tasks"></i> ${proyecto.total_actividades} actividades
+                    </span>
+                    ${proyecto.actividades_atrasadas > 0 ? `
+                        <span class="badge bg-danger">
+                            <i class="fas fa-exclamation-triangle"></i> ${proyecto.actividades_atrasadas} atrasadas
+                        </span>
+                    ` : `
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle"></i> Al día
+                        </span>
+                    `}
+                </div>
+            </div>
+        `;
+        
+        // Body con la tabla de actividades
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body p-0';
+        
+        const tableContainer = document.createElement('div');
+        tableContainer.className = 'table-responsive';
+        
+        let tableHtml = `
+            <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 8%">EDT</th>
+                        <th style="width: 30%">Actividad</th>
+                        <th style="width: 10%">Inicio</th>
+                        <th style="width: 10%">Fin</th>
+                        <th style="width: 12%">Recursos</th>
+                        <th style="width: 20%" class="text-center">Progreso</th>
+                        <th style="width: 10%" class="text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        proyecto.actividades.forEach(act => {
+            const nivelClass = `ps-${act.nivel_esquema}`;
+            const rowClass = act.estado_cronograma === 'Atrasado' ? 'table-danger' : '';
+            
+            tableHtml += `
+                <tr class="${rowClass}">
+                    <td><small><strong>${act.edt}</strong></small></td>
+                    <td class="${nivelClass}">
+                        <small title="${act.nombre_tarea}">
+                            ${act.nombre_tarea.length > 40 ? act.nombre_tarea.substring(0, 40) + '...' : act.nombre_tarea}
+                        </small>
+                    </td>
+                    <td><small>${act.fecha_inicio}</small></td>
+                    <td><small>${act.fecha_fin}</small></td>
+                    <td><small>${act.recursos}</small></td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${act.estado_cronograma === 'Atrasado' ? 'bg-danger' : 'bg-success'}" 
+                                 role="progressbar" 
+                                 style="width: ${act.progreso}%"
+                                 aria-valuenow="${act.progreso}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                <small><strong>${act.progreso.toFixed(1)}%</strong></small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${act.estado_cronograma === 'En Fecha' ? 'bg-success' : 'bg-danger'}">
+                            ${act.estado_cronograma}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHtml += `
+                </tbody>
+            </table>
+        `;
+        
+        tableContainer.innerHTML = tableHtml;
+        cardBody.appendChild(tableContainer);
+        
+        proyectoCard.appendChild(cardHeader);
+        proyectoCard.appendChild(cardBody);
+        container.appendChild(proyectoCard);
+    });
+    
+    container.style.display = 'block';
+}
+
+function actualizarEstadisticas(proyectos) {
+    let totalActividades = 0;
+    let totalAtrasadas = 0;
+    let totalEnFecha = 0;
+    
+    proyectos.forEach(proyecto => {
+        totalActividades += proyecto.total_actividades;
+        totalAtrasadas += proyecto.actividades_atrasadas;
+    });
+    
+    totalEnFecha = totalActividades - totalAtrasadas;
+    
+    const totalProyectosEl = document.getElementById('totalProyectos');
+    const totalActividadesEl = document.getElementById('totalActividades');
+    const totalAtrasadasEl = document.getElementById('totalAtrasadas');
+    const totalEnFechaEl = document.getElementById('totalEnFecha');
+    const estadisticas = document.getElementById('estadisticas');
+    
+    if (totalProyectosEl) totalProyectosEl.textContent = proyectos.length;
+    if (totalActividadesEl) totalActividadesEl.textContent = totalActividades;
+    if (totalAtrasadasEl) totalAtrasadasEl.textContent = totalAtrasadas;
+    if (totalEnFechaEl) totalEnFechaEl.textContent = totalEnFecha;
+    if (estadisticas) estadisticas.style.display = 'flex';
+}
+
+function exportarExcel() {
+    alert('Función de exportación en desarrollo');
+    // TODO: Implementar exportación a Excel
+}
+</script>
+
+<style>
+.hidden-initial {
+    display: none;
+}
+
+.loading-spinner {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Niveles de identación para actividades */
+.ps-1 { padding-left: 1rem !important; }
+.ps-2 { padding-left: 2rem !important; }
+.ps-3 { padding-left: 3rem !important; }
+.ps-4 { padding-left: 4rem !important; }
+.ps-5 { padding-left: 5rem !important; }
+</style>
+{% endblock %}

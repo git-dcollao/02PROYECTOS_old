@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="ImQwOTMwYmViODU1YmMzYmFhNGU5N2M3OGJmY2RjMjg0YWVkMjQ5NWQi.aRs_Kg.HDUwuFBiK0tQrlfxwQrqjJg6rew">
+    <title>Proyectos - Llenar Información</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --dark-color: #343a40;
+            --light-color: #f8f9fa;
+        }
+
+        body {
+            background: #f8f9fa;
+            padding-top: 0; /* Space for fixed header */
+        }
+
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding-top: 2rem; /* Space for header menu */
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .stats-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Breadcrumb styles */
+        .breadcrumb {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Alert improvements */
+        .alert {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+        }
+
+        .alert .btn-close {
+            margin: 0;
+            padding: 0.25rem;
+            align-self: flex-start;
+            margin-top: -0.125rem;
+        }
+
+        .alert-content {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+    </style>
+    
+    
+<!-- CSS Global OBLIGATORIO - DEBE IR PRIMERO -->
+<link rel="stylesheet" href="/static/css/modal-styles.css">
+<!-- CSS Específico de la Página -->
+<link rel="stylesheet" href="/static/css/proyecto-llenar.css">
+
+</head>
+<body>
+    <!-- Header Menu -->
+    
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" id="main-navbar">
+    <div class="container-fluid">
+        <!-- Logo/Brand -->
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <img src="/static/imgs/logo_maho.png" 
+                 alt="MAHO Logo" 
+                 height="50" 
+                 class="me-2" 
+                 style="max-width: 50px; object-fit: contain;">
+            <span class="fw-bold">MAHo</span>
+        </a>
+
+        <!-- Mobile menu toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Menu items -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                
+                
+                    
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                               id="dropdown-sistema" 
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-home me-1"></i>
+                                Sistema
+                                <span class="badge bg-light text-primary ms-2">1</span>
+                            </a>
+                            <ul class="dropdown-menu shadow border-0" 
+                                aria-labelledby="dropdown-sistema">
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/">
+                                            <i class="fas fa-home me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Inicio</span>
+                                        </a>
+                                    </li>
+                                
+                            </ul>
+                        </li>
+                    
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                               id="dropdown-requerimiento" 
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-clipboard-list me-1"></i>
+                                Requerimiento
+                                <span class="badge bg-light text-primary ms-2">9</span>
+                            </a>
+                            <ul class="dropdown-menu shadow border-0" 
+                                aria-labelledby="dropdown-requerimiento">
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/requerimientos">
+                                            <i class="fas fa-clipboard-list me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Requerimientos</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/requerimientos_aceptar">
+                                            <i class="fas fa-check-circle me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Requerimientos Aceptar</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/requerimientos_completar">
+                                            <i class="fas fa-clipboard-check me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Requerimientos Completar</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/proyectos_aceptar">
+                                            <i class="fas fa-thumbs-up me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Proyecto Aceptar</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/proyecto-llenar">
+                                            <i class="fas fa-edit me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Proyectos Completar</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/control_actividades">
+                                            <i class="fas fa-clipboard-list me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Controles</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/avance-actividades">
+                                            <i class="fas fa-chart-line me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Avance Actividades</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/avance-actividades-all">
+                                            <i class="fas fa-chart-area me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Avance Actividades - Todos</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/historial-avances">
+                                            <i class="fas fa-history me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Historial Avances</span>
+                                        </a>
+                                    </li>
+                                
+                            </ul>
+                        </li>
+                    
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                               id="dropdown-usuarios" 
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-users me-1"></i>
+                                Usuarios
+                                <span class="badge bg-light text-primary ms-2">2</span>
+                            </a>
+                            <ul class="dropdown-menu shadow border-0" 
+                                aria-labelledby="dropdown-usuarios">
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/trabajadores">
+                                            <i class="fas fa-users me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Trabajadores</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/auth/mi-perfil">
+                                            <i class="fas fa-id-card me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Mi Perfil</span>
+                                        </a>
+                                    </li>
+                                
+                            </ul>
+                        </li>
+                    
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                               id="dropdown-configuración" 
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cogs me-1"></i>
+                                Configuración
+                                <span class="badge bg-light text-primary ms-2">13</span>
+                            </a>
+                            <ul class="dropdown-menu shadow border-0" 
+                                aria-labelledby="dropdown-configuración">
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/estados">
+                                            <i class="fas fa-flag me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Estados</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/prioridades">
+                                            <i class="fas fa-exclamation-triangle me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Prioridades</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/fases">
+                                            <i class="fas fa-layer-group me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Fases</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/tipologias">
+                                            <i class="fas fa-tags me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Tipologías</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/financiamientos">
+                                            <i class="fas fa-money-bill-wave me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Financiamientos</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/tipoproyectos">
+                                            <i class="fas fa-project-diagram me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Tipos de Proyecto</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/sectores">
+                                            <i class="fas fa-building me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Sectores</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/tiposrecintos">
+                                            <i class="fas fa-home me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Tipos de Recinto</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/recintos">
+                                            <i class="fas fa-map-marker-alt me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Recintos</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/equipos">
+                                            <i class="fas fa-users-cog me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Equipos</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/especialidades">
+                                            <i class="fas fa-graduation-cap me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Especialidades</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/areas">
+                                            <i class="fas fa-sitemap me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Áreas</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/grupos">
+                                            <i class="fas fa-layer-group me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Grupos</span>
+                                        </a>
+                                    </li>
+                                
+                            </ul>
+                        </li>
+                    
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                               id="dropdown-administración" 
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Administración
+                                <span class="badge bg-light text-primary ms-2">3</span>
+                            </a>
+                            <ul class="dropdown-menu shadow border-0" 
+                                aria-labelledby="dropdown-administración">
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/permissions/">
+                                            <i class="fas fa-shield-alt me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Gestión de Permisos</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/gestion-administradores">
+                                            <i class="fas fa-users-cog me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Gestión de Administradores</span>
+                                        </a>
+                                    </li>
+                                
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2" href="/gestion-usuarios">
+                                            <i class="fas fa-users me-2 text-primary" style="width: 18px;"></i>
+                                            <span>Gestión de Usuarios por Recinto</span>
+                                        </a>
+                                    </li>
+                                
+                            </ul>
+                        </li>
+                    
+                
+            </ul>
+
+            <!-- User info and actions -->
+            <div class="navbar-nav">
+                <!-- User profile dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                       id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar me-2">
+                            <i class="fas fa-user-circle fs-5"></i>
+                        </div>
+                        <div class="d-none d-md-block">
+                            <div class="fw-semibold">Administrador L1</div>
+                            <small class="text-light opacity-75"></small>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li>
+                            <div class="dropdown-header">
+                                <div class="fw-semibold">Administrador L1</div>
+                                <small class="text-muted">administrador@sistema.local</small>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="/menu-diagnostico">
+                                <i class="fas fa-stethoscope me-2"></i>
+                                Diagnóstico del Menú
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center text-danger" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+
+<style>
+/* Estilos personalizados para el menú superior */
+#main-navbar {
+    min-height: 70px;
+    background: linear-gradient(135deg, #0056b3 0%, #007bff 50%, #0d6efd 100%) !important;
+}
+
+#main-navbar .navbar-brand {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+#main-navbar .nav-link {
+    font-weight: 500;
+    padding: 0.75rem 1rem !important;
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+#main-navbar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+#main-navbar .dropdown-menu {
+    border-radius: 12px;
+    padding: 0.5rem 0;
+    margin-top: 8px;
+    min-width: 220px;
+}
+
+#main-navbar .dropdown-item {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: all 0.2s ease;
+}
+
+#main-navbar .dropdown-item:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    transform: translateX(4px);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* Badge personalizado */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #main-navbar .navbar-nav .nav-link {
+        padding: 0.5rem 0.75rem !important;
+        margin: 2px 0;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Logo styles */
+.navbar-brand img {
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.05);
+}
+
+/* Responsive logo adjustments */
+@media (max-width: 768px) {
+    .navbar-brand img {
+        height: 32px !important;
+        max-width: 40px !important;
+    }
+    
+    .navbar-brand span {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-brand span {
+        display: none; /* Hide text on very small screens */
+    }
+}
+
+/* Ajustar el margen del contenido principal */
+body {
+    margin-left: 0 !important;
+    padding-top: 0;
+}
+
+.main-content {
+    margin-left: 0 !important;
+    padding-top: 20px;
+}
+</style>
+
+
+    <!-- Main Content Container -->
+    <div class="container-fluid main-content">
+        <div class="container-xl px-4">
+            <!-- Flash Messages -->
+            
+                
+            
+
+            <!-- Page Content -->
+            
+<div class="container-fluid py-4">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-project-diagram"></i> Gestión de Proyectos - Asignación de EDT</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">Suba archivos XLSX con información de proyectos para asignar a requerimientos en estado "En Desarrollo".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel de subida de archivo -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload"></i> Subir Archivo XLSX</h5>
+                </div>
+                <div class="card-body">
+                    <form id="uploadForm" action="/procesar-proyecto-xlsx" 
+                          method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="ImQwOTMwYmViODU1YmMzYmFhNGU5N2M3OGJmY2RjMjg0YWVkMjQ5NWQi.aRs_Kg.HDUwuFBiK0tQrlfxwQrqjJg6rew"/>
+                        <div class="mb-3">
+                            <label for="archivo_xlsx" class="form-label">Seleccionar archivo XLSX</label>
+                            <input type="file" class="form-control" id="archivo_xlsx" name="archivo_xlsx" 
+                                   accept=".xlsx,.xls" required>
+                            <div class="form-text">
+                                <strong>Formato requerido:</strong><br>
+                                El archivo debe contener exactamente estas columnas:
+                                <ul class="small mt-2 mb-2">
+                                    <li><strong>Id</strong>: Identificador único de la tarea</li>
+                                    <li><strong>Nivel de esquema</strong>: Nivel jerárquico (1=Proyecto, 2=Fase, 3=Tarea)</li>
+                                    <li><strong>EDT</strong>: Estructura de Desglose del Trabajo (ej: 1, 1.1, 1.1.1)</li>
+                                    <li><strong>Nombre de tarea</strong>: Descripción de la actividad</li>
+                                    <li><strong>Duración</strong>: Duración en días</li>
+                                    <li><strong>Comienzo</strong>: Fecha de inicio (formato: YYYY-MM-DD)</li>
+                                    <li><strong>Fin</strong>: Fecha de finalización (formato: YYYY-MM-DD)</li>
+                                    <li><strong>Predecesoras</strong>: IDs de tareas predecesoras separadas por coma</li>
+                                    <li><strong>Nombres de los recursos</strong>: Recursos asignados</li>
+                                </ul>
+                                <div class="alert alert-info small">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Las columnas pueden tener variaciones menores en mayúsculas/minúsculas y espacios.
+                                    <br>
+                                    <strong>Ejemplo:</strong> "Nivel de Esquema", "nivel de esquema", "NivelDeEsquema" son válidos.
+                                    <br>
+                                    <a href="/descargar-plantilla-gantt" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-download"></i> Descargar Plantilla de Ejemplo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload"></i> Procesar Archivo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de requerimientos disponibles -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> 
+                        Requerimientos Disponibles (Estado: En Desarrollo)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Fecha</th>
+                                    <th>Proyecto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                <tr>
+                                    <td>3</td>
+                                    <td>PROYECTO EN DESARROLLO</td>
+                                    <td>14/01/2025</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-secondary">Sin asignar</span>
+                                        
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>4</td>
+                                    <td>Prueba 1</td>
+                                    <td>14/11/2025</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-secondary">Sin asignar</span>
+                                        
+                                    </td>
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de proyectos asignados -->
+    
+</div>
+
+<!-- Modal para asignar proyectos -->
+<div class="modal fade" id="asignarProyectoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Asignar Requerimientos a Proyectos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Se encontraron nuevos proyectos (nivel_esquema = 1). 
+                   Asigne cada proyecto a un requerimiento disponible:</p>
+                <div id="proyectosParaAsignar">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarAsignaciones()">
+                    <i class="fas fa-save"></i> Guardar Asignaciones
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalles del proyecto -->
+<div class="modal fade" id="detalleProyectoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles del Proyecto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalleProyectoContent">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let proyectosNuevos = [];
+let asignacionesTemporales = {};
+
+// Manejar la subida del archivo
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    button.disabled = true;
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'  // Incluir cookies de sesión
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            if (data.proyectos_nuevos && data.proyectos_nuevos.length > 0) {
+                proyectosNuevos = data.proyectos_nuevos;
+                mostrarModalAsignacion(data.proyectos_nuevos, data.requerimientos_disponibles);
+            } else {
+                location.reload(); // Recargar si no hay proyectos nuevos para asignar
+            }
+        } else {
+            // Mostrar error más detallado
+            const errorMsg = data.message || 'Error desconocido al procesar el archivo';
+            
+            // Crear modal de error más informativo
+            let errorModal = `
+                <div class="modal fade" id="errorModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Error al procesar archivo</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-danger">
+                                    <strong>Error:</strong> ${errorMsg}
+                                </div>
+                                <h6>Formato correcto requerido:</h6>
+                                <ul class="small">
+                                    <li><strong>Id</strong>: Número entero único</li>
+                                    <li><strong>Nivel de esquema</strong>: 1 (Proyecto), 2 (Fase), 3 (Tarea)</li>
+                                    <li><strong>EDT</strong>: Estructura jerárquica (ej: 1, 1.1, 1.1.1)</li>
+                                    <li><strong>Nombre de tarea</strong>: Texto descriptivo</li>
+                                    <li><strong>Duración</strong>: Días (número entero)</li>
+                                    <li><strong>Comienzo/Fin</strong>: Fechas en formato YYYY-MM-DD</li>
+                                    <li><strong>Predecesoras</strong>: IDs separados por coma (opcional)</li>
+                                    <li><strong>Nombres de los recursos</strong>: Texto (opcional)</li>
+                                </ul>
+                                <div class="mt-3">
+                                    <a href="/descargar-plantilla-gantt" class="btn btn-primary">
+                                        <i class="fas fa-download"></i> Descargar Plantilla de Ejemplo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal existente si existe
+            const existingModal = document.getElementById('errorModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al DOM
+            document.body.insertAdjacentHTML('beforeend', errorModal);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+            modal.show();
+        }
+    })
+    .catch(error => {
+        console.error('Error completo:', error);
+        
+        let errorMessage = 'Error al procesar el archivo';
+        
+        if (error.message.includes('HTTP error! status: 404')) {
+            errorMessage = 'Endpoint no encontrado. Verifique la configuración del servidor.';
+        } else if (error.message.includes('Response is not JSON')) {
+            errorMessage = 'El servidor devolvió una respuesta no válida. Puede que haya un problema de autenticación.';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Error de conexión con el servidor. Verifique que el servidor esté funcionando.';
+        }
+        
+        // Crear modal de error más detallado
+        let errorModal = `
+            <div class="modal fade" id="fetchErrorModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Error de Conexión</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> ${errorMessage}
+                            </div>
+                            <details>
+                                <summary>Detalles técnicos</summary>
+                                <pre class="mt-2 p-2 bg-light border rounded">${error.message}</pre>
+                            </details>
+                            <div class="mt-3">
+                                <h6>Posibles soluciones:</h6>
+                                <ul>
+                                    <li>Verifique que esté logueado correctamente</li>
+                                    <li>Refresque la página e intente nuevamente</li>
+                                    <li>Verifique que el archivo tenga el formato correcto</li>
+                                    <li>Contacte al administrador si el problema persiste</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" onclick="location.reload()">Recargar Página</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remover modal existente si existe
+        const existingModal = document.getElementById('fetchErrorModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Agregar nuevo modal al DOM
+        document.body.insertAdjacentHTML('beforeend', errorModal);
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('fetchErrorModal'));
+        modal.show();
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+});
+
+function mostrarModalAsignacion(proyectos, requerimientos) {
+    const container = document.getElementById('proyectosParaAsignar');
+    container.innerHTML = '';
+    
+    // Agregar sección para seleccionar cuál proyecto procesará actividades
+    const selectorDiv = document.createElement('div');
+    selectorDiv.className = 'alert alert-info mb-4';
+    selectorDiv.innerHTML = `
+        <h6><i class="fas fa-info-circle"></i> Seleccionar Proyecto Principal</h6>
+        <p class="mb-2">Seleccione cuál requerimiento procesará y guardará las actividades del archivo Excel:</p>
+        <select class="form-select" id="requerimientoPrincipal">
+            <option value="">🔄 Solo asignar proyectos (no procesar actividades)</option>
+            ${requerimientos.map(req => 
+                `<option value="${req.id}">✅ Procesar actividades para: ${req.id} - ${req.nombre}</option>`
+            ).join('')}
+        </select>
+        <small class="form-text text-muted mt-2">
+            Solo el requerimiento seleccionado guardará las actividades. Los demás solo se asignarán sin procesar.
+        </small>
+    `;
+    container.appendChild(selectorDiv);
+    
+    proyectos.forEach((proyecto, index) => {
+        const proyectoDiv = document.createElement('div');
+        proyectoDiv.className = 'card mb-3';
+        proyectoDiv.innerHTML = `
+            <div class="card-body">
+                <h6 class="card-title">Proyecto: ${proyecto.nombre_tarea}</h6>
+                <p class="card-text">
+                    <strong>EDT:</strong> ${proyecto.edt}<br>
+                    <strong>Duración:</strong> ${proyecto.duracion} días<br>
+                    <strong>Fecha Inicio:</strong> ${proyecto.fecha_inicio}<br>
+                    <strong>Fecha Fin:</strong> ${proyecto.fecha_fin}
+                </p>
+                <div class="mb-2">
+                    <label class="form-label">Asignar a Requerimiento:</label>
+                    <select class="form-select" id="req_${index}" onchange="actualizarAsignacion('${proyecto.edt}|${proyecto.nombre_tarea.replace(/'/g, "&#39;")}', this.value)">
+                        <option value="">Seleccionar requerimiento...</option>
+                        ${requerimientos.map(req => 
+                            `<option value="${req.id}">${req.id} - ${req.nombre}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+            </div>
+        `;
+        container.appendChild(proyectoDiv);
+    });
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('asignarProyectoModal'));
+    modal.show();
+}
+
+function actualizarAsignacion(edt, requerimientoId) {
+    if (requerimientoId) {
+        asignacionesTemporales[edt] = requerimientoId;
+    } else {
+        delete asignacionesTemporales[edt];
+    }
+}
+
+function guardarAsignaciones() {
+    if (Object.keys(asignacionesTemporales).length === 0) {
+        alert('Debe asignar al menos un proyecto a un requerimiento');
+        return;
+    }
+    
+    // Obtener el requerimiento seleccionado para procesar actividades
+    const requerimientoPrincipal = document.getElementById('requerimientoPrincipal').value;
+    
+    console.log('🎯 Enviando asignaciones:', asignacionesTemporales);
+    console.log('🎯 Requerimiento principal para procesar:', requerimientoPrincipal);
+    
+    // Obtener el token CSRF del formulario
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch('/guardar-asignaciones-proyecto', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            asignaciones: asignacionesTemporales,
+            requerimiento_para_procesar: requerimientoPrincipal || null,
+            csrf_token: csrfToken
+        })
+    })
+    .then(response => {
+        console.log('Guardar - Response status:', response.status);
+        console.log('Guardar - Response headers:', response.headers);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON - possibly redirected to login');
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error al guardar asignaciones:', error);
+        
+        let errorMessage = 'Error al guardar las asignaciones';
+        
+        if (error.message.includes('Response is not JSON')) {
+            errorMessage = 'Sesión expirada. Por favor, recarga la página e inicia sesión nuevamente.';
+        } else if (error.message.includes('HTTP error! status: 403')) {
+            errorMessage = 'No tienes permisos para realizar esta acción.';
+        } else if (error.message.includes('HTTP error! status: 404')) {
+            errorMessage = 'Endpoint no encontrado. Contacta al administrador.';
+        }
+        
+        alert(errorMessage);
+        
+        // Si es un problema de sesión, recargar la página
+        if (error.message.includes('Response is not JSON')) {
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    });
+}
+
+function verDetalleProyecto(requerimientoId) {
+    fetch(`/obtener-detalle-proyecto/0`.replace('0', requerimientoId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarDetalleProyecto(data.actividades);
+        } else {
+            alert('Error al cargar los detalles');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar los detalles');
+    });
+}
+
+function mostrarDetalleProyecto(actividades) {
+    const container = document.getElementById('detalleProyectoContent');
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>EDT</th>
+                        <th>Tarea</th>
+                        <th>Nivel</th>
+                        <th>Duración</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Progreso</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    actividades.forEach(act => {
+        html += `
+            <tr>
+                <td>${act.edt}</td>
+                <td>${act.nombre_tarea}</td>
+                <td>${act.nivel_esquema}</td>
+                <td>${act.duracion} días</td>
+                <td>${act.fecha_inicio}</td>
+                <td>${act.fecha_fin}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: ${act.progreso}%" 
+                             aria-valuenow="${act.progreso}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            ${act.progreso}%
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('detalleProyectoModal'));
+    modal.show();
+}
+
+// Auto-dismiss alerts
+document.addEventListener('DOMContentLoaded', function() {
+    // Fix para dropdowns de Bootstrap que no funcionan
+    console.log('🔧 Inicializando dropdowns de Bootstrap...');
+    
+    // Verificar que Bootstrap esté cargado
+    if (typeof bootstrap !== 'undefined') {
+        // SOLUCIÓN DIRECTA: Forzar reinicialización completa de Bootstrap
+        console.log('🚀 APLICANDO FIX DIRECTO PARA MENÚ CONFIGURACIÓN');
+        
+        // Paso 1: Limpiar todos los event listeners de Bootstrap
+        const allDropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+        allDropdowns.forEach(dropdown => {
+            // Destruir instancia existente si existe
+            const existingInstance = bootstrap.Dropdown.getInstance(dropdown);
+            if (existingInstance) {
+                existingInstance.dispose();
+            }
+        });
+        
+        // Paso 2: Esperar un momento y crear nuevas instancias
+        setTimeout(() => {
+            document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(dropdown => {
+                new bootstrap.Dropdown(dropdown);
+            });
+            console.log('✅ Dropdowns de Bootstrap reinicializados completamente');
+        }, 500);
+        
+        console.log(`✅ ${allDropdowns.length} dropdowns procesados`);
+    } else {
+        console.error('❌ Bootstrap no está cargado');
+    }
+    
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+    
+    // Debug específico para el menú Configuración - EJECUTAR UNA SOLA VEZ
+    setTimeout(function() {
+        console.log('🔍 Verificando contenido del menú Configuración...');
+        const configDropdown = document.querySelector('[id*="dropdown-configuración"], [aria-labelledby*="configuración"]');
+        if (configDropdown) {
+            console.log('✅ Menú Configuración encontrado:', configDropdown);
+            const menuItems = configDropdown.querySelectorAll('.dropdown-item');
+            console.log(`📄 Items del menú: ${menuItems.length}`);
+            menuItems.forEach((item, index) => {
+                console.log(`   ${index + 1}. ${item.textContent.trim()} → ${item.href}`);
+            });
+        } else {
+            console.log('❌ Menú Configuración no encontrado');
+            // Listar todos los dropdowns disponibles
+            const allDropdowns = document.querySelectorAll('.dropdown-menu');
+            console.log(`📋 Dropdowns disponibles: ${allDropdowns.length}`);
+            allDropdowns.forEach((dropdown, index) => {
+                console.log(`   ${index + 1}. ID: ${dropdown.id}, Items: ${dropdown.querySelectorAll('.dropdown-item').length}`);
+            });
+        }
+    }, 2000); // Una sola verificación después de 2 segundos
+    
+    // DEBUG: Verificar que el CSS se está cargando
+    setTimeout(function() {
+        // Agregar clase para test de CSS
+        document.body.classList.add('proyecto-llenar-loaded');
+        console.log('🔍 CSS Test: Clase proyecto-llenar-loaded agregada al body');
+        
+        // Verificar si las reglas CSS se aplican
+        const testElement = document.createElement('div');
+        testElement.className = 'dropdown-menu';
+        testElement.style.position = 'absolute';
+        testElement.style.visibility = 'hidden';
+        document.body.appendChild(testElement);
+        
+        const zIndex = window.getComputedStyle(testElement).zIndex;
+        console.log(`🔍 CSS Test: z-index del .dropdown-menu = ${zIndex}`);
+        
+        if (zIndex === '1060' || zIndex > 1000) {
+            console.log('✅ CSS proyecto-llenar.css CARGADO CORRECTAMENTE');
+        } else {
+            console.log('❌ CSS proyecto-llenar.css NO SE ESTÁ APLICANDO');
+        }
+        
+        document.body.removeChild(testElement);
+    }, 500);
+    
+});
+</script>
+
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- API Client con CSRF Protection -->
+    <script src="/static/js/api-client.js"></script>
+    
+    
+</body>
+</html>

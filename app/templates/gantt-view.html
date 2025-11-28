@@ -1,0 +1,48 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Carta Gantt - Proyecto #{{ req_id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h3><i class="fas fa-chart-bar"></i> Carta Gantt - Proyecto #{{ req_id }}</h3>
+            <a href="{{ url_for('controllers.ruta_proyectos_completar') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+    {% if gantt_data %}
+    <div class="card shadow">
+        <div class="card-header bg-info text-white">
+            <strong>Vista de Carta Gantt (XLSX)</strong>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-info">
+                    <tr>
+                        {% for col in columns %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in gantt_data %}
+                    <tr>
+                        {% for col in columns %}
+                        <td>{{ row[col] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning text-center">
+        No hay datos para mostrar la carta Gantt.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

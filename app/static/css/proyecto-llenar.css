@@ -1,0 +1,140 @@
+/* Proyecto Llenar - Estilos Específicos */
+
+/* ==== LAYOUT PRINCIPAL ==== */
+.container-proyecto-llenar {
+    min-height: 100vh;
+    background: var(--app-light, #f8f9fa);
+}
+
+/* ==== FIX Z-INDEX: DROPDOWN VS STICKY TABLE ==== */
+/* Solución para dropdown que se va detrás de tablas sticky */
+.dropdown-menu {
+    z-index: 1060 !important; /* Bootstrap navbar dropdown z-index */
+}
+
+/* Asegurar que el sticky-top no tape los dropdowns */
+.table-light.sticky-top {
+    z-index: 1020 !important; /* Menor que dropdown-menu */
+}
+
+/* Override para cualquier elemento sticky que pueda interferir */
+.sticky-top {
+    z-index: 1020 !important;
+}
+
+/* Asegurar que todo el dropdown tenga alta prioridad */
+.dropdown.show .dropdown-menu {
+    z-index: 1060 !important;
+}
+
+/* Para menús de navegación principales */
+.navbar .dropdown-menu {
+    z-index: 1060 !important;
+}
+
+/* ==== COMPONENTES ESPECÍFICOS ==== */
+.header-proyecto-llenar {
+    background: linear-gradient(135deg, var(--app-primary, #007bff) 0%, var(--app-secondary, #6c757d) 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.panel-subida {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+}
+
+.table-proyecto-llenar {
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table-proyecto-llenar .table {
+    margin-bottom: 0;
+}
+
+/* ==== FORMULARIOS ==== */
+.form-proyecto-llenar .form-control {
+    border: 1px solid #e0e0e0;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-proyecto-llenar .form-control:focus {
+    border-color: var(--app-primary, #007bff);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* ==== BOTONES ==== */
+.btn-proyecto-llenar {
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-proyecto-llenar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* ==== ESTADOS Y ANIMACIONES ==== */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--app-primary, #007bff);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==== ALERTAS Y NOTIFICACIONES ==== */
+.alert-proyecto-llenar {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* ==== RESPONSIVE ==== */
+@media (max-width: 768px) {
+    .header-proyecto-llenar {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .container-proyecto-llenar {
+        padding: 0.5rem;
+    }
+    
+    .panel-subida {
+        padding: 1rem;
+    }
+    
+    /* Asegurar que en mobile los dropdowns sigan funcionando */
+    .dropdown-menu {
+        z-index: 1070 !important; /* Aún más alto en mobile */
+    }
+}
+
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-proyecto-llenar {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}

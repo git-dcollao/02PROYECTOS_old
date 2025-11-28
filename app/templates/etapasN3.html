@@ -1,143 +1,220 @@
-{% extends 'bases/base.html' %}
+{% extends 'base_layout.html' %}
 
-{% block title %}Etapa N3{% endblock %}
+{% block title %}Gestión de Etapas N3{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="well text-center">
-        <h1>Etapa N3 - Crud</h1>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col md-12">
-                <h2>
-                    Lista de Etapa N3
-                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
-                            type="button">
-                        Nuevo Etapa N3
-                    </button>
-                </h2>
-                
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Etapa N2</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {%for etapaN3 in etapasN3%}
-                    <tr>
-                        <td>{{etapaN3.id}}</td>
-                        <td>{{etapaN3.nombre}}</td>
-                        <td>{{etapaN3.descripcion}}</td>
-                        <td>{{etapaN3.etapaN2.nombre}}</td>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-tasks"></i> Lista de Etapas Nivel 3</h4>
+                </div>
+                <div class="card-body">
+                    {% if etapasN3 %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Etapa N2</th>
+                                    <th>Etapa N1</th>
+                                    <th>Subetapas</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for etapaN3 in etapasN3 %}
+                                <tr>
+                                    <td>{{ etapaN3.id }}</td>
+                                    <td>{{ etapaN3.nombre }}</td>
+                                    <td>{{ etapaN3.descripcion or 'Sin descripción' }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ etapaN3.etapaN2.nombre }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ etapaN3.etapaN2.etapaN1.nombre }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ etapaN3.etapasN4.count() }} subetapas</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editModal{{ etapaN3.id }}">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ etapaN3.id }}, '{{ etapaN3.nombre }}')">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
 
-                        <td>
-                            <a class="btn p-1 btn-primary btn-sm" 
-                               data-bs-target="#exampleModal1{{etapaN3.id}}"
-                               data-bs-toggle="modal"
-                               href="#">Editar</a> 
-                            <form action="{{ url_for('controllers.eliminar_etapaN3', id=etapaN3.id) }}"
-                                method="POST" style="display:inline;">
-                                <button class="btn p-1 btn-danger btn-sm" 
-                                type="submit">Eliminar</button>
-                            </form>
-                        </td>
-                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
-                             id="exampleModal1{{etapaN3.id}}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del etapaN3 {{etapaN3.nombre}}</h1>
-                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
-                                                type="button"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form action="{{ url_for('controllers.update_etapaN3', id=etapaN3.id) }}" method="POST">   
-                                            <div class="form-group">
-                                                <label>Nombre:</label>
-                                                <input type="hidden" name="id" value="{{etapaN3.id}}">
-                                                <input class="form-control" name="name" value="{{etapaN3.nombre}}" required="1" type="text">
-                                                <input class="form-control" name="descripcion" value="{{etapaN3.descripcion}}" required="1" type="text">
-                                                <label>Etapa N2:</label>
-                                                <select class="form-control" name="id_etapaN2" required="1">
-                                                    {% for etapaN2 in etapasN2 %}
-                                                    <option value="{{ etapaN2.id }}" {% if etapaN3.id_etapaN2 == etapaN2.id %}selected{% endif %}>
-                                                        {{ etapaN2.nombre }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
+                                <!-- Modal de Edición -->
+                                <div class="modal fade" id="editModal{{ etapaN3.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Editar Etapa N3</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
-                                            Cerrar
-                                        </button>
+                                            <form action="{{ url_for('controllers.update_etapaN3', id=etapaN3.id) }}" method="POST">
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label for="nombre{{ etapaN3.id }}" class="form-label">Nombre de la Etapa</label>
+                                                        <input type="text" class="form-control" 
+                                                               id="nombre{{ etapaN3.id }}" 
+                                                               name="name" 
+                                                               value="{{ etapaN3.nombre }}" 
+                                                               required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="descripcion{{ etapaN3.id }}" class="form-label">Descripción</label>
+                                                        <textarea class="form-control" 
+                                                                  id="descripcion{{ etapaN3.id }}" 
+                                                                  name="descripcion" 
+                                                                  rows="3">{{ etapaN3.descripcion or '' }}</textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="etapaN2{{ etapaN3.id }}" class="form-label">Etapa Padre (N2)</label>
+                                                        <select class="form-control" 
+                                                                id="etapaN2{{ etapaN3.id }}" 
+                                                                name="id_etapaN2" required>
+                                                            {% for etapaN2 in etapasN2 %}
+                                                            <option value="{{ etapaN2.id }}" 
+                                                                    {% if etapaN3.id_etapaN2 == etapaN2.id %}selected{% endif %}>
+                                                                {{ etapaN2.etapaN1.nombre }} > {{ etapaN2.nombre }}
+                                                            </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-save"></i> Actualizar
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </tr>
-                    {%endfor%}
-                    </tbody>
-                </table>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay etapas N3 registradas en el sistema.
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Modal para agregar nuevo estado -->
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar EtapaN3</h1>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus"></i> Añadir Etapa N3</h4>
                 </div>
-                <div class="modal-body">
-                    <form action="{{ url_for('controllers.add_etapaN3') }}" method="POST"> 
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input class="form-control" name="name" required="1" type="text">
-                            <label>Descripción:</label>
-                            <input class="form-control" name="descripcion" required="1" type="text">
-                            <label>Etapa N2:</label>
-                            <select class="form-control" name="id_etapaN2" required="1">
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_etapaN3') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre de la Etapa</label>
+                            <input type="text" class="form-control" id="nombre" name="name" required 
+                                   placeholder="Ingrese el nombre de la etapa">
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"
+                                      placeholder="Describa la etapa"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="etapaN2" class="form-label">Etapa Padre (N2)</label>
+                            <select class="form-control" id="etapaN2" name="id_etapaN2" required>
                                 <option value="">Seleccione una Etapa N2</option>
                                 {% for etapaN2 in etapasN2 %}
-                                <option value="{{ etapaN2.id }}">{{ etapaN2.nombre }}</option>
+                                <option value="{{ etapaN2.id }}">{{ etapaN2.etapaN1.nombre }} > {{ etapaN2.nombre }}</option>
                                 {% endfor %}
-                            </select>                        
+                            </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Guardar Etapa N3
+                            </button>
+                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card shadow mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Jerarquía de Etapas</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>Total de Etapas N3:</strong> {{ etapasN3|length }}</p>
+                    <hr>
+                    <h6>Por Etapa N1:</h6>
+                    {% for etapaN1 in etapasN1 %}
+                        {% set count = etapasN3|selectattr("etapaN2.id_etapaN1", "equalto", etapaN1.id)|list|length %}
+                        <small class="d-block">• {{ etapaN1.nombre }}: {{ count }} etapas N3</small>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="well container">
-    
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar la etapa <strong id="etapaN3Nombre"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Esta acción eliminará todas las subetapas N4 relacionadas y no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Agregar al final del archivo -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Si necesitas alguna funcionalidad JavaScript adicional para el combo
-        const etapaN2Select = document.querySelector('select[name="id_etapaN2"]');
-        
-        etapaN2Select.addEventListener('change', function() {
-            const selectedEtapaN2 = this.value;
-            console.log('Etapa N2 seleccionada:', selectedEtapaN2);
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('etapaN3Nombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_etapaN3', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
         });
-    });
-    </script>
+    }, 5000);
+});
+</script>
 {% endblock %}

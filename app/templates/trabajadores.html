@@ -1,123 +1,765 @@
-{% extends 'bases/base.html' %}
+{% extends 'base_layout.html' %}
 
-{% block title %}trabajador {% endblock %}
+{% block title %}Gestión de Trabajadores{% endblock %}
+
+{% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trabajadores.css') }}?v=1.0">
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="well text-center">
-        <h1>Trabajador - Crud</h1>
+<div class="container-fluid py-4 trabajadores-container">
+    <!-- Header moderno -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-users me-2"></i>
+                                Gestión de Trabajadores
+                            </h3>
+                            <p class="mb-0 opacity-75">Administra la información de los trabajadores del sistema</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="text-center">
+                                    <div class="h4 mb-0">{{ trabajadores|length }}</div>
+                                    <small class="opacity-75">Total Trabajadores</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="container">
-        <div class="row">
-            <div class="col md-12">
-                <h2>
-                    Lista de trabajadores
-                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
-                            type="button">
-                        Nuevo trabajador
-                    </button>
-                </h2>
-                
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Nombre</th>
-                        <th>Profesión</th>
-                        <th>Nombre Corto</th>
-                        <th>Password</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {%for trabajador in trabajadores%}
-                    <tr>
-                        <td>{{trabajador.id}}</td>
-                        <td>{{trabajador.nombre}}</td>
-                        <td>{{trabajador.profesion}}</td>
-                        <td>{{trabajador.nombrecorto}}</td>
-                        <td>{{trabajador.password}}</td>
 
-                        <td>
-                            <a class="btn p-1 btn-primary btn-sm" 
-                               data-bs-target="#exampleModal1{{trabajador.id}}"
-                               data-bs-toggle="modal"
-                               href="#">Editar</a> 
-                            <form action="{{ url_for('controllers.eliminar_trabajador', id=trabajador.id) }}"
-                                method="POST" style="display:inline;">
-                                <button class="btn p-1 btn-danger btn-sm" 
-                                type="submit">Eliminar</button>
-                            </form>
-                        </td>
-                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
-                             id="exampleModal1{{trabajador.id}}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del Trabajador {{trabajador.nombre}}</h1>
-                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
-                                                type="button"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form action="{{ url_for('controllers.update_trabajador', id=trabajador.id) }}" method="POST">   
-                                            <div class="form-group">
-                                                <label>Nombre:</label>
-                                                <input type="hidden" name="id" value="{{trabajador.id}}">
-                                                <input class="form-control" name="name" value="{{trabajador.nombre}}" required="1" type="text">
-                                                <input class="form-control" name="profesion" value="{{trabajador.profesion}}" required="1" type="text">
-                                                <input class="form-control" name="nombrecorto" value="{{trabajador.nombrecorto}}" required="1" type="text">
-                                                <input class="form-control" name="password" value="{{trabajador.password}}" required="1" type="text">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list me-2"></i>Lista de Trabajadores
+                            </h5>
+                        </div>
+                        <div class="text-muted">
+                            <small><i class="fas fa-users me-1"></i>{{ trabajadores|length }} registros</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0 position-relative">
+                    {% if trabajadores %}
+                    <div class="trabajadores-table-container">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="col-id">ID</th>
+                                    <th class="col-nombre">Nombre</th>
+                                    <th class="col-email">Email</th>
+                                    <th class="col-rut">RUT</th>
+                                    <th class="col-profesion">Profesión</th>
+                                    <th class="col-rol">Rol</th>
+                                    <th class="col-sector">Sector</th>
+                                    <th class="col-recinto">Recinto</th>
+                                    <th class="col-acciones">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trabajador in trabajadores %}
+                                <tr data-trabajador-id="{{ trabajador.id }}">
+                                    <td class="col-id">
+                                        <span class="badge badge-custom badge-id">{{ trabajador.id }}</span>
+                                    </td>
+                                    <td class="col-nombre" title="{{ trabajador.nombre }}">
+                                        <div class="fw-semibold text-dark">{{ trabajador.nombre }}</div>
+                                    </td>
+                                    <td class="col-email" title="{{ trabajador.email or 'Sin email' }}">
+                                        {% if trabajador.email %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-envelope text-muted me-2"></i>
+                                                <span class="text-primary">{{ trabajador.email }}</span>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                                        </form>
+                                        {% else %}
+                                            <span class="text-muted">Sin email</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-rut">
+                                        {% if trabajador.rut %}
+                                            <span class="badge badge-custom badge-rut">{{ trabajador.rut }}</span>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-profesion" title="{{ trabajador.profesion or 'Sin especificar' }}">
+                                        <span class="text-muted">{{ trabajador.profesion or 'Sin especificar' }}</span>
+                                    </td>
+                                    <td class="col-rol">
+                                        {% if trabajador.rol and trabajador.rol.name == 'SUPERADMIN' %}
+                                            <span class="badge badge-custom badge-superadmin">
+                                                <i class="fas fa-shield-alt me-1"></i>{{ trabajador.rol.display_name }}
+                                            </span>
+                                        {% elif trabajador.custom_role %}
+                                            <span class="badge badge-custom badge-role">
+                                                <i class="fas fa-user-tag me-1"></i>{{ trabajador.custom_role.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Sin rol</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-sector">
+                                        {% if trabajador.sector %}
+                                            <span class="badge badge-custom badge-sector">{{ trabajador.sector.nombre }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Sin sector</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-recinto">
+                                        {% if trabajador.recinto %}
+                                            <span class="badge badge-custom badge-recinto">{{ trabajador.recinto.nombre }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Sin recinto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-acciones">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="abrirModalEdicion({{ trabajador.id }}, '{{ trabajador.nombre }}', '{{ trabajador.email or '' }}', '{{ trabajador.rut or '' }}', '{{ trabajador.profesion or '' }}', '{{ trabajador.nombrecorto or '' }}', {{ trabajador.sector_id or 'null' }}, {{ trabajador.recinto_id or 'null' }}, '{{ 'system' if trabajador.rol else 'custom' }}', {{ trabajador.custom_role_id or 'null' }})"
+                                                    title="Editar trabajador">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if current_user.rol and current_user.rol.name == 'SUPERADMIN' and trabajador.email %}
+                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    onclick="resetPassword({{ trabajador.id }}, '{{ trabajador.nombre }}')"
+                                                    title="Resetear contraseña">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ trabajador.id }}, '{{ trabajador.nombre }}')"
+                                                    title="Eliminar trabajador">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h5 class="text-muted">No hay trabajadores registrados</h5>
+                        <p class="text-muted">Comienza agregando un nuevo trabajador usando el formulario lateral</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="form-sidebar">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0 text-primary">
+                            <i class="fas fa-plus me-2"></i>Agregar Trabajador
+                        </h5>
+                    </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_trabajador') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-medium">Nombre Completo <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombre" name="name" required 
+                                   placeholder="Ej: Juan Pérez González">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="rut" class="form-label fw-medium">RUT</label>
+                            <input type="text" class="form-control" id="rut" name="rut"
+                                   placeholder="Ej: 12.345.678-9">
+                            <div class="form-text">Formato: 12.345.678-9</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="profesion" class="form-label fw-medium">Profesión</label>
+                            <input type="text" class="form-control" id="profesion" name="profesion"
+                                   placeholder="Ej: Ingeniero Civil">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="nombrecorto" class="form-label fw-medium">Nombre Corto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombrecorto" name="nombrecorto" required
+                                   placeholder="Ej: jperez">
+                            <div class="form-text">Nombre de usuario para el sistema</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sector_id" class="form-label fw-medium">Sector <span class="text-danger">*</span></label>
+                            <select class="form-select" id="sector_id" name="sector_id" required>
+                                <option value="">Seleccione un sector</option>
+                                {% for sector in sectores %}
+                                <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="recinto_id" class="form-label fw-medium">Recinto</label>
+                            <select class="form-select" id="recinto_id" name="recinto_id">
+                                <option value="">Sin recinto asignado</option>
+                                {% for recinto in recintos %}
+                                <option value="{{ recinto.id }}" data-sector="{{ recinto.tiporecinto.sector.id if recinto.tiporecinto and recinto.tiporecinto.sector else '' }}">{{ recinto.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Los recintos se filtran según el sector seleccionado</div>
+                        </div>
+
+                        <!-- Autenticación y Roles -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="crear_credenciales" name="crear_credenciales" onchange="toggleAuthFields()">
+                                <label class="form-check-label fw-medium" for="crear_credenciales">
+                                    <i class="fas fa-key me-1"></i>Crear credenciales de acceso
+                                </label>
+                            </div>
+                            <div class="form-text">Permite al trabajador acceder al sistema</div>
+                        </div>
+
+                        <div id="auth_fields" style="display: none;" class="border rounded p-3 bg-light">
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-medium">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="usuario@ejemplo.com">
+                                <div class="form-text">Será usado como nombre de usuario</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label fw-medium">Contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Mínimo 8 caracteres">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Combina letras, números y símbolos</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Tipo de Rol <span class="text-danger">*</span></label>
+                                <div class="row">
+                                    {% if current_user.rol and current_user.rol.name == 'SUPERADMIN' %}
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rol_tipo" id="rol_sistema" value="system" onchange="toggleRoleFields()">
+                                            <label class="form-check-label" for="rol_sistema">
+                                                <strong>Sistema</strong>
+                                                <small class="d-block text-muted">Super Administrador</small>
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
-                                            Cerrar
-                                        </button>
+                                    {% endif %}
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rol_tipo" id="rol_personalizado" value="custom" checked onchange="toggleRoleFields()">
+                                            <label class="form-check-label" for="rol_personalizado">
+                                                <strong>Personalizado</strong>
+                                                <small class="d-block text-muted">Roles del sistema</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="custom_role_field" class="mb-3">
+                                <label for="custom_role_id" class="form-label fw-medium">Rol <span class="text-danger">*</span></label>
+                                <select class="form-select" id="custom_role_id" name="custom_role_id">
+                                    <option value="">Seleccione un rol</option>
+                                    {% for rol in roles_personalizados %}
+                                    <option value="{{ rol.id }}" title="{{ rol.description }}">
+                                        {{ rol.name }} - {{ rol.description }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Crear Trabajador
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-light border-bottom">
+                    <h6 class="mb-0 text-secondary">
+                        <i class="fas fa-info-circle me-2"></i>Información del Sistema
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                                    <i class="fas fa-chart-bar text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-primary fs-5">{{ trabajadores|length }}</div>
+                                    <small class="text-muted">Total</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 rounded p-2 me-3">
+                                    <i class="fas fa-users text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-success fs-5">{{ trabajadores|selectattr('recinto')|list|length }}</div>
+                                    <small class="text-muted">Con Recinto</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <p class="mb-0 text-muted small">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Los trabajadores pueden ser asignados a diferentes recintos según sus roles y responsabilidades.
+                    </p>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-trash fa-lg text-danger"></i>
+                    </div>
+                </div>
+                <p class="text-center mb-3">¿Está seguro de que desea eliminar al trabajador <strong id="trabajadorNombre" class="text-danger"></strong>?</p>
+                <div class="alert alert-warning border-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer y puede afectar proyectos existentes.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar Trabajador
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// URL base para actualización
+const updateTrabajadorBaseUrl = "{{ url_for('controllers.update_trabajador', id=0) }}";
+
+function abrirModalEdicion(id, nombre, email, rut, profesion, nombrecorto, sectorId, recintoId, rolTipo, customRoleId) {
+    // Limpiar y escapar valores
+    const nombreEscapado = (nombre || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const emailEscapado = (email || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const rutEscapado = (rut || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const profesionEscapado = (profesion || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const nombrecortoEscapado = (nombrecorto || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    
+    // HTML del modal dinámico
+    const modalHTML = `
+        <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Editar Trabajador
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="editForm" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="edit_nombre" class="form-label fw-medium">Nombre Completo <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="edit_nombre" name="name" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_email" class="form-label fw-medium">Email</label>
+                                        <input type="email" class="form-control" id="edit_email" name="email">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_rut" class="form-label fw-medium">RUT</label>
+                                        <input type="text" class="form-control" id="edit_rut" name="rut">
+                                        <div class="form-text">Formato: 12.345.678-9</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_profesion" class="form-label fw-medium">Profesión</label>
+                                        <input type="text" class="form-control" id="edit_profesion" name="profesion">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="edit_nombrecorto" class="form-label fw-medium">Nombre Corto</label>
+                                        <input type="text" class="form-control" id="edit_nombrecorto" name="nombrecorto">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_sector_id" class="form-label fw-medium">Sector <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="edit_sector_id" name="sector_id" required>
+                                            <option value="">Seleccione un sector</option>
+                                            {% for sector in sectores %}
+                                            <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_recinto_id" class="form-label fw-medium">Recinto</label>
+                                        <select class="form-select" id="edit_recinto_id" name="recinto_id">
+                                            <option value="">Sin recinto asignado</option>
+                                            {% for recinto in recintos %}
+                                            <option value="{{ recinto.id }}" data-sector="{{ recinto.tiporecinto.sector.id if recinto.tiporecinto and recinto.tiporecinto.sector else '' }}">{{ recinto.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <!-- Roles Section -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Rol de Acceso</label>
+                                        <div class="border rounded p-3 bg-light">
+                                            <div class="row mb-2">
+                                                {% if current_user.rol and current_user.rol.name == 'SUPERADMIN' %}
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="rol_tipo" id="edit_rol_sistema" value="system" onchange="toggleEditRoleFields()">
+                                                        <label class="form-check-label" for="edit_rol_sistema">
+                                                            <strong>Sistema</strong>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="rol_tipo" id="edit_rol_personalizado" value="custom" onchange="toggleEditRoleFields()">
+                                                        <label class="form-check-label" for="edit_rol_personalizado">
+                                                            <strong>Personalizado</strong>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="edit_custom_role_field">
+                                                <select class="form-select form-select-sm" id="edit_custom_role_id" name="custom_role_id">
+                                                    <option value="">Sin rol asignado</option>
+                                                    {% for rol in roles_personalizados %}
+                                                    <option value="{{ rol.id }}">{{ rol.name }} - {{ rol.description }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </tr>
-                    {%endfor%}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para agregar nuevo estado -->
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Trabajador</h1>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ url_for('controllers.add_trabajador') }}" method="POST"> 
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input class="form-control" name="name" required="1" type="text">
-                            <label>Profesión:</label>
-                            <input class="form-control" name="profesion" required="1" type="text">
-                            <label>Nombre corto:</label>
-                            <input class="form-control" name="nombrecorto" required="1" type="text">
-                            <label>Password:</label>
-                            <input class="form-control" name="passsword" required="1" type="text">
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Guardar Cambios
+                            </button>
                         </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
-                </div>
             </div>
         </div>
-    </div>
-</div>
-<div class="well container">
+    `;
     
-</div>
+    // Remover modal anterior si existe
+    const existingModal = document.getElementById('editModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Agregar nuevo modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Configurar la acción del formulario
+    document.getElementById('editForm').action = updateTrabajadorBaseUrl.replace('0', id);
+    
+    // Establecer valores de los campos
+    document.getElementById('edit_nombre').value = nombreEscapado;
+    document.getElementById('edit_email').value = emailEscapado;
+    document.getElementById('edit_rut').value = rutEscapado; 
+    document.getElementById('edit_profesion').value = profesionEscapado;
+    document.getElementById('edit_nombrecorto').value = nombrecortoEscapado;
+    
+    // Configurar sector y recinto
+    const sectorSelect = document.getElementById('edit_sector_id');
+    if (sectorId && sectorId !== 'null') {
+        sectorSelect.value = sectorId;
+    }
+    
+    const recintoSelect = document.getElementById('edit_recinto_id');
+    if (recintoId && recintoId !== 'null') {
+        recintoSelect.value = recintoId;
+    }
+    
+    // Configurar rol
+    if (rolTipo === 'system') {
+        document.getElementById('edit_rol_sistema').checked = true;
+        document.getElementById('edit_custom_role_field').style.display = 'none';
+    } else {
+        document.getElementById('edit_rol_personalizado').checked = true;
+        document.getElementById('edit_custom_role_field').style.display = 'block';
+        if (customRoleId && customRoleId !== 'null') {
+            document.getElementById('edit_custom_role_id').value = customRoleId;
+        }
+    }
+    
+    // Configurar eventos
+    if (sectorSelect && recintoSelect) {
+        sectorSelect.addEventListener('change', function() {
+            filtrarRecintosPorSector('edit_sector_id', 'edit_recinto_id');
+        });
+        
+        recintoSelect.addEventListener('change', function() {
+            actualizarSectorPorRecinto('edit_recinto_id', 'edit_sector_id');
+        });
+        
+        filtrarRecintosPorSector('edit_sector_id', 'edit_recinto_id');
+    }
+    
+    // Mostrar modal
+    var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    editModal.show();
+    
+    // Limpiar modal del DOM cuando se cierre
+    document.getElementById('editModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('trabajadorNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_trabajador', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Función para filtrar recintos según sector seleccionado
+function filtrarRecintosPorSector(sectorSelectId, recintoSelectId) {
+    const sectorSelect = document.getElementById(sectorSelectId);
+    const recintoSelect = document.getElementById(recintoSelectId);
+    
+    if (!sectorSelect || !recintoSelect) return;
+    
+    const sectorId = sectorSelect.value;
+    const recintoOptions = recintoSelect.querySelectorAll('option');
+    
+    // Resetear recinto seleccionado si el sector cambió
+    const currentRecintoValue = recintoSelect.value;
+    let recintoValido = false;
+    
+    recintoOptions.forEach(option => {
+        if (option.value === '') {
+            // Mantener siempre la opción "Sin recinto asignado"
+            option.style.display = 'block';
+            return;
+        }
+        
+        const optionSectorId = option.getAttribute('data-sector');
+        
+        if (!sectorId || optionSectorId === sectorId) {
+            option.style.display = 'block';
+            if (option.value === currentRecintoValue) {
+                recintoValido = true;
+            }
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Si el recinto actual no es válido para el sector seleccionado, resetear
+    if (!recintoValido && currentRecintoValue) {
+        recintoSelect.value = '';
+    }
+}
+
+// Función para actualizar sector cuando se selecciona recinto
+function actualizarSectorPorRecinto(recintoSelectId, sectorSelectId) {
+    const recintoSelect = document.getElementById(recintoSelectId);
+    const sectorSelect = document.getElementById(sectorSelectId);
+    
+    if (!recintoSelect || !sectorSelect) return;
+    
+    const selectedRecinto = recintoSelect.options[recintoSelect.selectedIndex];
+    
+    if (selectedRecinto && selectedRecinto.value) {
+        const sectorId = selectedRecinto.getAttribute('data-sector');
+        if (sectorId && sectorSelect.value !== sectorId) {
+            sectorSelect.value = sectorId;
+        }
+    }
+}
+
+// Función para alternar campos de autenticación
+function toggleAuthFields() {
+    const authFields = document.getElementById('auth_fields');
+    const checkbox = document.getElementById('crear_credenciales');
+    const emailField = document.getElementById('email');
+    const passwordField = document.getElementById('password');
+    
+    if (checkbox.checked) {
+        authFields.style.display = 'block';
+        emailField.required = true;
+        passwordField.required = true;
+    } else {
+        authFields.style.display = 'none';
+        emailField.required = false;
+        passwordField.required = false;
+        emailField.value = '';
+        passwordField.value = '';
+    }
+}
+
+// Función para alternar campos de rol
+function toggleRoleFields() {
+    const customRoleField = document.getElementById('custom_role_field');
+    const rolPersonalizado = document.getElementById('rol_personalizado');
+    const customRoleSelect = document.getElementById('custom_role_id');
+    
+    if (rolPersonalizado.checked) {
+        customRoleField.style.display = 'block';
+        customRoleSelect.required = true;
+    } else {
+        customRoleField.style.display = 'none';
+        customRoleSelect.required = false;
+        customRoleSelect.value = '';
+    }
+}
+
+// Función para alternar campos de rol en modal de edición
+function toggleEditRoleFields() {
+    const customRoleField = document.getElementById('edit_custom_role_field');
+    const rolPersonalizado = document.getElementById('edit_rol_personalizado');
+    
+    if (rolPersonalizado && rolPersonalizado.checked) {
+        customRoleField.style.display = 'block';
+    } else {
+        customRoleField.style.display = 'none';
+        document.getElementById('edit_custom_role_id').value = '';
+    }
+}
+
+// Función para alternar visibilidad de contraseña
+function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const icon = document.getElementById('togglePasswordIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Función para resetear contraseña
+function resetPassword(id, nombre) {
+    if (confirm(`¿Está seguro de que desea resetear la contraseña de ${nombre}?`)) {
+        fetch(`/api/reset_password/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Contraseña reseteada exitosamente. Nueva contraseña: ${data.new_password}`);
+            } else {
+                alert('Error al resetear contraseña: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al resetear contraseña');
+        });
+    }
+}
+
+// Función para obtener CSRF token
+function getCsrfToken() {
+    const token = document.querySelector('meta[name="csrf-token"]');
+    return token ? token.getAttribute('content') : '';
+}
+
+// Configurar eventos para el formulario principal
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar filtrado de recintos en formulario principal
+    const mainSectorSelect = document.getElementById('sector_id');
+    const mainRecintoSelect = document.getElementById('recinto_id');
+    
+    if (mainSectorSelect && mainRecintoSelect) {
+        mainSectorSelect.addEventListener('change', function() {
+            filtrarRecintosPorSector('sector_id', 'recinto_id');
+        });
+        
+        mainRecintoSelect.addEventListener('change', function() {
+            actualizarSectorPorRecinto('recinto_id', 'sector_id');
+        });
+        
+        // Filtro inicial
+        filtrarRecintosPorSector('sector_id', 'recinto_id');
+    }
+    
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
+
 {% endblock %}

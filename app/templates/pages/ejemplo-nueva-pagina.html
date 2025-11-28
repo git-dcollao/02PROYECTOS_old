@@ -1,0 +1,58 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Mi Nueva Página{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        Mi Nueva Página
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Esta es una nueva página agregada desde el sistema de administración de menús.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Información</h5>
+                            <p>Esta página fue creada dinámicamente y está registrada en el sistema de permisos.</p>
+                            
+                            <h5>Características:</h5>
+                            <ul>
+                                <li>Registrada en la base de datos</li>
+                                <li>Controlada por el sistema de permisos</li>
+                                <li>Visible en el menú según los roles asignados</li>
+                                <li>Completamente editable desde la interfaz de administración</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Acciones disponibles</h5>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Configurar
+                                </button>
+                                <button class="btn btn-success" type="button">
+                                    <i class="fas fa-save me-2"></i>
+                                    Guardar cambios
+                                </button>
+                                <button class="btn btn-info" type="button">
+                                    <i class="fas fa-info me-2"></i>
+                                    Ver detalles
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

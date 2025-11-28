@@ -1,0 +1,414 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Especialidades{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header moderno -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>
+                                Gestión de Especialidades
+                            </h3>
+                            <p class="mb-0 opacity-75">Administra y configura las especialidades del sistema</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-center">
+                                    <div class="h4 mb-0">{{ especialidades|length }}</div>
+                                    <small class="opacity-75">Total</small>
+                                </div>
+                                <div class="vr mx-2"></div>
+                                <div class="text-center">
+                                    <div class="h4 mb-0">Activas</div>
+                                    <small class="opacity-75">Estado</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list me-2"></i>Lista de Especialidades
+                            </h5>
+                        </div>
+                        <div class="text-muted">
+                            <small>{{ especialidades|length }} registros</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if especialidades %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 px-4 py-3">ID</th>
+                                    <th class="border-0 px-4 py-3">Nombre</th>
+                                    <th class="border-0 px-4 py-3">Equipos Asignados</th>
+                                    <th class="border-0 px-4 py-3 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for especialidad in especialidades %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-light text-dark">{{ especialidad.id }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="fw-semibold text-dark">{{ especialidad.nombre }}</div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-primary">{{ especialidad.equipos_trabajo.count() }} equipos</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    onclick="abrirModalDetalle({{ especialidad.id }}, '{{ especialidad.nombre }}', {{ especialidad.equipos_trabajo.count() }})"
+                                                    title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="abrirModalEdicion({{ especialidad.id }}, '{{ especialidad.nombre }}')"
+                                                    title="Editar especialidad">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ especialidad.id }}, '{{ especialidad.nombre }}')"
+                                                    title="Eliminar especialidad">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-inbox fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No hay especialidades registradas</h5>
+                        <p class="text-muted">Comienza agregando una nueva especialidad usando el formulario</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-plus me-2"></i>Añadir Especialidad
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_especialidad') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="add_form_token" value="">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-semibold">Nombre de la Especialidad</label>
+                            <input type="text" class="form-control" id="nombre" name="name" required 
+                                   placeholder="Ej: Arquitectura, Ingeniería, Construcción">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Crear Especialidad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Card de estadísticas -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-info">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Total de Especialidades:</span>
+                            <span class="badge bg-primary">{{ especialidades|length }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Estado General:</span>
+                            <span class="badge bg-success">Activas</span>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Las especialidades definen las áreas de expertise de los trabajadores
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dinámico para detalles -->
+<div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Detalle de Especialidad
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleContent">
+                <!-- Contenido dinámico aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dinámico para edición -->
+<div class="modal fade" id="modalEdicion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Especialidad
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEdicion">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="form_token" id="edit_form_token" value="">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label fw-semibold">Nombre de la Especialidad</label>
+                        <input type="text" class="form-control" id="editNombre" name="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dinámico para confirmación de eliminación -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+                </div>
+                <p class="text-center">¿Estás seguro de que quieres eliminar la especialidad <strong id="eliminarNombre"></strong>?</p>
+                <div class="alert alert-warning border-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Esta acción no se puede deshacer y podría afectar a los equipos asociados.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <form id="formEliminar" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Función para generar token único
+function generateUniqueToken() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Variables globales para los modales
+let modalDetalle, modalEdicion, modalEliminar;
+
+// Inicialización optimizada
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar modales una sola vez
+    modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
+    modalEdicion = new bootstrap.Modal(document.getElementById('modalEdicion'));
+    modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminar'));
+    
+    // Generar token para formulario de creación
+    document.getElementById('add_form_token').value = generateUniqueToken();
+    
+    // Mejorar formulario principal
+    const formularioPrincipal = document.querySelector('form[action*="add_especialidad"]');
+    if (formularioPrincipal) {
+        formularioPrincipal.addEventListener('submit', function(e) {
+            const input = this.querySelector('input[name="name"]');
+            if (!input.value.trim()) {
+                e.preventDefault();
+                mostrarAlerta('Por favor, ingresa un nombre válido para la especialidad', 'warning');
+                input.focus();
+            }
+        });
+    }
+    
+    // Auto-dismissal de alertas
+    setTimeout(() => {
+        document.querySelectorAll('.alert-dismissible').forEach(alert => {
+            try {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            } catch (e) {
+                console.log('Alert ya cerrada');
+            }
+        });
+    }, 5000);
+});
+
+// Función optimizada para abrir modal de detalle
+function abrirModalDetalle(id, nombre, equiposCount) {
+    requestAnimationFrame(() => {
+        const contenido = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-primary"><i class="fas fa-tag me-2"></i>Información General</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-semibold">ID:</td>
+                                    <td><span class="badge bg-light text-dark">${id}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Nombre:</td>
+                                    <td class="fw-bold">${nombre}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-primary"><i class="fas fa-users me-2"></i>Equipos Asignados</h6>
+                            <div class="text-center py-3">
+                                <div class="h2 text-primary">${equiposCount}</div>
+                                <p class="text-muted mb-0">Equipos de trabajo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('detalleContent').innerHTML = contenido;
+        modalDetalle.show();
+    });
+}
+
+// Función optimizada para abrir modal de edición
+function abrirModalEdicion(id, nombre) {
+    requestAnimationFrame(() => {
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('formEdicion').action = `/update_especialidad/${id}`;
+        document.getElementById('formEdicion').method = 'POST';
+        
+        // Generar nuevo token para edición
+        document.getElementById('edit_form_token').value = generateUniqueToken();
+        
+        // Agregar evento de submit
+        const form = document.getElementById('formEdicion');
+        form.onsubmit = function(e) {
+            const input = document.getElementById('editNombre');
+            if (!input.value.trim()) {
+                e.preventDefault();
+                mostrarAlerta('El nombre no puede estar vacío', 'warning');
+                input.focus();
+                return false;
+            }
+        };
+        
+        modalEdicion.show();
+        
+        // Enfocar y seleccionar texto después de que se muestre el modal
+        setTimeout(() => {
+            const input = document.getElementById('editNombre');
+            input.focus();
+            input.select();
+        }, 150);
+    });
+}
+
+// Función optimizada para confirmar eliminación
+function confirmarEliminacion(id, nombre) {
+    requestAnimationFrame(() => {
+        document.getElementById('eliminarNombre').textContent = nombre;
+        document.getElementById('formEliminar').action = `/eliminar_especialidad/${id}`;
+        document.getElementById('formEliminar').method = 'POST';
+        
+        modalEliminar.show();
+    });
+}
+
+// Función auxiliar para mostrar alertas
+function mostrarAlerta(mensaje, tipo = 'info') {
+    const alertContainer = document.createElement('div');
+    alertContainer.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertContainer.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertContainer.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertContainer);
+    
+    // Remover automáticamente después de 5 segundos
+    setTimeout(() => {
+        if (alertContainer.parentNode) {
+            alertContainer.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

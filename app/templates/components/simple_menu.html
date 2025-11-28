@@ -1,0 +1,67 @@
+<!-- Menú super simple para debug -->
+{% macro render_debug_menu() %}
+{% set user = get_current_user() %}
+{% if user %}
+<div style="position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; padding: 20px; z-index: 99999; border-right: 5px solid #333; box-shadow: 2px 0 10px rgba(0,0,0,0.5);">
+    <div style="text-align: center; border-bottom: 2px solid white; padding-bottom: 15px; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-weight: bold;">
+            <i class="fas fa-rocket"></i><br>
+            MENÚ DINÁMICO
+        </h3>
+    </div>
+    
+    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>👤 Usuario:</strong><br>{{ user.nombre }}<br>
+        <strong>🎭 Rol:</strong> {{ user.rol.value }}<br>
+        <strong>📊 Total:</strong> {{ get_menu_item_count() }} páginas
+    </div>
+    
+    <div style="max-height: 60vh; overflow-y: auto;">
+        {% set user_menu = get_user_menu() %}
+        {% if user_menu %}
+            {% for category in user_menu %}
+                <div style="background: rgba(255,255,255,0.1); margin-bottom: 10px; border-radius: 6px; padding: 8px;">
+                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
+                        <i class="{{ category.icon }}"></i> {{ category.category }} ({{ category.count }})
+                    </div>
+                    {% for page in category.pages %}
+                        <div style="margin-left: 15px; margin-bottom: 3px;">
+                            <a href="{{ page.url }}" style="color: #fff; text-decoration: none; font-size: 12px; display: block; padding: 3px 0;" 
+                               onmouseover="this.style.backgroundColor='rgba(255,255,255,0.2)'" 
+                               onmouseout="this.style.backgroundColor='transparent'">
+                                <i class="{{ page.icon }}"></i> {{ page.name }}
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                <strong>Sin elementos de menú</strong><br>
+                <small>No hay páginas configuradas para tu rol</small>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
+        <a href="/auth/logout" style="display: block; background: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 8px; text-align: center; border-radius: 4px; font-weight: bold;">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </a>
+    </div>
+</div>
+
+<!-- Ajuste del contenido principal -->
+<style>
+body {
+    margin-left: 250px !important;
+    transition: margin-left 0.3s ease;
+}
+@media (max-width: 768px) {
+    body {
+        margin-left: 0 !important;
+    }
+}
+</style>
+{% endif %}
+{% endmacro %}

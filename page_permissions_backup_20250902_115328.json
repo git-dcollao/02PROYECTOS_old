@@ -1,0 +1,221 @@
+{
+  "main.index": {
+    "name": "Página Principal",
+    "category": "General",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR",
+      "USUARIO"
+    ],
+    "description": "Dashboard principal del sistema"
+  },
+  "main.dashboard": {
+    "name": "Dashboard",
+    "category": "General",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR",
+      "USUARIO"
+    ],
+    "description": "Panel de control con estadísticas"
+  },
+  "auth.list_users": {
+    "name": "Lista de Usuarios",
+    "category": "Usuarios",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Ver lista de todos los usuarios"
+  },
+  "auth.create_user": {
+    "name": "Crear Usuario",
+    "category": "Usuarios",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN"
+    ],
+    "description": "Formulario para crear nuevos usuarios"
+  },
+  "auth.edit_user": {
+    "name": "Editar Usuario",
+    "category": "Usuarios",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN"
+    ],
+    "description": "Modificar datos de usuarios existentes"
+  },
+  "auth.delete_user": {
+    "name": "Eliminar Usuario",
+    "category": "Usuarios",
+    "roles": [
+      "SUPERADMIN"
+    ],
+    "description": "Eliminar usuarios del sistema"
+  },
+  "proyectos.list_projects": {
+    "name": "Lista de Proyectos",
+    "category": "Proyectos",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Ver todos los proyectos"
+  },
+  "proyectos.create_project": {
+    "name": "Crear Proyecto",
+    "category": "Proyectos",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Formulario para crear nuevos proyectos"
+  },
+  "proyectos.edit_project": {
+    "name": "Editar Proyecto",
+    "category": "Proyectos",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Modificar datos de proyectos"
+  },
+  "proyectos.view_gantt": {
+    "name": "Diagrama Gantt",
+    "category": "Proyectos",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Ver cronograma de proyectos"
+  },
+  "reportes.financial": {
+    "name": "Reportes Financieros",
+    "category": "Reportes",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN"
+    ],
+    "description": "Informes financieros y presupuestos"
+  },
+  "reportes.progress": {
+    "name": "Reportes de Avance",
+    "category": "Reportes",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Reportes de progreso de proyectos"
+  },
+  "reportes.export": {
+    "name": "Exportar Datos",
+    "category": "Reportes",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Exportar información del sistema"
+  },
+  "config.system": {
+    "name": "Configuración Sistema",
+    "category": "Configuración",
+    "roles": [
+      "SUPERADMIN"
+    ],
+    "description": "Configuraciones generales del sistema"
+  },
+  "config.backup": {
+    "name": "Respaldos",
+    "category": "Configuración",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN"
+    ],
+    "description": "Gestión de respaldos de datos"
+  },
+  "demo.dashboard_ejecutivo": {
+    "name": "Dashboard Ejecutivo",
+    "category": "Demo",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN"
+    ],
+    "description": "Dashboard con métricas ejecutivas y KPIs estratégicos"
+  },
+  "demo.informes_detallados": {
+    "name": "Informes Detallados",
+    "category": "Demo",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Informes detallados con análisis profundo de datos"
+  },
+  "demo.panel_usuario": {
+    "name": "Panel de Usuario",
+    "category": "Demo",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR",
+      "USUARIO"
+    ],
+    "description": "Panel básico accesible para todos los usuarios"
+  },
+  "demo.configuracion_avanzada": {
+    "name": "Configuración Avanzada",
+    "category": "Demo",
+    "roles": [
+      "SUPERADMIN"
+    ],
+    "description": "Configuraciones críticas del sistema - Solo SuperAdmin"
+  },
+  "hr.employees": {
+    "name": "Gestión de Empleados",
+    "category": "Recursos Humanos",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Administración de información de empleados y personal"
+  },
+  "inventory.products": {
+    "name": "Productos",
+    "category": "Inventario",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN",
+      "SUPERVISOR"
+    ],
+    "description": "Catálogo de productos y stock"
+  },
+  "inventory.suppliers": {
+    "name": "Proveedores",
+    "category": "Inventario",
+    "roles": [
+      "SUPERADMIN",
+      "ADMIN"
+    ],
+    "description": "Gestión de proveedores"
+  },
+  "security.audit": {
+    "name": "Auditoría",
+    "category": "Seguridad",
+    "roles": [
+      "SUPERADMIN"
+    ],
+    "description": "Logs de auditoría del sistema"
+  }
+}

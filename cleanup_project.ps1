@@ -1,0 +1,584 @@
+# ============================================================================
+# SCRIPT DE LIMPIEZA AGRESIVA DEL PROYECTO
+# ============================================================================
+# Fecha: 28 de noviembre de 2025
+# Propósito: Eliminar scripts temporales de desarrollo/debug/migraciones
+# Nivel: AGRESIVO (prototipo con Git + backup)
+# ============================================================================
+
+Write-Host "🧹 INICIANDO LIMPIEZA AGRESIVA DEL PROYECTO" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Confirmar ejecución
+$confirmacion = Read-Host "⚠️  ADVERTENCIA: Esto eliminará ~150+ archivos temporales. ¿Continuar? (S/N)"
+if ($confirmacion -ne "S" -and $confirmacion -ne "s") {
+    Write-Host "❌ Operación cancelada por el usuario" -ForegroundColor Red
+    exit
+}
+
+Write-Host ""
+Write-Host "📊 PASO 1: Análisis de archivos a eliminar..." -ForegroundColor Yellow
+
+# Contadores
+$eliminados = 0
+$errores = 0
+
+# ============================================================================
+# CATEGORÍA 1: SCRIPTS DE MIGRACIÓN (add_*, create_*, migrate_*)
+# ============================================================================
+Write-Host ""
+Write-Host "🔧 Eliminando scripts de migración..." -ForegroundColor Green
+
+$scripts_migracion = @(
+    "add_grupo_to_requerimiento.py",
+    "add_menu_organization_fields.py",
+    "add_proyecto_column.py",
+    "add_rut_to_trabajador.py",
+    "add_template_path_to_pages.py",
+    "create_actividad_table.py",
+    "create_admin.py",
+    "create_admin_orm.py",
+    "create_admin_simple.py",
+    "create_admin_user.py",
+    "create_default_especialidad.py",
+    "create_historial_control_table.py",
+    "create_historial_table.py",
+    "create_permissions_tables.py",
+    "create_sample_menu.py",
+    "migrate_actividad_table.py",
+    "migrate_add_area_to_requerimiento.py",
+    "migrate_add_custom_role.py",
+    "migrate_areas.py",
+    "migrate_area_permissions.py",
+    "migrate_auth.py",
+    "migrate_custom_roles_permissions.py",
+    "migrate_custom_roles_permissions_sql.py",
+    "migrate_to_production_roles.py",
+    "migration_add_sector_recinto_to_trabajador.py"
+)
+
+foreach ($archivo in $scripts_migracion) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 2: SCRIPTS DE DEBUG Y TEST (fuera de carpeta tests/)
+# ============================================================================
+Write-Host ""
+Write-Host "🐛 Eliminando scripts de debug y test temporales..." -ForegroundColor Green
+
+$scripts_debug = @(
+    "debug_admin.py",
+    "debug_all_proyectos.py",
+    "debug_flash_autenticado.py",
+    "debug_mensajes_flash.py",
+    "debug_menu_data_specific.py",
+    "debug_menu_proyecto_llenar.py",
+    "debug_menu_template.py",
+    "debug_requerimientos.py",
+    "debug_superadmin_menu.py",
+    "debug_trabajadores.py",
+    "debug_user_permissions.py",
+    "test_apis.py",
+    "test_api_session.py",
+    "test_area_filtering.py",
+    "test_asignar_recinto.py",
+    "test_authenticated_access.py",
+    "test_auto_selection.py",
+    "test_avances.py",
+    "test_avance_all_page.py",
+    "test_avance_routes.py",
+    "test_backend_error.py",
+    "test_backup_auth.py",
+    "test_backup_system.py",
+    "test_backup_timeouts.py",
+    "test_categories.py",
+    "test_category_function.py",
+    "test_checkbox_api.py",
+    "test_checkbox_functionality.py",
+    "test_clave_compuesta.py",
+    "test_complete_restore.py",
+    "test_completo_trabajadores.py",
+    "test_controller_simulation.py",
+    "test_control_solo_actualizar.py",
+    "test_correccion_final.py",
+    "test_crud_administrador.py",
+    "test_csrf_avances.py",
+    "test_direct_restore.py",
+    "test_duplicados_eliminados.py",
+    "test_encoding.py",
+    "test_endpoint.py",
+    "test_endpoints.py",
+    "test_estructura_jerarquica.py",
+    "test_excel.py",
+    "test_excel_sin_duplicados.py",
+    "test_filtrado_administrador.py",
+    "test_filtrado_trabajadores.py",
+    "test_filtro_proyecto.py",
+    "test_final_check.py",
+    "test_final_permissions.py",
+    "test_flash_fix.py",
+    "test_gestion_administradores.py",
+    "test_gestion_usuarios.py",
+    "test_header_menu_debug.py",
+    "test_login.py",
+    "test_login_completo.py",
+    "test_login_csrf.py",
+    "test_mapeo_edt.py",
+    "test_menu_system.py",
+    "test_modal_duplicados.py",
+    "test_multiple_projects.py",
+    "test_multiproyecto_all.py",
+    "test_new_features.py",
+    "test_nuevo_comportamiento_recursos.py",
+    "test_nuevo_formato.py",
+    "test_page_access.py",
+    "test_password_ubicacion.py",
+    "test_permissions.py",
+    "test_permissions_fix.py",
+    "test_procesar_xlsx.py",
+    "test_proyecto.py",
+    "test_proyectos_completo.py",
+    "test_proyecto_b.py",
+    "test_recursos_control_completo.py",
+    "test_requerimientos_aceptar_filtrado.py",
+    "test_requerimientos_filtrado.py",
+    "test_restore.py",
+    "test_restore_debug.py",
+    "test_restore_function.py",
+    "test_restore_stepbystep.py",
+    "test_restore_web.py",
+    "test_restore_web_direct.py",
+    "test_selective_cleanup.py",
+    "test_simple.py",
+    "test_template_debug.py",
+    "test_urls.py",
+    "test_user.py",
+    "test_validacion_columnas.py",
+    "test_verificacion_robusta.py",
+    "test_web_interface.py"
+)
+
+foreach ($archivo in $scripts_debug) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 3: SCRIPTS DE ANÁLISIS Y VERIFICACIÓN
+# ============================================================================
+Write-Host ""
+Write-Host "📊 Eliminando scripts de análisis..." -ForegroundColor Green
+
+$scripts_analisis = @(
+    "analizar_all_xlsx.py",
+    "analizar_excel.py",
+    "analizar_html_directo.py",
+    "analyze_backup_workers.py",
+    "check_backup_permissions.py",
+    "check_control_page.py",
+    "check_data.py",
+    "check_database_status.py",
+    "check_db.py",
+    "check_final_backup.py",
+    "check_pages_data.py",
+    "check_references.py",
+    "check_user_permissions.py",
+    "diagnosticar_asignacion_proyectos.py",
+    "diagnosticar_charset_menu.py",
+    "diagnosticar_menu_configuracion.py",
+    "diagnosticar_requerimientos.py",
+    "diagnosticar_trabajadores.py",
+    "diagnostico_asignacion.py",
+    "diagnostico_backup.py",
+    "diagnostico_menu_resumen.py",
+    "diagnostico_menu_superadmin.py",
+    "investigar_proyectos_all.py",
+    "investigate_restore_behavior.py",
+    "verificar_backup_maestro.py",
+    "verificar_css_proyecto.py",
+    "verificar_permisos_admin.py",
+    "verificar_sistema_final.py",
+    "verificar_todas_funciones_admin.py",
+    "verificar_trabajadores_temp.py",
+    "verify_system.py",
+    "verify_timeouts.py"
+)
+
+foreach ($archivo in $scripts_analisis) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 4: SCRIPTS DE FIX Y CORRECCIÓN
+# ============================================================================
+Write-Host ""
+Write-Host "🔨 Eliminando scripts de fix..." -ForegroundColor Green
+
+$scripts_fix = @(
+    "fix_admin_permissions.py",
+    "fix_admin_privileges.py",
+    "fix_admin_user.py",
+    "fix_backup_final.py",
+    "fix_backup_menu.py",
+    "fix_custom_roles.py",
+    "fix_encoding.py",
+    "fix_encoding_all.py",
+    "fix_encoding_catalogos.py",
+    "fix_encoding_pages.py",
+    "fix_enum_values.py",
+    "fix_menu_complete.py",
+    "fix_menu_organization_mysql.py",
+    "fix_mysql_timeouts.py",
+    "fix_role_names.py",
+    "fix_sql_complete.py",
+    "fix_table_structure.py",
+    "fix_user_emails.py",
+    "fix_user_permissions.py",
+    "fix_user_roles.py",
+    "fix_user_status.py",
+    "corregir_admin_privilegios.py",
+    "corregir_duplicados.py",
+    "corregir_encoding_backup.py"
+)
+
+foreach ($archivo in $scripts_fix) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 5: SCRIPTS DE UTILIDAD TEMPORAL
+# ============================================================================
+Write-Host ""
+Write-Host "🛠️ Eliminando scripts de utilidad temporal..." -ForegroundColor Green
+
+$scripts_utilidad = @(
+    "agregar_pagina_admin_trabajadores.py",
+    "agregar_pagina_areas.py",
+    "asignar_grupos_proyectos.py",
+    "asignar_recintos_admin.py",
+    "asignar_recintos_prueba.py",
+    "buscar_linea_885.py",
+    "buscar_linea_885_v2.py",
+    "category_manager.py",
+    "cleanup_old_backups.py",
+    "clean_mysql_connections.py",
+    "comparar_hexadecimal.py",
+    "comparar_templates_menu.py",
+    "comprimir_backup_corregido.py",
+    "configurar_permisos_requerimientos.py",
+    "crear_excel_ejemplo.py",
+    "crear_excel_nuevo_formato.py",
+    "crear_excel_prueba_filtro.py",
+    "crear_pagina_prueba.py",
+    "crear_plantilla_gantt.py",
+    "crear_requerimiento_prueba.py",
+    "crear_tabla_observaciones.py",
+    "demo_categories.py",
+    "demo_menu_roles.py",
+    "demo_permissions.py",
+    "descomprimir_backup.py",
+    "diagnose_menu.py",
+    "documentacion_estructura_final.py",
+    "documentar_correccion_guardado.py",
+    "documentar_observaciones_requeridas.py",
+    "eliminar_etapas_N.py",
+    "extraer_paginas_limpio.py",
+    "extraer_solo_page_permissions.py",
+    "importar_pages_final.py",
+    "importar_paginas_busqueda.py",
+    "importar_paginas_directo.py",
+    "importar_paginas_linea885.py",
+    "internal_backup_test.py",
+    "list_routes.py",
+    "manage_permissions.py",
+    "monitor_permisos.py",
+    "permissions_examples.py",
+    "plan_revision_sistematica.py",
+    "probar_calculo_completitud.py",
+    "probar_correccion_trabajadores.py",
+    "probar_exportacion.py",
+    "probar_guardado_parcial.py",
+    "probar_limpieza_msproj11.py",
+    "probar_menu_administrador.py",
+    "probar_modificaciones_completar.py",
+    "probar_observaciones_requeridas.py",
+    "probar_ordenamiento_edt.py",
+    "probar_reubicacion_observaciones.py",
+    "process_all_resources.py",
+    "promote_user.py",
+    "quick_test.py",
+    "quick_user_admin.py",
+    "reset_db.py",
+    "resumen_exportacion.py",
+    "resumen_implementacion_completitud.py",
+    "resumen_mejoras_trabajadores.py",
+    "resumen_modificaciones_completar.py",
+    "ruta_plantilla.py",
+    "setup_improvements.py",
+    "set_test_password.py",
+    "simular_procesamiento_completo.py",
+    "simular_proceso.py",
+    "status_migracion.py",
+    "update_admin.py",
+    "validar_filtrado_simple.py",
+    "validar_filtrado_web.py",
+    "advanced_menu_test.py"
+)
+
+foreach ($archivo in $scripts_utilidad) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 6: DOCUMENTACIÓN TEMPORAL (*.md)
+# ============================================================================
+Write-Host ""
+Write-Host "📝 Eliminando documentación temporal..." -ForegroundColor Green
+
+$docs_temporales = @(
+    "ACTUALIZACION_BOTONES_TRABAJADORES.md",
+    "AUTO_SELECCION_COMPLETADA.md",
+    "COMPORTAMIENTO_RECURSOS_FINAL.md",
+    "CONFIGURACION_AUTH.md",
+    "CORRECCION_CONTROL_FINAL.md",
+    "CORRECCION_DUPLICADOS.md",
+    "CORRECCION_RECURSOS_COMPLETA.md",
+    "CORRECCION_RECURSOS_CONTROL.md",
+    "CORRECCION_TEMPLATE_TRABAJADORES.md",
+    "CORRECCION_VALIDACION_COLUMNAS.md",
+    "FUNCIONALIDAD_SUBIR_CONTROL_IMPLEMENTADA.md",
+    "GUIA_CONTINUACION_BACKUP_V2.md",
+    "GUIA_PERMISOS_CATEGORIAS.md",
+    "GUIA_PRUEBAS_RESTAURACION.md",
+    "GUIA_SISTEMA_PERMISOS.md",
+    "IMPLEMENTACION_AVANCE_DUAL.md",
+    "IMPLEMENTACION_LIMPIEZA_BD_COMPLETA.md",
+    "INSTRUCCIONES_ELIMINAR_ETAPAS.md",
+    "INTERFAZ_WEB_COMPLETA.md",
+    "MEJORAS_MODAL_REQUERIMIENTO.md",
+    "MIGRACION_ROLES_COMPLETADA.md",
+    "NEW_GRID_INTERFACE_GUIDE.md",
+    "PERMISSIONS_SYSTEM_GUIDE.md",
+    "PLAN_PERMISOS_AREA.md",
+    "prueba_flujo_optimizado.md",
+    "REQUERIMIENTO_VER_IMPLEMENTADO.md",
+    "RESUMEN_CORRECCION_ENCODING.md",
+    "RESUMEN_IMPLEMENTACION_COMPLETA.md",
+    "RESUMEN_RUT_MULTIPLES_AREAS.md",
+    "SISTEMA_PERMISOS_AREA_COMPLETO.md",
+    "SISTEMA_PERMISOS_SEEDS_ACTUALIZADO.md",
+    "TERMINAL.md",
+    "TESTING_BACKUP_V2.md",
+    "XLSX_DEBUG_GUIDE.md"
+)
+
+foreach ($archivo in $docs_temporales) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 7: BACKUPS SQL ANTIGUOS (mantener solo el más reciente en backups/)
+# ============================================================================
+Write-Host ""
+Write-Host "💾 Eliminando backups SQL antiguos..." -ForegroundColor Green
+
+$backups_sql = @(
+    "BACKUP_CORREGIDO_FINAL.sql",
+    "BACKUP_FIXED_UTF8.sql",
+    "BACKUP_LIMPIO_UTF8_20251103_114447.sql",
+    "BACKUP_LIMPIO_UTF8_20251103_114447_CORREGIDO_20251105_122532.sql",
+    "BACKUP_LIMPIO_UTF8_20251103_114447_CORREGIDO_20251105_122612.sql",
+    "BACKUP_LIMPIO_UTF8_20251103_114447_FIXED_20251105_122713.sql",
+    "clean_tables.sql",
+    "eliminar_etapas_N.sql",
+    "fix_all_encoding.sql",
+    "fix_double_encoding.sql",
+    "fix_encoding.sql",
+    "restore_page_permissions_only.sql",
+    "restore_permissions.sql",
+    "restore_permissions_clean.sql"
+)
+
+foreach ($archivo in $backups_sql) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 8: ARCHIVOS HTML/JS/JSON TEMPORALES
+# ============================================================================
+Write-Host ""
+Write-Host "🌐 Eliminando archivos HTML/JS/JSON temporales..." -ForegroundColor Green
+
+$archivos_web_temp = @(
+    "debug_html_funcional.html",
+    "debug_html_problemática.html",
+    "debug_html_proyecto_llenar.html",
+    "debug_proyecto_llenar.html",
+    "debug_proyecto_llenar_autenticado.html",
+    "test_cascade.html",
+    "test_modal.html",
+    "DEBUG_BACKUP_V2.js",
+    "TEST_CONSOLE_BACKUP_V2.js",
+    "page_permissions_backup_20250902_115328.json"
+)
+
+foreach ($archivo in $archivos_web_temp) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 9: ARCHIVOS XLSX DE PRUEBA
+# ============================================================================
+Write-Host ""
+Write-Host "📊 Eliminando archivos Excel de prueba..." -ForegroundColor Green
+
+$archivos_excel = @(
+    "ejemplo_control_actividades_20250811_161003.xlsx",
+    "ejemplo_control_actividades_20250811_163255.xlsx",
+    "ejemplo_control_actividades_20250811_164753.xlsx",
+    "proyecto_nuevo_formato_20250826_102105.xlsx",
+    "prueba_filtro_20250811_165102.xlsx",
+    "prueba_filtro_20250811_165129.xlsx",
+    "test_gantt.xlsx",
+    "test_proyecto.xlsx",
+    "test_proyectos_post_migracion.xlsx"
+)
+
+foreach ($archivo in $archivos_excel) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# CATEGORÍA 10: ARCHIVOS VARIOS
+# ============================================================================
+Write-Host ""
+Write-Host "📦 Eliminando archivos varios..." -ForegroundColor Green
+
+$archivos_varios = @(
+    "controllers_main_backup_20251117_164346.py",
+    "proyectos_controller_backup_20251117_164353.py",
+    "fix_emojis.ps1",
+    "setup_backup_env.sh",
+    "init-db.sql",
+    "image.png"
+)
+
+foreach ($archivo in $archivos_varios) {
+    if (Test-Path $archivo) {
+        try {
+            Remove-Item $archivo -Force
+            Write-Host "  ✅ $archivo" -ForegroundColor Gray
+            $eliminados++
+        } catch {
+            Write-Host "  ❌ Error: $archivo" -ForegroundColor Red
+            $errores++
+        }
+    }
+}
+
+# ============================================================================
+# RESUMEN FINAL
+# ============================================================================
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "📊 RESUMEN DE LIMPIEZA" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "✅ Archivos eliminados: $eliminados" -ForegroundColor Green
+Write-Host "❌ Errores: $errores" -ForegroundColor Red
+Write-Host ""
+
+if ($eliminados -gt 0) {
+    Write-Host "🎉 ¡Limpieza completada exitosamente!" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "📝 PRÓXIMOS PASOS RECOMENDADOS:" -ForegroundColor Yellow
+    Write-Host "  1. Revisar que la aplicación funcione: docker-compose restart proyectos_app" -ForegroundColor White
+    Write-Host "  2. Hacer commit de los cambios: git add . && git commit -m 'Limpieza de archivos temporales'" -ForegroundColor White
+    Write-Host "  3. Verificar que todo funcione correctamente" -ForegroundColor White
+} else {
+    Write-Host "ℹ️  No se encontraron archivos para eliminar" -ForegroundColor Yellow
+}
+
+Write-Host ""
+Write-Host "✨ Script finalizado" -ForegroundColor Cyan

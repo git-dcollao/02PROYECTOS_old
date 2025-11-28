@@ -1,0 +1,472 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #0d6efd;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-complete {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    
+    .status-incomplete {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header moderno igual que trabajadores -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-user-circle me-2"></i>
+                                Mi Perfil
+                            </h3>
+                            <p class="mb-0 opacity-75">Actualiza y mantén tu información personal</p>
+                        </div>
+                        <div class="col-auto">
+                            {% if trabajador.rut and trabajador.telefono %}
+                                <span class="status-badge status-complete">
+                                    <i class="fas fa-check"></i> Completo
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-incomplete">
+                                    <i class="fas fa-exclamation-triangle"></i> Incompleto
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar con información del sistema -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-primary">
+                        <i class="fas fa-info-circle me-2"></i>Información del Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Trabajador:</strong><br>
+                        <span class="text-muted">{{ trabajador.nombre }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Usuario:</strong><br>
+                        <span class="text-muted">{{ trabajador.nombrecorto or 'No asignado' }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Email:</strong><br>
+                        <span class="text-muted">{{ trabajador.email }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Rol:</strong><br>
+                        <span class="badge bg-secondary">{{ trabajador.custom_role.name if trabajador.custom_role else 'Sin rol' }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Área:</strong><br>
+                        <span class="text-muted">{{ trabajador.area_principal.nombre if trabajador.area_principal else 'No asignada' }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Sector:</strong><br>
+                        <span class="text-muted">{{ trabajador.sector.nombre if trabajador.sector else 'No asignado' }}</span>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Recinto:</strong><br>
+                        <span class="text-muted">{{ trabajador.recinto.nombre if trabajador.recinto else 'No asignado' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información importante -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-primary">
+                        <i class="fas fa-lightbulb me-2"></i>Información Importante
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        <small>Tus datos están protegidos</small>
+                    </div>
+                    <div class="mb-2">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        <small>RUT y teléfono son importantes para reportes</small>
+                    </div>
+                    <div class="mb-0">
+                        <i class="fas fa-user-cog text-warning me-2"></i>
+                        <small>Las áreas son asignadas por administradores</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulario principal -->
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-primary">
+                        <i class="fas fa-edit me-2"></i>Actualizar Datos Personales
+                    </h5>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Formulario de Datos Personales -->
+                    <form method="POST" id="perfilForm">
+                        <!-- Token para prevenir doble envío -->
+                        <input type="hidden" name="form_token" id="form_token" value="">
+                        
+                        <div class="row">
+                            <!-- Nombre -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium" for="nombre">
+                                    Nombre Completo <span class="required-field">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nombre" 
+                                       name="nombre" 
+                                       value="{{ trabajador.nombre or '' }}"
+                                       placeholder="Nombre completo"
+                                       required>
+                            </div>
+                            
+                            <!-- Email -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium" for="email">
+                                    Email <span class="required-field">*</span>
+                                </label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ trabajador.email or '' }}"
+                                       placeholder="correo@ejemplo.com"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- RUT -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium" for="rut">
+                                    RUT
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="rut" 
+                                       name="rut" 
+                                       value="{{ trabajador.rut or '' }}"
+                                       placeholder="Ej: 12345678-9"
+                                       maxlength="12">
+                                <div class="invalid-feedback" id="rutFeedback"></div>
+                                <div class="valid-feedback">RUT válido</div>
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium" for="telefono">
+                                    Teléfono
+                                </label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="telefono" 
+                                       name="telefono" 
+                                       value="{{ trabajador.telefono or '' }}"
+                                       placeholder="Ej: +56912345678">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Profesión -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-medium" for="profesion">
+                                    Profesión
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="profesion" 
+                                       name="profesion" 
+                                       value="{{ trabajador.profesion or '' }}"
+                                       placeholder="Tu profesión o especialidad">
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Volver
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="btnGuardar">
+                                <i class="fas fa-save me-2"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rutInput = document.getElementById('rut');
+    const rutFeedback = document.getElementById('rutFeedback');
+    const emailInput = document.getElementById('email');
+    const nombreInput = document.getElementById('nombre');
+    const form = document.getElementById('perfilForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const submitBtn = document.getElementById('btnGuardar');
+    const formTokenInput = document.getElementById('form_token');
+    
+    // Generar token único para este formulario
+    const generateToken = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+    formTokenInput.value = generateToken();
+    
+    // Formatear RUT mientras se escribe
+    if (rutInput) {
+        rutInput.addEventListener('input', function() {
+            // Limpiar todo excepto números, k, K
+            let rut = this.value.replace(/[^0-9kK]/g, '');
+            
+            if (rut.length > 1) {
+                // Separar dígito verificador
+                const dv = rut.slice(-1);
+                const number = rut.slice(0, -1);
+                
+                if (number.length >= 7) {
+                    // Formato: 12345678-9 (sin puntos)
+                    this.value = number + '-' + dv;
+                } else {
+                    this.value = rut;
+                }
+            } else {
+                this.value = rut;
+            }
+            
+            console.log('RUT formateado:', this.value);
+            
+            // Validar en tiempo real solo si hay contenido
+            if (this.value.trim()) {
+                validateRut();
+            } else {
+                // Limpiar validación si está vacío
+                this.classList.remove('is-valid', 'is-invalid');
+                if (rutFeedback) rutFeedback.textContent = '';
+            }
+        });
+    }
+    
+    // Validación de RUT
+    function validateRut() {
+        const rut = rutInput.value.trim();
+        
+        if (!rut) {
+            rutInput.classList.remove('is-valid', 'is-invalid');
+            if (rutFeedback) rutFeedback.textContent = '';
+            return true; // RUT vacío es válido (opcional)
+        }
+        
+        // Validación básica de formato
+        const rutPattern = /^\d{7,8}-[\dkK]$/i; // Agregué 'i' para ignorar case
+        if (!rutPattern.test(rut)) {
+            rutInput.classList.remove('is-valid');
+            rutInput.classList.add('is-invalid');
+            if (rutFeedback) rutFeedback.textContent = 'Formato inválido (ej: 12345678-9)';
+            return false;
+        }
+        
+        // Validar en servidor (duplicados) solo si el formato es correcto
+        fetch('/auth/validar-rut', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rut: rut })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                rutInput.classList.remove('is-invalid');
+                rutInput.classList.add('is-valid');
+                if (rutFeedback) rutFeedback.textContent = '';
+            } else {
+                rutInput.classList.remove('is-valid');
+                rutInput.classList.add('is-invalid');
+                if (rutFeedback) rutFeedback.textContent = data.message;
+            }
+        })
+        .catch(error => {
+            console.error('Error validando RUT:', error);
+            // En caso de error de red, no bloquear el formulario
+            rutInput.classList.remove('is-invalid');
+        });
+        
+        return true; // Permitir continuar mientras se valida en servidor
+    }
+    
+    // Formatear teléfono
+    const telefonoInput = document.getElementById('telefono');
+    telefonoInput.addEventListener('input', function() {
+        let telefono = this.value.replace(/[^\d+]/g, '');
+        
+        // Si no empieza con +, agregar +56 para Chile
+        if (telefono && !telefono.startsWith('+')) {
+            if (!telefono.startsWith('56')) {
+                telefono = '+56' + telefono;
+            } else {
+                telefono = '+' + telefono;
+            }
+        }
+        
+        this.value = telefono;
+    });
+    
+    // Variable para evitar doble envío
+    let formSubmitting = false;
+    
+    // Manejar envío del formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Siempre prevenir el envío automático primero
+        
+        console.log('🔄 Procesando envío del formulario...');
+        
+        // Evitar doble envío
+        if (formSubmitting) {
+            console.log('⚠️ Formulario ya está siendo enviado...');
+            return false;
+        }
+        
+        // Validar campos requeridos antes del envío
+        const nombre = nombreInput.value.trim();
+        const email = emailInput.value.trim();
+        const rut = rutInput.value.trim();
+        
+        let errores = [];
+        
+        if (!nombre) {
+            errores.push('El nombre es requerido');
+            nombreInput.classList.add('is-invalid');
+        } else {
+            nombreInput.classList.remove('is-invalid');
+        }
+        
+        if (!email) {
+            errores.push('El email es requerido');
+            emailInput.classList.add('is-invalid');
+        } else {
+            emailInput.classList.remove('is-invalid');
+        }
+        
+        // Solo validar RUT si no está vacío y tiene la clase invalid
+        if (rut && rutInput.classList.contains('is-invalid')) {
+            errores.push('El RUT ingresado no es válido');
+        }
+        
+        if (errores.length > 0) {
+            e.preventDefault();
+            
+            // Remover alertas anteriores
+            const existingAlerts = form.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            // Mostrar alert con Bootstrap
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <strong>Errores encontrados:</strong><br>
+                ${errores.map(error => `• ${error}`).join('<br>')}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            form.insertBefore(alertDiv, form.firstChild);
+            return false;
+        }
+        
+        // Si llegamos aquí, el formulario es válido
+        formSubmitting = true;
+        
+        // Generar nuevo token para este envío
+        const newToken = generateToken();
+        formTokenInput.value = newToken;
+        
+        // Mostrar loading
+        loadingOverlay.style.display = 'flex';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        
+        console.log('✅ Enviando formulario con token:', newToken);
+        
+        // Remover el event listener temporalmente para evitar loops
+        form.removeEventListener('submit', arguments.callee);
+        
+        // Enviar el formulario de forma nativa
+        setTimeout(() => {
+            form.submit();
+        }, 100);
+    });
+    
+    // Validar RUT inicial si existe
+    if (rutInput.value) {
+        validateRut();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1945 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Completar Iniciativa{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style>
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(23, 162, 184, 0.1);
+    }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        transition: all 0.2s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #17a2b8, #20c997);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+    }
+
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #5bc0de 100%);
+    }
+
+    .table th {
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .table td {
+        font-size: 0.875rem;
+        vertical-align: middle;
+    }
+
+    .progress {
+        border-radius: 10px;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .requerimiento-row:hover {
+        background-color: rgba(23, 162, 184, 0.05);
+    }
+
+    .info-item {
+        margin-bottom: 1rem;
+    }
+
+    .info-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .location-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #e3f2fd;
+        color: #1976d2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        flex-shrink: 0;
+    }
+
+    .team-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #6f42c1;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .team-member-card {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .btn-group .btn {
+        min-width: 36px;
+    }
+
+    .text-purple {
+        color: #6f42c1 !important;
+    }
+
+    .bg-purple {
+        background: linear-gradient(135deg, #6f42c1, #9c27b0) !important;
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-tasks me-2"></i>
+        Completar Información de Requerimientos
+    </h2>
+    <div>
+        <a href="{{ url_for('requerimientos.ruta_requerimientos') }}" class="btn btn-info me-2">
+            <i class="fas fa-list me-1"></i>
+            Ver Todos
+        </a>
+        <span class="badge bg-info text-white fs-6">
+            {{ requerimientos|length }} En Preparación
+        </span>
+    </div>
+</div>
+
+<!-- Filtros y búsqueda -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="completitudFilter">
+                    <option value="">Todas las completadas</option>
+                    <option value="0">0% - Sin información</option>
+                    <option value="25">25% - Información parcial</option>
+                    <option value="50">50% - Medio completado</option>
+                    <option value="75">75% - Casi completo</option>
+                    <option value="100">100% - Completado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="fechaFilter">
+                    <option value="">Todas las fechas</option>
+                    <option value="recientes">Más recientes</option>
+                    <option value="antiguos">Más antiguos</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Tabla de requerimientos en grilla -->
+    {% if requerimientos %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tablaRequerimientos">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="15%">Proyecto</th>
+                            <th width="8%">F. Ingreso</th>
+                            <th width="8%">F. Aceptación</th>
+                            <th width="12%">Ubicación</th>
+                            <th width="20%">Descripción</th>
+                            <th width="10%">Completado</th>
+                            <th width="12%">Equipo</th>
+                            <th width="10%" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for requerimiento in requerimientos %}
+                        {% set completitud = 0 %}
+                        {% if requerimiento.id_tipologia %}{% set completitud = completitud + 15 %}{% endif %}
+                        {% if requerimiento.id_financiamiento %}{% set completitud = completitud + 15 %}{% endif %}
+                        {% if requerimiento.id_tipoproyecto %}{% set completitud = completitud + 15 %}{% endif %}
+                        {% if requerimiento.id_prioridad %}{% set completitud = completitud + 15 %}{% endif %}
+                        {% if requerimiento.id_grupo %}{% set completitud = completitud + 15 %}{% endif %}
+                        {% if requerimiento.equipos_trabajo %}{% set completitud = completitud + 15 %}{% endif %}
+                        {% if requerimiento.observacion %}{% set completitud = completitud + 10 %}{% endif %}
+                        
+                        <tr class="requerimiento-row" 
+                            data-nombre="{{ requerimiento.nombre|lower }}" 
+                            data-fecha="{{ requerimiento.fecha_aceptacion.strftime('%Y-%m-%d') if requerimiento.fecha_aceptacion else requerimiento.fecha.strftime('%Y-%m-%d') }}"
+                            data-completitud="{{ completitud }}">
+                            <td>
+                                <span class="badge bg-info fs-6">#{{ requerimiento.id }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-start">
+                                    <div class="team-avatar me-2 bg-info">
+                                        <i class="fas fa-tasks"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ requerimiento.nombre }}</div>
+                                        <small class="text-muted">{{ requerimiento.estado.nombre }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                <small>{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</small>
+                            </td>
+                            <td>
+                                <i class="fas fa-calendar-check text-success me-1"></i>
+                                <small>{{ requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="location-icon me-2">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <small class="text-muted">{{ requerimiento.sector.nombre }}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="location-icon me-2">
+                                            <i class="fas fa-home"></i>
+                                        </div>
+                                        <small class="text-muted">{{ requerimiento.tiporecinto.nombre }}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="location-icon me-2">
+                                            <i class="fas fa-door-open"></i>
+                                        </div>
+                                        <div class="fw-bold text-truncate" style="max-width: 120px;" title="{{ requerimiento.recinto.nombre }}">
+                                            {{ requerimiento.recinto.nombre }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ requerimiento.descripcion }}">
+                                    {{ requerimiento.descripcion[:80] }}{% if requerimiento.descripcion|length > 80 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-center">
+                                    <div class="progress mb-1" style="height: 8px;">
+                                        {% set completitud_visual = 0 %}
+                                        {% if requerimiento.id_tipologia %}{% set completitud_visual = completitud_visual + 15 %}{% endif %}
+                                        {% if requerimiento.id_financiamiento %}{% set completitud_visual = completitud_visual + 15 %}{% endif %}
+                                        {% if requerimiento.id_tipoproyecto %}{% set completitud_visual = completitud_visual + 15 %}{% endif %}
+                                        {% if requerimiento.id_prioridad %}{% set completitud_visual = completitud_visual + 15 %}{% endif %}
+                                        {% if requerimiento.id_grupo %}{% set completitud_visual = completitud_visual + 15 %}{% endif %}
+                                        {% if requerimiento.equipos_trabajo.count() > 0 %}{% set completitud_visual = completitud_visual + 15 %}{% endif %}
+                                        {% if requerimiento.observacion and requerimiento.observacion.strip() %}{% set completitud_visual = completitud_visual + 10 %}{% endif %}
+                                        
+                                        <div class="progress-bar bg-{{ 'success' if completitud_visual == 100 else 'warning' }}" 
+                                             style="width: {{ completitud_visual }}%;" 
+                                             title="Completitud: {{ completitud_visual }}% - Tipología: {{ '✓' if requerimiento.id_tipologia else '✗' }} | Financiamiento: {{ '✓' if requerimiento.id_financiamiento else '✗' }} | Tipo Proyecto: {{ '✓' if requerimiento.id_tipoproyecto else '✗' }} | Prioridad: {{ '✓' if requerimiento.id_prioridad else '✗' }} | Grupo: {{ '✓' if requerimiento.id_grupo else '✗' }} | Equipo: {{ '✓' if requerimiento.equipos_trabajo.count() > 0 else '✗' }} ({{ requerimiento.equipos_trabajo.count() }} miembros) | Observaciones: {{ '✓' if requerimiento.observacion and requerimiento.observacion.strip() else '✗' }}">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ completitud_visual }}%</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if requerimiento.equipos_trabajo %}
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for equipo in requerimiento.equipos_trabajo[:2] %}
+                                        <span class="badge bg-primary" style="font-size: 0.65em;" title="{{ equipo.trabajador.nombre }}{% if equipo.trabajador.profesion %} - {{ equipo.trabajador.profesion }}{% endif %}">
+                                            {{ equipo.trabajador.nombrecorto or equipo.trabajador.nombre[:3] }}
+                                        </span>
+                                        {% endfor %}
+                                        {% set equipos_count = requerimiento.equipos_trabajo.count() %}
+                                        {% if equipos_count > 2 %}
+                                        <span class="badge bg-outline-primary" style="font-size: 0.65em;">+{{ equipos_count - 2 }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted d-block">{{ equipos_count }} miembro(s)</small>
+                                {% else %}
+                                    <span class="text-warning small"><i class="fas fa-exclamation-triangle"></i> Sin equipo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-info btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalAgregarInfoRequerimiento{{ requerimiento.id }}"
+                                            title="Completar información">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+        <h5 class="text-muted">¡Excelente! No hay requerimientos pendientes de completar</h5>
+        <p class="text-muted">Todos los requerimientos aceptados han sido completados.</p>
+        <a href="{{ url_for('requerimientos.ruta_requerimientos_aceptar') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Ver requerimientos pendientes
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Modales para cada requerimiento -->
+    {% for requerimiento in requerimientos %}
+    <div class="modal fade" id="modalAgregarInfoRequerimiento{{ requerimiento.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="modal-icon me-3">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div>
+                            <h4 class="modal-title mb-0 fw-bold">Completar Información del Proyecto</h4>
+                            <small class="text-muted">ID: #{{ requerimiento.id }} • {{ requerimiento.fecha.strftime('%d-%m-%Y') }}</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body pt-2">
+                    <!-- Contenedor para alertas -->
+                    <div class="alert-container mb-3"></div>
+                    
+                    <form id="formCompletarRequerimiento{{ requerimiento.id }}" method="POST" 
+                          action="{{ url_for('requerimientos.update_requerimiento_completar', id=requerimiento.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Información existente -->
+                        <div class="card border-0 bg-light mb-4">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <h5 class="mb-1 fw-bold text-info">{{ requerimiento.nombre }}</h5>
+                                        <span class="badge bg-info text-white me-2">{{ requerimiento.estado.nombre }}</span>
+                                        <span class="badge bg-secondary">{{ requerimiento.sector.nombre }}</span>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="text-center">
+                                            <i class="fas fa-calendar-check text-info fa-lg"></i>
+                                            <div class="mt-1">
+                                                <small class="text-muted d-block">Aceptado</small>
+                                                <span class="fw-bold">{{ requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Información General -->
+                            <div class="col-lg-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 pb-0">
+                                        <h6 class="text-primary mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Información General
+                                        </h6>
+                                    </div>
+                                    <div class="card-body pt-3">
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-bold mb-1">FECHA DE INGRESO</label>
+                                                    <div class="fw-bold">{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-bold mb-1">FECHA DE ACEPTACIÓN</label>
+                                                    <div class="fw-bold">{{ requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else 'N/A' }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-bold mb-1">ESTADO</label>
+                                                    <div class="fw-bold">{{ requerimiento.estado.nombre }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Ubicación -->
+                            <div class="col-lg-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 pb-0">
+                                        <h6 class="text-success mb-0">
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            Ubicación
+                                        </h6>
+                                    </div>
+                                    <div class="card-body pt-3">
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-bold mb-1">SECTOR</label>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="location-icon me-2">
+                                                            <i class="fas fa-building"></i>
+                                                        </div>
+                                                        <span class="fw-bold">{{ requerimiento.sector.nombre }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-bold mb-1">TIPO DE RECINTO</label>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="location-icon me-2">
+                                                            <i class="fas fa-home"></i>
+                                                        </div>
+                                                        <span class="fw-bold">{{ requerimiento.tiporecinto.nombre }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-bold mb-1">RECINTO</label>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="location-icon me-2">
+                                                            <i class="fas fa-door-open"></i>
+                                                        </div>
+                                                        <span class="fw-bold text-primary">{{ requerimiento.recinto.nombre }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="mt-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-0 pb-0">
+                                    <h6 class="text-info mb-0">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        Descripción del Proyecto
+                                    </h6>
+                                </div>
+                                <div class="card-body pt-3">
+                                    <div class="bg-light rounded p-3">
+                                        <p class="mb-0">{{ requerimiento.descripcion }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulario de completar información -->
+                        <div class="row g-4 mt-2">
+                            <!-- Información del Proyecto -->
+                            <div class="col-lg-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 pb-0">
+                                        <h6 class="text-warning mb-0">
+                                            <i class="fas fa-cogs me-2"></i>
+                                            Información del Proyecto
+                                        </h6>
+                                    </div>
+                                    <div class="card-body pt-3">
+                                        <div class="mb-3">
+                                            <label class="form-label">Tipología *</label>
+                                            <select class="form-select" name="id_tipologia" id="tipologia{{ requerimiento.id }}" required>
+                                                <option value="">Seleccione Tipología</option>
+                                                {% for tipologia in tipologias %}
+                                                <option value="{{ tipologia.id }}" 
+                                                    {% if requerimiento.id_tipologia == tipologia.id %}selected{% endif %}>
+                                                    {{ tipologia.nombre }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Fuente de Financiamiento *</label>
+                                            <select class="form-select" name="id_financiamiento" id="id_financiamiento{{ requerimiento.id }}" required>
+                                                <option value="">Seleccione Fuente</option>
+                                                {% for financiamiento in financiamientos %}
+                                                <option value="{{ financiamiento.id }}"
+                                                    {% if requerimiento.id_financiamiento == financiamiento.id %}selected{% endif %}>
+                                                    {{ financiamiento.nombre }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Tipo de Proyecto *</label>
+                                            <select class="form-select" name="id_tipoproyecto" id="id_tipoproyecto{{ requerimiento.id }}" required>
+                                                <option value="">Seleccione Tipo de Proyecto</option>
+                                                {% for tipoproyecto in tipoproyectos %}
+                                                <option value="{{ tipoproyecto.id }}"
+                                                    {% if requerimiento.id_tipoproyecto == tipoproyecto.id %}selected{% endif %}>
+                                                    {{ tipoproyecto.nombre }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Prioridad *</label>
+                                            <select class="form-select" name="id_prioridad" id="id_prioridad{{ requerimiento.id }}" required>
+                                                <option value="">Seleccione Prioridad</option>
+                                                {% for prioridad in prioridades %}
+                                                <option value="{{ prioridad.id }}"
+                                                    {% if requerimiento.id_prioridad == prioridad.id %}selected{% endif %}
+                                                    data-color="{{ prioridad.color }}">
+                                                    {{ prioridad.nombre }} (Cuadrante {{ prioridad.cuadrante }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text">
+                                                <small class="text-muted">Basado en la matriz de Eisenhower</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Grupo *</label>
+                                            <select class="form-select" name="id_grupo" id="id_grupo{{ requerimiento.id }}" required>
+                                                <option value="">Seleccione Grupo</option>
+                                                {% for grupo in grupos %}
+                                                <option value="{{ grupo.id }}"
+                                                    {% if requerimiento.id_grupo == grupo.id %}selected{% endif %}>
+                                                    {{ grupo.nombre }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Miembros Responsables -->
+                            <div class="col-lg-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+                                        <h6 class="text-purple mb-0">
+                                            <i class="fas fa-users me-2"></i>
+                                            Miembros Responsables
+                                        </h6>
+                                        <button type="button" class="btn btn-primary btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalTrabajadores{{ requerimiento.id }}">
+                                            <i class="fas fa-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                    <div class="card-body pt-3">
+                                        {% if requerimiento.equipos_trabajo %}
+                                            <div class="team-members">
+                                                {% for equipo in requerimiento.equipos_trabajo %}
+                                                <div class="team-member-card mb-2">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="team-avatar me-3">
+                                                            {{ equipo.trabajador.nombre[0] }}
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <div class="fw-bold">{{ equipo.trabajador.nombre }}</div>
+                                                            <small class="text-muted">{{ equipo.trabajador.profesion or 'Sin profesión' }}</small>
+                                                        </div>
+                                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                                onclick="quitarMiembro('{{ requerimiento.id }}', '{{ equipo.id }}')">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-center py-3" id="noTeamMessage{{ requerimiento.id }}">
+                                                <i class="fas fa-users-slash fa-2x text-muted mb-2"></i>
+                                                <p class="text-muted mb-0">No hay miembros asignados al equipo</p>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Tabla oculta para mantener compatibilidad con el JavaScript existente -->
+                                        <div class="table-responsive" style="display: none;">
+                                            <table class="table table-sm" id="tablaEquipo{{ requerimiento.id }}">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Nombre Responsable</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% if requerimiento.equipos_trabajo %}
+                                                        {% for equipo in requerimiento.equipos_trabajo %}
+                                                        <tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="avatar-sm bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center">
+                                                                        {{ equipo.trabajador.nombre[0] }}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="fw-bold">{{ equipo.trabajador.nombre }}</div>
+                                                                        <small class="text-muted">{{ equipo.trabajador.profesion or 'Sin profesión' }}</small>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <!-- Bot\u00f3n deshabilitado en tabla oculta para evitar duplicados -->
+                                                                <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <tr class="no-data">
+                                                            <td colspan="2" class="text-center text-muted">
+                                                                <i class="fas fa-users-slash"></i> No hay miembros Responsables
+                                                            </td>
+                                                        </tr>
+                                                    {% endif %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Observaciones Adicionales (sección independiente) -->
+                        <div class="mt-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-0 pb-0">
+                                    <h6 class="text-warning mb-0">
+                                        <i class="fas fa-comment-alt me-2"></i>
+                                        Observaciones del Proyecto
+                                    </h6>
+                                </div>
+                                <div class="card-body pt-3">
+                                    <!-- Historial de Observaciones -->
+                                    <div class="mb-4">
+                                        <h6 class="mb-3"><i class="fas fa-history me-2"></i>Historial de Observaciones</h6>
+                                        <div id="historialObservaciones{{ requerimiento.id }}" class="border rounded" style="max-height: 200px; overflow-y: auto;">
+                                            <div class="p-3 text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin me-2"></i>Cargando observaciones...
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Nueva Observación -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Agregar Nueva Observación</label>
+                                        <textarea class="form-control" name="observacion" id="observacion{{ requerimiento.id }}" rows="3" 
+                                                placeholder="Escriba una observación sobre el estado actual del proyecto..."></textarea>
+                                        <div class="form-text">
+                                            <small class="text-muted">Las observaciones se registrarán con fecha, hora y usuario</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cerrar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="submitFormCompletar('{{ requerimiento.id }}')">
+                        <i class="fas fa-save me-2"></i>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar trabajadores -->
+    <div class="modal fade" id="modalTrabajadores{{ requerimiento.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="modal-icon me-3 bg-purple">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0 fw-bold">Agregar Miembro Responsable</h5>
+                            <small class="text-muted">Proyecto #{{ requerimiento.id }} - {{ requerimiento.nombre }}</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" 
+                            data-bs-dismiss="modal" 
+                            aria-label="Close"
+                            onclick="cancelarAgregarMiembro('{{ requerimiento.id }}')"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <ul class="nav nav-pills nav-fill mb-3" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#existente{{ requerimiento.id }}">
+                                <i class="fas fa-user"></i> Existente
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#nuevo{{ requerimiento.id }}">
+                                <i class="fas fa-user-plus"></i> Nuevo
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="existente{{ requerimiento.id }}">
+                            <div class="mb-3">
+                                <label class="form-label">Seleccionar Responsable *</label>
+                                <select class="form-select" id="trabajador{{ requerimiento.id }}">
+                                    <option value="">Seleccione un Responsable</option>
+                                    {% for trabajador in trabajadores %}
+                                    <option value="{{ trabajador.id }}">
+                                        {{ trabajador.nombre }}{% if trabajador.profesion %} - {{ trabajador.profesion }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="nuevo{{ requerimiento.id }}">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre Completo *</label>
+                                <input type="text" class="form-control" id="nombreNuevo{{ requerimiento.id }}" 
+                                       placeholder="Nombre completo del trabajador">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">RUT *</label>
+                                <input type="text" class="form-control" id="rutNuevo{{ requerimiento.id }}" 
+                                       placeholder="12.345.678-9"
+                                       maxlength="12"
+                                       oninput="formatearRUT(this)">
+                                <div class="form-text">Formato: 12.345.678-9</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Profesión</label>
+                                <input type="text" class="form-control" id="profesionNuevo{{ requerimiento.id }}" 
+                                       placeholder="Profesión del trabajador">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre Corto</label>
+                                <input type="text" class="form-control" id="nombreCortoNuevo{{ requerimiento.id }}" 
+                                       placeholder="Iniciales o nombre corto">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light border" 
+                            data-bs-dismiss="modal" 
+                            onclick="cancelarAgregarMiembro('{{ requerimiento.id }}')">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="agregarMiembro('{{ requerimiento.id }}')">
+                        <i class="fas fa-plus me-2"></i>
+                        Agregar a Responsables
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Estadísticas en tarjetas modernas -->
+    {% if requerimientos %}
+    <div class="row mt-4 g-3">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="stats-icon bg-info bg-opacity-10 text-info mb-3">
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                    <h4 class="text-info fw-bold">{{ requerimientos|length }}</h4>
+                    <p class="text-muted mb-0">En Preparación</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="stats-icon bg-success bg-opacity-10 text-success mb-3">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    {% set completos = requerimientos|selectattr("id_tipologia")|selectattr("id_financiamiento")|selectattr("id_tipoproyecto")|list %}
+                    <h4 class="text-success fw-bold">{{ completos|length }}</h4>
+                    <p class="text-muted mb-0">Información Completa</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="stats-icon bg-warning bg-opacity-10 text-warning mb-3">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    {% set con_equipo = requerimientos|selectattr("equipos_trabajo")|list %}
+                    <h4 class="text-warning fw-bold">{{ con_equipo|length }}</h4>
+                    <p class="text-muted mb-0">Con Asignación Responsable</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary mb-3">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                    {% set porcentaje = ((completos|length * 100) / requerimientos|length)|round|int if requerimientos else 0 %}
+                    <h4 class="text-primary fw-bold">{{ porcentaje }}%</h4>
+                    <p class="text-muted mb-0">Completitud General</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #5bc0de);
+}
+
+.table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.table td {
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.requerimiento-row:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+</style>
+
+<script>
+// Función helper para obtener el token CSRF
+function getCSRFToken() {
+    return '{{ csrf_token() }}';
+}
+
+// Función de búsqueda y filtros mejorada para tabla
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const fechaFilter = document.getElementById('fechaFilter');
+    const completitudFilter = document.getElementById('completitudFilter');
+    const contadorRequerimientos = document.getElementById('contadorRequerimientos');
+
+    function filtrarRequerimientos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const fechaOrden = fechaFilter.value;
+        const completitudSeleccionada = completitudFilter.value;
+        const filas = document.querySelectorAll('.requerimiento-row');
+        let contadorVisible = 0;
+        let filasArray = Array.from(filas);
+
+        // Filtrar por búsqueda y completitud
+        filasArray.forEach(fila => {
+            const nombre = fila.getAttribute('data-nombre');
+            const descripcion = fila.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
+            const completitud = fila.getAttribute('data-completitud');
+            
+            const coincideBusqueda = nombre.includes(searchTerm) || descripcion.includes(searchTerm);
+            const coincideCompletitud = !completitudSeleccionada || completitud === completitudSeleccionada;
+            
+            if (coincideBusqueda && coincideCompletitud) {
+                fila.style.display = '';
+                contadorVisible++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+
+        // Ordenar por fecha
+        if (fechaOrden) {
+            filasArray = filasArray.filter(fila => fila.style.display !== 'none');
+            filasArray.sort((a, b) => {
+                const fechaA = new Date(a.getAttribute('data-fecha'));
+                const fechaB = new Date(b.getAttribute('data-fecha'));
+                
+                if (fechaOrden === 'recientes') {
+                    return fechaB - fechaA;
+                } else {
+                    return fechaA - fechaB;
+                }
+            });
+
+            const tbody = document.querySelector('#tablaRequerimientos tbody');
+            filasArray.forEach(fila => tbody.appendChild(fila));
+        }
+
+        // Actualizar contador
+        if (contadorRequerimientos) {
+            contadorRequerimientos.textContent = `${contadorVisible} requerimientos`;
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filtrarRequerimientos);
+    if (fechaFilter) fechaFilter.addEventListener('change', filtrarRequerimientos);
+    if (completitudFilter) completitudFilter.addEventListener('change', filtrarRequerimientos);
+
+    // Auto-dismiss alerts
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+
+function limpiarCamposFormulario(idRequerimiento, esNuevo) {
+    if (esNuevo) {
+        document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`especialidadNuevo${idRequerimiento}`).value = '';
+    } else {
+        document.getElementById(`trabajadorExistente${idRequerimiento}`).value = '';
+        document.getElementById(`especialidadExistente${idRequerimiento}`).value = '';
+    }
+}
+
+function quitarTrabajador(idRequerimiento, idTrabajador) {
+    if (confirm('¿Está seguro de quitar este trabajador?')) {
+        fetch(`/quitar_trabajador_requerimiento/${idRequerimiento}/${idTrabajador}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const item = event.target.closest('.list-group-item');
+                item.remove();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud');
+        });
+    }
+}
+
+function limpiarFormularios(idRequerimiento) {
+    // Limpiar selects
+    document.getElementById(`trabajador${idRequerimiento}`).value = '';
+    
+    // Limpiar formulario nuevo trabajador
+    document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+    document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value = '';
+    document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+    
+    // Ocultar formulario nuevo trabajador
+    const formNuevo = document.getElementById(`formNuevoTrabajador${idRequerimiento}`);
+    if (formNuevo) {
+        formNuevo.style.display = 'none';
+    }
+}
+
+function quitarMiembro(idRequerimiento, idEquipo) {
+    console.log('🗑️ quitarMiembro llamado:', { idRequerimiento, idEquipo, timestamp: new Date().toISOString() });
+    
+    // SIN confirmación - eliminar directamente
+    console.log('✅ Procediendo a eliminar, enviando solicitud a /quitar_miembro_equipo/' + idEquipo);
+    
+    const csrfToken = getCSRFToken();
+    console.log('🔑 CSRF Token:', csrfToken ? 'presente' : 'AUSENTE');
+    
+    fetch(`/quitar_miembro_equipo/${idEquipo}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        console.log('📡 Respuesta recibida:', response.status, response.statusText);
+        if (!response.ok) {
+            throw new Error(`Error en la respuesta del servidor: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Datos recibidos:', data);
+        
+        if (data.success) {
+            console.log('✅ Eliminación exitosa en el servidor');
+            
+            // Buscar el modal primero
+            const modal = document.getElementById(`modalAgregarInfoRequerimiento${idRequerimiento}`);
+            console.log('🔍 Modal encontrado:', modal ? 'Sí' : 'No', `modalAgregarInfoRequerimiento${idRequerimiento}`);
+            
+            if (!modal) {
+                console.error('❌ Modal no encontrado');
+                throw new Error('Modal no encontrado');
+            }
+            
+            // Buscar todos los botones de eliminar en el modal
+            const botonesEliminar = modal.querySelectorAll(`button[onclick*="quitarMiembro"][onclick*="${idEquipo}"]`);
+            console.log('🔍 Botones encontrados:', botonesEliminar.length);
+            
+            let tarjetaMiembro = null;
+            
+            // Buscar la tarjeta del miembro
+            if (botonesEliminar.length > 0) {
+                tarjetaMiembro = botonesEliminar[0].closest('.team-member-card');
+                console.log('🔍 Tarjeta encontrada:', tarjetaMiembro ? 'Sí' : 'No');
+            }
+            
+            if (!tarjetaMiembro) {
+                console.error('❌ Tarjeta del miembro no encontrada para idEquipo:', idEquipo);
+                console.log('🔍 Todos los botones en el modal:', modal.querySelectorAll('button').length);
+                throw new Error('Tarjeta del miembro no encontrada');
+            }
+            
+            console.log('🎬 Iniciando animación de salida...');
+            
+            // Agregar efecto de fade out antes de eliminar
+            tarjetaMiembro.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            tarjetaMiembro.style.opacity = '0';
+            tarjetaMiembro.style.transform = 'translateX(-20px)';
+            
+            // Eliminar la tarjeta después de la animación
+            setTimeout(() => {
+                console.log('🗑️ Eliminando tarjeta del DOM...');
+                tarjetaMiembro.remove();
+                console.log('✅ Tarjeta eliminada del DOM');
+                
+                // Buscar el modal y el card de miembros de la misma forma que en actualizarInterfazTarjetas
+                const modal = document.getElementById(`modalAgregarInfoRequerimiento${idRequerimiento}`);
+                if (modal) {
+                    const cardMiembros = Array.from(modal.querySelectorAll('.card')).find(card => {
+                        const header = card.querySelector('.card-header');
+                        return header && header.textContent.includes('Miembros Responsables');
+                    });
+                    
+                    if (cardMiembros) {
+                        const cardBody = cardMiembros.querySelector('.card-body');
+                        const contenedorMiembros = cardBody ? cardBody.querySelector('.team-members') : null;
+                        const tarjetasRestantes = contenedorMiembros ? contenedorMiembros.querySelectorAll('.team-member-card') : [];
+                        
+                        if (tarjetasRestantes.length === 0) {
+                            // Mostrar mensaje de "no hay miembros"
+                            if (cardBody) {
+                                cardBody.innerHTML = `
+                                    <div class="text-center py-3" id="noTeamMessage${idRequerimiento}">
+                                        <i class="fas fa-users-slash fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">No hay miembros asignados al equipo</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                }
+                
+                // También actualizar la tabla oculta para compatibilidad
+                actualizarTablaOculta(idRequerimiento, idEquipo, 'eliminar');
+            }, 300);
+            
+            // Mostrar notificación de éxito
+            mostrarNotificacionExito(data.message || 'Miembro eliminado exitosamente');
+            
+        } else {
+            throw new Error(data.error || 'No se pudo eliminar el miembro');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarNotificacionError('Error al eliminar miembro: ' + error.message);
+    });
+}
+
+// Función para mostrar mensajes de éxito
+function mostrarMensajeExito(idRequerimiento, mensaje) {
+    // Buscar el contenedor de alertas en el modal
+    let alertContainer = document.querySelector(`#modalAgregarInfoRequerimiento${idRequerimiento} .alert-container`);
+    
+    if (!alertContainer) {
+        // Si no existe, crearlo
+        const modalBody = document.querySelector(`#modalAgregarInfoRequerimiento${idRequerimiento} .modal-body`);
+        if (modalBody) {
+            alertContainer = document.createElement('div');
+            alertContainer.className = 'alert-container mb-3';
+            modalBody.insertBefore(alertContainer, modalBody.firstChild);
+        }
+    }
+    
+    if (alertContainer) {
+        alertContainer.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Auto-remover después de 4 segundos
+        setTimeout(() => {
+            const alert = alertContainer.querySelector('.alert');
+            if (alert) {
+                alert.remove();
+            }
+        }, 4000);
+    }
+}
+
+// Función para actualizar la tabla oculta (compatibilidad)
+function actualizarTablaOculta(idRequerimiento, idEquipo, accion) {
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento}`);
+    if (!tabla) return;
+    
+    if (accion === 'eliminar') {
+        // Buscar y eliminar la fila correspondiente en la tabla oculta
+        const fila = tabla.querySelector(`tr:has(button[onclick*="${idEquipo}"])`);
+        if (fila) {
+            fila.remove();
+        }
+        
+        // Verificar si quedan filas
+        const tbody = tabla.querySelector('tbody');
+        const filasRestantes = tbody.querySelectorAll('tr:not(.no-data)');
+        
+        if (filasRestantes.length === 0) {
+            tbody.innerHTML = `
+                <tr class="no-data">
+                    <td colspan="2" class="text-center text-muted">
+                        <i class="fas fa-users-slash"></i> No hay miembros Responsables
+                    </td>
+                </tr>`;
+        }
+    }
+}
+
+function actualizarTablaEquipo(idRequerimiento) {
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla) return;
+
+    // Verificar si hay filas en la tabla (excluyendo la fila de "no hay datos")
+    const filasValidas = tabla.querySelectorAll('tr:not(.no-data)');
+    if (filasValidas.length === 0) {
+        tabla.innerHTML = `
+            <tr class="no-data">
+                <td colspan="2" class="text-center text-muted">
+                    <i class="fas fa-users-slash"></i> No hay miembros Responsables
+                </td>
+            </tr>`;
+    }
+}
+
+// Función para validar el formulario antes de enviar
+// Flag para evitar múltiples submits simultáneos
+let isSubmitting = false;
+
+function validarFormularioCompletar(idRequerimiento) {
+    console.log('🔍 validarFormularioCompletar llamado, isSubmitting:', isSubmitting);
+    
+    // Prevenir múltiples ejecuciones
+    if (isSubmitting) {
+        console.log('⚠️ Ya hay un submit en progreso, ignorando...');
+        return false;
+    }
+    
+    // Validación básica: solo verificar que al menos un campo esté lleno
+    // El sistema permite guardar progreso parcial
+    const tipologia = document.querySelector(`select[name="id_tipologia"]`)?.value;
+    const financiamiento = document.querySelector(`select[name="id_financiamiento"]`)?.value;
+    const tipoproyecto = document.querySelector(`select[name="id_tipoproyecto"]`)?.value;
+    const prioridad = document.querySelector(`select[name="id_prioridad"]`)?.value;
+    const grupo = document.querySelector(`select[name="id_grupo"]`)?.value;
+    const observacion = document.querySelector(`textarea[name="observacion"]`)?.value?.trim();
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    const filasValidas = tabla?.querySelectorAll('tr:not(.no-data)');
+    const tieneEquipo = filasValidas && filasValidas.length > 0;
+
+    // Calcular completitud (7 campos totales)
+    const camposCompletos = [
+        tipologia ? 1 : 0,
+        financiamiento ? 1 : 0,
+        tipoproyecto ? 1 : 0,
+        prioridad ? 1 : 0,
+        grupo ? 1 : 0,
+        tieneEquipo ? 1 : 0,
+        observacion ? 1 : 0
+    ].reduce((a, b) => a + b, 0);
+    
+    const porcentajeCompletitud = Math.round((camposCompletos / 7) * 100);
+    
+    console.log(`📊 Completitud calculada: ${porcentajeCompletitud}% (${camposCompletos}/7 campos)`);
+    console.log(`   - Tipología: ${tipologia ? '✓' : '✗'}`);
+    console.log(`   - Financiamiento: ${financiamiento ? '✓' : '✗'}`);
+    console.log(`   - Tipo Proyecto: ${tipoproyecto ? '✓' : '✗'}`);
+    console.log(`   - Prioridad: ${prioridad ? '✓' : '✗'}`);
+    console.log(`   - Grupo: ${grupo ? '✓' : '✗'}`);
+    console.log(`   - Equipo: ${tieneEquipo ? '✓' : '✗'}`);
+    console.log(`   - Observación: ${observacion ? '✓' : '✗'}`);
+    
+    // Verificar si está 100% completo
+    if (porcentajeCompletitud === 100) {
+        console.log('🎯 100% completo - guardando directamente (sin confirmación por ahora)...');
+        
+        // Marcar como en proceso
+        isSubmitting = true;
+        
+        // Mostrar notificación informativa
+        mostrarNotificacionExito('✅ Requerimiento completado al 100%. Se enviará a EJECUCIÓN.');
+        
+        console.log('✅ Procediendo a cambiar estado a EJECUCIÓN');
+        return true;
+    }
+    
+    // Guardado parcial permitido
+    if (porcentajeCompletitud === 0) {
+        mostrarNotificacionError('Debe completar al menos un campo para guardar');
+        return false;
+    }
+    
+    // Mostrar notificación con el porcentaje
+    console.log(`💾 Guardando progreso: ${porcentajeCompletitud}% completado`);
+    
+    // Si no hay observación, mostrar advertencia pero permitir guardar
+    if (!observacion) {
+        console.log('⚠️ Guardando sin observación');
+    }
+    
+    return true;
+}
+
+function submitFormCompletar(idRequerimiento) {
+    console.log('📝 submitFormCompletar llamado para requerimiento:', idRequerimiento);
+    
+    const esValido = validarFormularioCompletar(idRequerimiento);
+    
+    if (esValido) {
+        console.log('✅ Validación pasada, enviando formulario...');
+        
+        // Si está al 100%, dar tiempo para mostrar el Toast
+        if (isSubmitting) {
+            // Esperar 1 segundo para que el usuario vea el mensaje
+            setTimeout(() => {
+                document.getElementById(`formCompletarRequerimiento${idRequerimiento}`).submit();
+            }, 1000);
+        } else {
+            // Guardado parcial - enviar inmediatamente
+            document.getElementById(`formCompletarRequerimiento${idRequerimiento}`).submit();
+        }
+    } else {
+        console.log('❌ Validación falló, no se envía el formulario');
+    }
+}
+
+// Función para formatear RUT mientras se escribe
+function formatearRUT(input) {
+    let rut = input.value.replace(/[^\dkK]/g, ''); // Solo números y K
+    
+    if (rut.length > 1) {
+        const dv = rut.slice(-1);
+        const numero = rut.slice(0, -1);
+        
+        // Formatear con puntos
+        let numeroFormateado = numero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        
+        input.value = numeroFormateado + '-' + dv.toUpperCase();
+    } else {
+        input.value = rut.toUpperCase();
+    }
+}
+
+// Función para validar RUT
+function validarRUT(rut) {
+    if (!rut) return false;
+    
+    // Limpiar RUT
+    rut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    
+    if (rut.length < 8) return false;
+    
+    const dv = rut.slice(-1);
+    const numero = parseInt(rut.slice(0, -1));
+    
+    let suma = 0;
+    let multiplicador = 2;
+    
+    // Calcular dígito verificador
+    for (let i = numero.toString().length - 1; i >= 0; i--) {
+        suma += parseInt(numero.toString()[i]) * multiplicador;
+        multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    }
+    
+    const dvCalculado = 11 - (suma % 11);
+    let dvEsperado = dvCalculado === 11 ? '0' : dvCalculado === 10 ? 'K' : dvCalculado.toString();
+    
+    return dv === dvEsperado;
+}
+
+function cancelarAgregarMiembro(idRequerimiento) {
+    // Evitar cualquier redirección
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    // Limpiar los formularios del modal
+    limpiarFormularioMiembro(idRequerimiento, false); // Existente
+    limpiarFormularioMiembro(idRequerimiento, true);  // Nuevo
+    
+    // Marcar que se canceló para que el event listener maneje el retorno
+    const modalTrabajadores = document.getElementById(`modalTrabajadores${idRequerimiento}`);
+    modalTrabajadores.setAttribute('data-cancelado', 'true');
+    
+    // Cerrar el modal de trabajadores
+    const modalTrabajadoresInstance = bootstrap.Modal.getInstance(modalTrabajadores);
+    if (modalTrabajadoresInstance) {
+        modalTrabajadoresInstance.hide();
+    }
+    
+    // Asegurar que no hay redirección
+    return false;
+}
+
+function agregarMiembro(idRequerimiento) {
+    const tabActivo = document.querySelector(`#modalTrabajadores${idRequerimiento} .nav-link.active`);
+    const esNuevo = tabActivo.getAttribute('href').includes('nuevo');
+    let data = {};
+    
+    if (esNuevo) {
+        const nombre = document.getElementById(`nombreNuevo${idRequerimiento}`).value;
+        const rut = document.getElementById(`rutNuevo${idRequerimiento}`).value;
+        
+        // Validar campos obligatorios
+        if (!nombre || !rut) {
+            mostrarNotificacionError('Por favor complete el nombre y RUT obligatorios');
+            return;
+        }
+        
+        // Validar formato de RUT
+        if (!validarRUT(rut)) {
+            mostrarNotificacionError('Por favor ingrese un RUT válido');
+            return;
+        }
+        
+        data = {
+            es_nuevo: true,
+            nombre: nombre,
+            rut: rut,
+            profesion: document.getElementById(`profesionNuevo${idRequerimiento}`).value || '',
+            nombre_corto: document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value || '',
+            id_requerimiento: idRequerimiento
+        };
+    } else {
+        data = {
+            es_nuevo: false,
+            id_trabajador: document.getElementById(`trabajador${idRequerimiento}`).value,
+            id_requerimiento: idRequerimiento
+        };
+    }
+    
+    if (!validarDatosMiembro(data)) {
+        mostrarNotificacionError('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    // Validar duplicados ANTES de enviar la petición
+    if (!esNuevo && data.id_trabajador) {
+        const trabajadorYaExiste = verificarTrabajadorDuplicado(idRequerimiento, data.id_trabajador);
+        if (trabajadorYaExiste) {
+            mostrarNotificacionError('Este trabajador ya es miembro del equipo');
+            return;
+        }
+    }
+    
+    fetch('/agregar_miembro_equipo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la tabla
+            actualizarTablaTrabajadores(idRequerimiento, data.miembro);
+            
+            if (data.trabajador_nuevo) {
+                // Actualizar el select de trabajadores existentes
+                const selectTrabajador = document.getElementById(`trabajador${idRequerimiento}`);
+                const nuevaOpcion = new Option(
+                    `${data.miembro.trabajador_nombre} - ${data.miembro.profesion}`, 
+                    data.miembro.trabajador_id
+                );
+                selectTrabajador.add(nuevaOpcion);
+            }
+            
+            // Cerrar el modal de trabajadores
+            const modalTrabajadores = document.getElementById(`modalTrabajadores${idRequerimiento}`);
+            const modalTrabajadoresInstance = bootstrap.Modal.getInstance(modalTrabajadores);
+            if (modalTrabajadoresInstance) {
+                modalTrabajadoresInstance.hide();
+            }
+            
+            // Mostrar mensaje de éxito SIN recargar la página (preserva datos del formulario)
+            mostrarNotificacionExito('Miembro agregado exitosamente al equipo');
+            
+            // Limpiar formularios
+            limpiarFormularioMiembro(idRequerimiento, esNuevo);
+        } else {
+            mostrarNotificacionError('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarNotificacionError('Error al procesar la solicitud');
+    });
+}
+
+function actualizarTablaTrabajadores(idRequerimiento, miembro) {
+    // 1. Actualizar la interfaz visual de tarjetas
+    actualizarInterfazTarjetas(idRequerimiento, miembro);
+    
+    // 2. Actualizar la tabla oculta para compatibilidad
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (tabla) {
+        // Remover la fila de "no hay datos" si existe
+        const noDataRow = tabla.querySelector('.no-data');
+        if (noDataRow) {
+            noDataRow.remove();
+        }
+        
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center">
+                        ${miembro.trabajador_nombre[0]}
+                    </div>
+                    <div>
+                        <div class="fw-bold">${miembro.trabajador_nombre}</div>
+                        <small class="text-muted">${miembro.profesion || 'Sin profesión'}</small>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" 
+                        onclick="quitarMiembro('${idRequerimiento}', '${miembro.id}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+        
+        tabla.appendChild(newRow);
+    }
+}
+
+// Nueva función para actualizar la interfaz de tarjetas
+function actualizarInterfazTarjetas(idRequerimiento, miembro) {
+    // Buscar el card-body específico donde están los miembros (dentro de la sección "Miembros Responsables")
+    const modal = document.getElementById(`modalAgregarInfoRequerimiento${idRequerimiento}`);
+    if (!modal) {
+        console.error('Modal no encontrado:', `modalAgregarInfoRequerimiento${idRequerimiento}`);
+        return;
+    }
+    
+    // Buscar el card de "Miembros Responsables" específicamente
+    const cardMiembros = Array.from(modal.querySelectorAll('.card')).find(card => {
+        const header = card.querySelector('.card-header');
+        return header && header.textContent.includes('Miembros Responsables');
+    });
+    
+    if (!cardMiembros) {
+        console.error('Card de miembros no encontrado');
+        return;
+    }
+    
+    const cardBody = cardMiembros.querySelector('.card-body');
+    if (!cardBody) {
+        console.error('Card body no encontrado');
+        return;
+    }
+    
+    // Buscar el contenedor de miembros o el mensaje de "no hay miembros"
+    let contenedorMiembros = cardBody.querySelector('.team-members');
+    const mensajeNoMiembros = cardBody.querySelector(`#noTeamMessage${idRequerimiento}`);
+    
+    // Si hay mensaje de "no hay miembros", eliminarlo y crear el contenedor
+    if (mensajeNoMiembros) {
+        mensajeNoMiembros.remove();
+        contenedorMiembros = document.createElement('div');
+        contenedorMiembros.className = 'team-members';
+        cardBody.appendChild(contenedorMiembros);
+    }
+    
+    // Si no existe el contenedor, crearlo
+    if (!contenedorMiembros) {
+        contenedorMiembros = document.createElement('div');
+        contenedorMiembros.className = 'team-members';
+        cardBody.appendChild(contenedorMiembros);
+    }
+    
+    // Crear la nueva tarjeta del miembro
+    const nuevaTarjeta = document.createElement('div');
+    nuevaTarjeta.className = 'team-member-card mb-2';
+    nuevaTarjeta.innerHTML = `
+        <div class="d-flex align-items-center">
+            <div class="team-avatar me-3">
+                ${miembro.trabajador_nombre[0]}
+            </div>
+            <div class="flex-grow-1">
+                <div class="fw-bold">${miembro.trabajador_nombre}</div>
+                <small class="text-muted">${miembro.profesion || 'Sin profesión'}</small>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm" 
+                    onclick="quitarMiembro('${idRequerimiento}', '${miembro.id}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Agregar efecto de entrada
+    nuevaTarjeta.style.opacity = '0';
+    nuevaTarjeta.style.transform = 'translateX(-20px)';
+    contenedorMiembros.appendChild(nuevaTarjeta);
+    
+    // Animar la entrada
+    setTimeout(() => {
+        nuevaTarjeta.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        nuevaTarjeta.style.opacity = '1';
+        nuevaTarjeta.style.transform = 'translateX(0)';
+    }, 10);
+}
+
+// Agregar esta función de validación
+function validarDatosMiembro(data) {
+    if (data.es_nuevo) {
+        return data.nombre; // Solo requiere el nombre
+    } else {
+        return data.id_trabajador; // Solo requiere seleccionar un trabajador
+    }
+}
+
+// Función para verificar si un trabajador ya está en el equipo
+function verificarTrabajadorDuplicado(idRequerimiento, idTrabajador) {
+    // Buscar en la tabla oculta si existe el trabajador
+    const tabla = document.querySelector(`#tablaEquipo${idRequerimiento} tbody`);
+    if (!tabla) return false;
+    
+    const filas = tabla.querySelectorAll('tr:not(.no-data)');
+    
+    // También buscar en las tarjetas visibles
+    const contenedorMiembros = document.querySelector(`#modalAgregarInfoRequerimiento${idRequerimiento} .team-members`);
+    if (contenedorMiembros) {
+        const tarjetas = contenedorMiembros.querySelectorAll('.team-member-card');
+        
+        // Verificar si ya existe alguna tarjeta con este trabajador
+        // (esto es una verificación básica, el servidor también valida)
+        if (tarjetas.length > 0) {
+            // Por seguridad, siempre permitir que el servidor valide
+            // Esta es solo una validación de UX rápida
+            const selectTrabajador = document.getElementById(`trabajador${idRequerimiento}`);
+            const nombreTrabajadorSeleccionado = selectTrabajador.options[selectTrabajador.selectedIndex]?.text;
+            
+            for (let tarjeta of tarjetas) {
+                const nombreEnTarjeta = tarjeta.querySelector('.fw-bold')?.textContent;
+                if (nombreEnTarjeta && nombreTrabajadorSeleccionado && 
+                    nombreEnTarjeta.trim() === nombreTrabajadorSeleccionado.split(' - ')[0].trim()) {
+                    return true; // Encontrado duplicado
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+// Agregar esta función de limpieza
+function limpiarFormularioMiembro(idRequerimiento, esNuevo) {
+    if (esNuevo) {
+        document.getElementById(`nombreNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`rutNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`profesionNuevo${idRequerimiento}`).value = '';
+        document.getElementById(`nombreCortoNuevo${idRequerimiento}`).value = '';
+    } else {
+        document.getElementById(`trabajador${idRequerimiento}`).value = '';
+    }
+}
+
+function agregarTrabajador(idRequerimiento) {
+    const tabActivo = document.querySelector(`#modalTrabajadores${idRequerimiento} .nav-link.active`);
+    const esNuevo = tabActivo.getAttribute('href').includes('agregar');
+    let data = {};
+    
+    if (esNuevo) {
+        const nombre = document.getElementById(`nombreNuevo${idRequerimiento}`).value;
+        const especialidadId = document.getElementById(`profesionNuevo${idRequerimiento}`).value;
+        
+        if (!nombre || !especialidadId) {
+            alert('Por favor complete todos los campos');
+            return;
+        }
+        
+        data = {
+            es_nuevo: true,
+            nombre: nombre,
+            id_requerimiento: idRequerimiento,
+            especialidad_id: especialidadId
+        };
+    } else {
+        const trabajadorId = document.getElementById(`trabajadorExistente${idRequerimiento}`).value;
+        const especialidadId = document.getElementById(`especialidadExistente${idRequerimiento}`).value;
+        
+        if (!trabajadorId || !especialidadId) {
+            alert('Por favor seleccione trabajador y especialidad');
+            return;
+        }
+        
+        data = {
+            es_nuevo: false,
+            trabajador_id: trabajadorId,
+            id_requerimiento: idRequerimiento,
+            especialidad_id: especialidadId
+        };
+    }
+    
+    fetch('/agregar_trabajador_requerimiento', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la tabla
+            actualizarTablaTrabajadores(idRequerimiento, data.trabajador);
+            // Cerrar el modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`modalTrabajadores${idRequerimiento}`));
+            modal.hide();
+            // Limpiar campos
+            limpiarCamposFormulario(idRequerimiento, esNuevo);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+// Función para cargar observaciones de un requerimiento
+function cargarObservaciones(idRequerimiento) {
+    const historialDiv = document.getElementById(`historialObservaciones${idRequerimiento}`);
+    
+    fetch(`/obtener_observaciones_requerimiento/${idRequerimiento}`, {
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.observaciones.length === 0) {
+                historialDiv.innerHTML = `
+                    <div class="p-3 text-center text-muted">
+                        <i class="fas fa-comment-slash me-2"></i>
+                        No hay observaciones registradas aún
+                    </div>
+                `;
+            } else {
+                let html = '';
+                data.observaciones.forEach(obs => {
+                    const tipoColor = getTipoEventoColor(obs.tipo_evento);
+                    html += `
+                        <div class="border-bottom p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong class="text-primary">${obs.usuario_nombre}</strong>
+                                    <span class="badge bg-${tipoColor} ms-2">${obs.tipo_evento}</span>
+                                </div>
+                                <small class="text-muted">${obs.fecha_registro}</small>
+                            </div>
+                            <p class="mb-1">${obs.observacion}</p>
+                            <small class="text-muted">Desde: ${obs.pagina_origen}</small>
+                        </div>
+                    `;
+                });
+                historialDiv.innerHTML = html;
+            }
+        } else {
+            historialDiv.innerHTML = `
+                <div class="p-3 text-center text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error al cargar observaciones: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        historialDiv.innerHTML = `
+            <div class="p-3 text-center text-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error de conexión
+            </div>
+        `;
+    });
+}
+
+// Función para obtener el color según el tipo de evento
+function getTipoEventoColor(tipo) {
+    const colores = {
+        'requerimiento': 'primary',
+        'aceptado': 'success',
+        'rechazado': 'danger',
+        'completado': 'warning',
+        'proyecto_aceptado': 'success',
+        'proyecto_rechazado': 'danger',
+        'obs_control': 'info',
+        'finalizado': 'success'
+    };
+    return colores[tipo] || 'secondary';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar observaciones al cargar la página para todos los requerimientos visibles
+    const historialDivs = document.querySelectorAll('[id^="historialObservaciones"]');
+    historialDivs.forEach(function(div) {
+        const idRequerimiento = div.id.replace('historialObservaciones', '');
+        if (idRequerimiento) {
+            cargarObservaciones(idRequerimiento);
+        }
+    });
+    
+    // Cargar observaciones cuando se abra un modal
+    document.addEventListener('show.bs.modal', function (event) {
+        const modal = event.target;
+        if (modal.id && modal.id.startsWith('modalAgregarInfoRequerimiento')) {
+            const idRequerimiento = modal.id.replace('modalAgregarInfoRequerimiento', '');
+            cargarObservaciones(idRequerimiento);
+        }
+    });
+    
+    // Manejar modales de trabajadores - evitar redirecciones y mantener contexto
+    document.addEventListener('show.bs.modal', function (event) {
+        const modal = event.target;
+        if (modal.id && modal.id.startsWith('modalTrabajadores')) {
+            const idRequerimiento = modal.id.replace('modalTrabajadores', '');
+            
+            // Guardar el ID del requerimiento para poder volver
+            modal.setAttribute('data-requerimiento-id', idRequerimiento);
+            
+            // Agregar event listener para cuando se cierre el modal
+            modal.addEventListener('hidden.bs.modal', function(e) {
+                // Reabrir el modal del requerimiento si se canceló o cerró normalmente
+                if (!modal.hasAttribute('data-miembro-agregado')) {
+                    const modalRequerimiento = document.getElementById(`modalAgregarInfoRequerimiento${idRequerimiento}`);
+                    if (modalRequerimiento) {
+                        setTimeout(() => {
+                            const modalRequerimientoInstance = new bootstrap.Modal(modalRequerimiento);
+                            modalRequerimientoInstance.show();
+                        }, 300);
+                    }
+                }
+                
+                // Limpiar todos los atributos
+                modal.removeAttribute('data-miembro-agregado');
+                modal.removeAttribute('data-cancelado');
+            }, { once: true });
+        }
+    });
+    
+    // Prevenir redirecciones no deseadas específicamente en modales de trabajadores
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+        const modal = target.closest('.modal');
+        
+        if (modal && modal.id && modal.id.startsWith('modalTrabajadores')) {
+            if (target.matches('[data-bs-dismiss="modal"]') || target.closest('[data-bs-dismiss="modal"]')) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Obtener ID del requerimiento
+                const idRequerimiento = modal.id.replace('modalTrabajadores', '');
+                
+                // Llamar a la función de cancelar
+                cancelarAgregarMiembro(idRequerimiento);
+                return false;
+            }
+        }
+    });
+    
+    // Verificar si hay un nuevo requerimiento aceptado
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('new_req')) {
+        // Hacer scroll a la tabla
+        const tabla = document.getElementById('tablarequerimiento');
+        if (tabla) {
+            tabla.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
+
+// Función para mostrar notificaciones de éxito sin recargar la página
+function mostrarNotificacionExito(mensaje) {
+    // Crear elemento de notificación estilo Toast Bootstrap
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '9999';
+    
+    const toastId = 'toast-' + Date.now();
+    toastContainer.innerHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${mensaje}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(toastContainer);
+    
+    // Inicializar y mostrar el toast
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 4000
+    });
+    toast.show();
+    
+    // Eliminar el contenedor después de que se oculte
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastContainer.remove();
+    });
+}
+
+// Función para mostrar notificaciones de error sin recargar la página
+function mostrarNotificacionError(mensaje) {
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '9999';
+    
+    const toastId = 'toast-' + Date.now();
+    toastContainer.innerHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    ${mensaje}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(toastContainer);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 5000
+    });
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastContainer.remove();
+    });
+}
+</script>
+{% endblock %}

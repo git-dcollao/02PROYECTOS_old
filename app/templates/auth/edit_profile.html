@@ -1,0 +1,181 @@
+{% extends "base_layout.html" %}
+{% set active_page = "edit_profile" %}
+
+{% block title %}Editar Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Editar Mi Perfil
+                </h5>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Volver al Perfil
+                </a>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.nombre.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    {{ form.nombre(class="form-control" + (" is-invalid" if form.nombre.errors else "")) }}
+                                </div>
+                                {% if form.nombre.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.nombre.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.email.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                </div>
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.email.errors[0] }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Tu email se usa para iniciar sesión
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.profesion.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-briefcase"></i>
+                                    </span>
+                                    {{ form.profesion(class="form-control" + (" is-invalid" if form.profesion.errors else "")) }}
+                                </div>
+                                {% if form.profesion.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.profesion.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.telefono.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-phone"></i>
+                                    </span>
+                                    {{ form.telefono(class="form-control" + (" is-invalid" if form.telefono.errors else "")) }}
+                                </div>
+                                {% if form.telefono.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.telefono.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        Información del Sistema
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <small class="text-muted">Rol:</small>
+                                            <div>
+                                                {% if user.rol == user.rol.SUPERADMIN %}
+                                                    <span class="badge bg-danger">{{ user.rol.value.upper() }}</span>
+                                                {% elif user.custom_role %}
+                                                    <span class="badge bg-primary">{{ user.custom_role.name }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Sin rol</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <small class="text-muted">Estado:</small>
+                                            <div>
+                                                {% if user.activo %}
+                                                    <span class="badge bg-success">Activo</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactivo</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <small class="text-muted">Área:</small>
+                                            <div>
+                                                {% if user.area %}
+                                                    <span class="badge bg-info">{{ user.area.nombre }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Sin área</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            El rol y estado solo pueden ser modificados por un administrador
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-warning">
+                                    <i class="fas fa-key me-1"></i>
+                                    Cambiar Contraseña
+                                </a>
+                                <div>
+                                    <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary me-2">
+                                        <i class="fas fa-times me-1"></i>
+                                        Cancelar
+                                    </a>
+                                    {{ form.submit(class="btn btn-primary") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

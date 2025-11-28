@@ -1,0 +1,13 @@
+{
+  "filename": "Backup_Control-V1_20251121_121415.sql.gz",
+  "name": "Backup_Control-V1",
+  "original_name": "Backup_Control-V1",
+  "description": "Con Datos necesarios para pruebas de control\r\n- Tiene 3 requerimientos, 2 por aceptar y 1 por completar",
+  "created_at": "2025-11-21T12:14:15.550929",
+  "created_by": "Admin Sistema",
+  "user_id": 1,
+  "size": 9118,
+  "compressed": true,
+  "include_data": true,
+  "status": "success"
+}

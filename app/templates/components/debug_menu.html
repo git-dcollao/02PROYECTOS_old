@@ -1,0 +1,26 @@
+<!-- Versión simplificada del menú para debug -->
+{% macro render_simple_menu() %}
+{% if current_user.is_authenticated %}
+    <div style="position: fixed; left: 10px; top: 10px; background: red; color: white; padding: 10px; z-index: 9999; max-width: 300px;">
+        <h4>🔧 MENÚ DEBUG</h4>
+        <p>Usuario: {{ current_user.nombre }}</p>
+        <p>Rol: {{ current_user.rol.value }}</p>
+        
+        {% set user_menu = get_user_menu() %}
+        <p>Total categorías: {{ user_menu|length if user_menu else 0 }}</p>
+        
+        {% if user_menu %}
+            {% for category in user_menu %}
+                <div style="margin: 5px 0; border: 1px solid white; padding: 5px;">
+                    <strong>{{ category.category }} ({{ category.count }})</strong>
+                    {% for page in category.pages %}
+                        <div>→ <a href="{{ page.url }}" style="color: yellow;">{{ page.name }}</a></div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: yellow;">❌ No hay menú disponible</p>
+        {% endif %}
+    </div>
+{% endif %}
+{% endmacro %}

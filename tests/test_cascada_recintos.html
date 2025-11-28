@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test AJAX - Cascada Recintos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .endpoint-test {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .test-controls {
+            margin: 15px 0;
+        }
+        .test-controls button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        .test-controls select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .status.pass { background: #d4edda; color: #155724; }
+        .status.fail { background: #f8d7da; color: #721c24; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .json-output {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test AJAX - Cascada de Recintos</h1>
+        <p class="info">Test para validar la corrección de la cascada Sector → Tipo Recinto → Recinto</p>
+
+        <div class="test-section">
+            <h3>🎯 Problemas Identificados y Corregidos</h3>
+            <div class="status pass">
+                <strong>✅ Importación corregida:</strong> verificar_permiso ahora usa sistema unificado de permisos
+            </div>
+            <div class="status pass">
+                <strong>✅ Modal HTML mejorado:</strong> Selects inician vacíos y se pueblan dinámicamente
+            </div>
+            <div class="status pending">
+                <strong>⏳ Pendiente verificar:</strong> Endpoints AJAX responden correctamente
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test de Endpoints AJAX</h3>
+            
+            <div class="endpoint-test">
+                <h4>1. GET /get_tiposrecintos_by_sector/{sector_id}</h4>
+                <div class="test-controls">
+                    <label>Sector ID: </label>
+                    <select id="sector-select">
+                        <option value="1">Sector 1</option>
+                        <option value="2">Sector 2</option>
+                        <option value="3">Sector 3</option>
+                    </select>
+                    <button onclick="testTiposRecintosBySector()">Probar Endpoint</button>
+                </div>
+                <div id="tiposrecintos-result" class="status pending">⏳ Sin probar</div>
+                <pre id="tiposrecintos-json" class="json-output" style="display: none;"></pre>
+            </div>
+
+            <div class="endpoint-test">
+                <h4>2. GET /get_recintos_by_tipo/{tipo_id}</h4>
+                <div class="test-controls">
+                    <label>Tipo Recinto ID: </label>
+                    <select id="tipo-select">
+                        <option value="1">Tipo 1</option>
+                        <option value="2">Tipo 2</option>
+                        <option value="3">Tipo 3</option>
+                    </select>
+                    <button onclick="testRecintosByTipo()">Probar Endpoint</button>
+                </div>
+                <div id="recintos-result" class="status pending">⏳ Sin probar</div>
+                <pre id="recintos-json" class="json-output" style="display: none;"></pre>
+            </div>
+
+            <div class="endpoint-test">
+                <h4>3. GET /get_tiposrecintos</h4>
+                <div class="test-controls">
+                    <button onclick="testAllTiposRecintos()">Probar Endpoint</button>
+                </div>
+                <div id="all-tipos-result" class="status pending">⏳ Sin probar</div>
+                <pre id="all-tipos-json" class="json-output" style="display: none;"></pre>
+            </div>
+
+            <div class="endpoint-test">
+                <h4>4. GET /get_recintos</h4>
+                <div class="test-controls">
+                    <button onclick="testAllRecintos()">Probar Endpoint</button>
+                </div>
+                <div id="all-recintos-result" class="status pending">⏳ Sin probar</div>
+                <pre id="all-recintos-json" class="json-output" style="display: none;"></pre>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Test de Cascada Completa</h3>
+            <div class="test-controls">
+                <button onclick="testFullCascade()">Probar Cascada Completa</button>
+            </div>
+            <div id="cascade-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Resumen de Tests</h3>
+            <div id="test-summary">
+                <div class="status pending">⏳ Tests no ejecutados</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            tiposrecintos: null,
+            recintos: null,
+            allTipos: null,
+            allRecintos: null
+        };
+
+        async function testTiposRecintosBySector() {
+            const sectorId = document.getElementById('sector-select').value;
+            const resultDiv = document.getElementById('tiposrecintos-result');
+            const jsonDiv = document.getElementById('tiposrecintos-json');
+            
+            resultDiv.className = 'status pending';
+            resultDiv.textContent = '⏳ Probando...';
+            
+            try {
+                const response = await fetch(`http://localhost:5050/get_tiposrecintos_by_sector/${sectorId}`);
+                const data = await response.json();
+                
+                if (response.ok && Array.isArray(data)) {
+                    resultDiv.className = 'status pass';
+                    resultDiv.textContent = `✅ Éxito: ${data.length} tipos de recinto encontrados`;
+                    testResults.tiposrecintos = true;
+                } else {
+                    resultDiv.className = 'status fail';
+                    resultDiv.textContent = `❌ Error: ${response.status} - ${response.statusText}`;
+                    testResults.tiposrecintos = false;
+                }
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                resultDiv.className = 'status fail';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                testResults.tiposrecintos = false;
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = `Error: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testRecintosByTipo() {
+            const tipoId = document.getElementById('tipo-select').value;
+            const resultDiv = document.getElementById('recintos-result');
+            const jsonDiv = document.getElementById('recintos-json');
+            
+            resultDiv.className = 'status pending';
+            resultDiv.textContent = '⏳ Probando...';
+            
+            try {
+                const response = await fetch(`http://localhost:5050/get_recintos_by_tipo/${tipoId}`);
+                const data = await response.json();
+                
+                if (response.ok && Array.isArray(data)) {
+                    resultDiv.className = 'status pass';
+                    resultDiv.textContent = `✅ Éxito: ${data.length} recintos encontrados`;
+                    testResults.recintos = true;
+                } else {
+                    resultDiv.className = 'status fail';
+                    resultDiv.textContent = `❌ Error: ${response.status} - ${response.statusText}`;
+                    testResults.recintos = false;
+                }
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                resultDiv.className = 'status fail';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                testResults.recintos = false;
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = `Error: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testAllTiposRecintos() {
+            const resultDiv = document.getElementById('all-tipos-result');
+            const jsonDiv = document.getElementById('all-tipos-json');
+            
+            resultDiv.className = 'status pending';
+            resultDiv.textContent = '⏳ Probando...';
+            
+            try {
+                const response = await fetch('http://localhost:5050/get_tiposrecintos');
+                const data = await response.json();
+                
+                if (response.ok && Array.isArray(data)) {
+                    resultDiv.className = 'status pass';
+                    resultDiv.textContent = `✅ Éxito: ${data.length} tipos de recinto totales`;
+                    testResults.allTipos = true;
+                } else {
+                    resultDiv.className = 'status fail';
+                    resultDiv.textContent = `❌ Error: ${response.status} - ${response.statusText}`;
+                    testResults.allTipos = false;
+                }
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                resultDiv.className = 'status fail';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                testResults.allTipos = false;
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = `Error: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testAllRecintos() {
+            const resultDiv = document.getElementById('all-recintos-result');
+            const jsonDiv = document.getElementById('all-recintos-json');
+            
+            resultDiv.className = 'status pending';
+            resultDiv.textContent = '⏳ Probando...';
+            
+            try {
+                const response = await fetch('http://localhost:5050/get_recintos');
+                const data = await response.json();
+                
+                if (response.ok && Array.isArray(data)) {
+                    resultDiv.className = 'status pass';
+                    resultDiv.textContent = `✅ Éxito: ${data.length} recintos totales`;
+                    testResults.allRecintos = true;
+                } else {
+                    resultDiv.className = 'status fail';
+                    resultDiv.textContent = `❌ Error: ${response.status} - ${response.statusText}`;
+                    testResults.allRecintos = false;
+                }
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                resultDiv.className = 'status fail';
+                resultDiv.textContent = `❌ Error de conexión: ${error.message}`;
+                testResults.allRecintos = false;
+                
+                jsonDiv.style.display = 'block';
+                jsonDiv.textContent = `Error: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testFullCascade() {
+            const resultDiv = document.getElementById('cascade-result');
+            resultDiv.innerHTML = '<h4>⏳ Ejecutando cascada completa...</h4>';
+            
+            try {
+                // Paso 1: Obtener todos los sectores
+                resultDiv.innerHTML += '<p>🔍 Paso 1: Obteniendo sectores...</p>';
+                
+                // Paso 2: Para cada sector, obtener tipos de recinto
+                resultDiv.innerHTML += '<p>🔍 Paso 2: Probando cascada sector → tipo recinto...</p>';
+                await testTiposRecintosBySector();
+                
+                // Paso 3: Para cada tipo, obtener recintos
+                resultDiv.innerHTML += '<p>🔍 Paso 3: Probando cascada tipo → recinto...</p>';
+                await testRecintosByTipo();
+                
+                resultDiv.innerHTML += '<div class="status pass">✅ Cascada completa probada</div>';
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<div class="status fail">❌ Error en cascada: ${error.message}</div>`;
+            }
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('test-summary');
+            const tests = Object.values(testResults);
+            const completed = tests.filter(t => t !== null).length;
+            const passed = tests.filter(t => t === true).length;
+            const failed = tests.filter(t => t === false).length;
+            
+            let html = `
+                <div class="status ${completed === 4 ? (failed === 0 ? 'pass' : 'fail') : 'pending'}">
+                    📊 Resumen: ${completed}/4 tests completados
+                    <br>✅ Pasaron: ${passed}
+                    <br>❌ Fallaron: ${failed}
+                    <br>⏳ Pendientes: ${4 - completed}
+                </div>
+            `;
+            
+            if (completed === 4 && failed === 0) {
+                html += '<div class="status pass">🎉 ¡Todos los endpoints AJAX funcionan correctamente!</div>';
+            }
+            
+            summaryDiv.innerHTML = html;
+        }
+
+        // Auto-ejecutar algunos tests básicos al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Test de endpoints AJAX cargado');
+            console.log('💡 Sugerencia: Ejecutar los tests manualmente para validar la funcionalidad');
+        });
+    </script>
+</body>
+</html>

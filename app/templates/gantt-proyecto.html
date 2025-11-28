@@ -1,0 +1,471 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Diagrama de Gantt - {{ requerimiento.nombre }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.css">
+<style>
+    .gantt-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .project-header {
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .project-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .info-item {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .info-label {
+        font-weight: bold;
+        color: #495057;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        color: #212529;
+        font-size: 1.1em;
+    }
+    
+    .gantt-container {
+        overflow-x: auto;
+        margin-top: 20px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    
+    .activities-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .summary-number {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .summary-label {
+        font-size: 0.9em;
+        opacity: 0.9;
+    }
+    
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .view-controls {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-view {
+        padding: 8px 16px;
+        border: 1px solid #007bff;
+        background: white;
+        color: #007bff;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-view.active,
+    .btn-view:hover {
+        background: #007bff;
+        color: white;
+    }
+    
+    .activity-details {
+        margin-top: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .activity-table {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .activity-table th,
+    .activity-table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+        font-size: 0.9em;
+    }
+    
+    .activity-table th {
+        background: #e9ecef;
+        font-weight: bold;
+    }
+    
+    /* Estilos para diferentes niveles de actividades */
+    .nivel-1 {
+        font-weight: bold;
+        color: #007bff;
+        background-color: #f8f9ff !important;
+    }
+    
+    .nivel-2 {
+        color: #28a745;
+        background-color: #f8fff8 !important;
+    }
+    
+    .nivel-3 {
+        color: #ffc107;
+        background-color: #fffef8 !important;
+    }
+    
+    .nivel-4 {
+        color: #dc3545;
+        background-color: #fff8f8 !important;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        transition: width 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+        .project-info {
+            grid-template-columns: 1fr;
+        }
+        
+        .activities-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .view-controls {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado del proyecto -->
+    <div class="gantt-card">
+        <div class="project-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-project-diagram"></i> {{ requerimiento.nombre }}</h2>
+                <div>
+                    <a href="{{ url_for('proyectos.ruta_proyecto_llenar') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <button class="btn btn-primary" onclick="exportarGantt()"
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información del proyecto -->
+        <div class="project-info">
+            <div class="info-item">
+                <div class="info-label">Proyecto EDT</div>
+                <div class="info-value">{{ requerimiento.proyecto or 'No asignado' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Estado</div>
+                <div class="info-value">
+                    <span class="badge badge-info">{{ requerimiento.estado.nombre if requerimiento.estado else 'Sin estado' }}</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Responsable</div>
+                <div class="info-value">{{ requerimiento.responsable or 'No asignado' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Fecha de Inicio</div>
+                <div class="info-value">
+                    {% if actividades %}
+                        {{ actividades[0].fecha_inicio_display }}
+                    {% else %}
+                        No definida
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resumen de actividades -->
+        <div class="activities-summary">
+            <div class="summary-card">
+                <div class="summary-number">{{ actividades|length }}</div>
+                <div class="summary-label">Total Actividades</div>
+            </div>
+            <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="summary-number" id="summary-completed">0</div>
+                <div class="summary-label">Completadas</div>
+            </div>
+            <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="summary-number" id="summary-progress">0%</div>
+                <div class="summary-label">Progreso Total</div>
+            </div>
+            <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="summary-number" id="summary-duration">0</div>
+                <div class="summary-label">Días Totales</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Controles del diagrama -->
+    <div class="gantt-card">
+        <div class="toolbar">
+            <h4><i class="fas fa-chart-gantt"></i> Diagrama de Gantt</h4>
+            <div class="view-controls">
+                <button class="btn-view active" data-view="Day">Día</button>
+                <button class="btn-view" data-view="Week">Semana</button>
+                <button class="btn-view" data-view="Month">Mes</button>
+                <button class="btn-view" data-view="Quarter">Trimestre</button>
+            </div>
+        </div>
+        
+        <!-- Contenedor del diagrama de Gantt -->
+        <div class="gantt-container">
+            <div id="gantt"></div>
+        </div>
+    </div>
+    
+    <!-- Detalles de las actividades -->
+    <div class="gantt-card">
+        <div class="activity-details">
+            <h4><i class="fas fa-list-alt"></i> Detalles de Actividades</h4>
+            
+            {% if actividades %}
+            <div class="table-responsive">
+                <table class="activity-table table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>EDT</th>
+                            <th>Nombre de Tarea</th>
+                            <th>Duración (días)</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Progreso</th>
+                            <th>Predecesoras</th>
+                            <th>Recursos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for actividad in actividades %}
+                        {% set nivel = actividad.nivel_esquema or 1 %}
+                        <tr class="nivel-{{ nivel }}">
+                            <td><strong>{{ actividad.id }}</strong></td>
+                            <td><strong>{{ actividad.edt }}</strong></td>
+                            <td>
+                                {% set espaciado = '&nbsp;&nbsp;&nbsp;&nbsp;' * (nivel - 1) %}
+                                {{ espaciado|safe }}{{ actividad.nombre_tarea }}
+                            </td>
+                            <td>{{ actividad.duracion }}</td>
+                            <td>{{ actividad.fecha_inicio_display }}</td>
+                            <td>{{ actividad.fecha_fin_display }}</td>
+                            <td>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" 
+                                         style="width: {{ actividad.progreso or 0 }}%">
+                                    </div>
+                                </div>
+                                <small>{{ actividad.progreso or 0 }}%</small>
+                            </td>
+                            <td>{{ actividad.predecesoras or '-' }}</td>
+                            <td>{{ actividad.recursos or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay actividades registradas para este proyecto</h5>
+                <p class="text-muted">Sube un archivo XLSX para cargar las actividades del proyecto.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Datos de las actividades para el diagrama de Gantt
+    const actividades = [
+        {% for actividad in actividades %}
+        {
+            id: '{{ actividad.edt }}',
+            name: '{{ actividad.nombre_tarea|replace("'", "\\'") }}',
+            start: '{{ actividad.fecha_inicio }}',
+            end: '{{ actividad.fecha_fin }}',
+            progress: {{ actividad.progreso or 0 }},
+            dependencies: '{{ actividad.predecesoras or "" }}',
+            custom_class: 'nivel-{{ actividad.nivel_esquema }}'
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    // Configurar el diagrama de Gantt
+    let gantt = null;
+    
+    if (actividades.length > 0) {
+        gantt = new Gantt("#gantt", actividades, {
+            header_height: 50,
+            column_width: 30,
+            step: 24,
+            view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month', 'Quarter Year'],
+            bar_height: 20,
+            bar_corner_radius: 3,
+            arrow_curve: 5,
+            padding: 18,
+            view_mode: 'Day',
+            date_format: 'DD/MM/YYYY',
+            custom_popup_html: function(task) {
+                return `
+                    <div class="details-container">
+                        <h5>${task.name}</h5>
+                        <p><strong>EDT:</strong> ${task.id}</p>
+                        <p><strong>Duración:</strong> ${task._diff_in_days} días</p>
+                        <p><strong>Progreso:</strong> ${task.progress}%</p>
+                        <p><strong>Inicio:</strong> ${new Date(task.start).toLocaleDateString('es-ES')}</p>
+                        <p><strong>Fin:</strong> ${new Date(task.end).toLocaleDateString('es-ES')}</p>
+                    </div>
+                `;
+            }
+        });
+        
+        // Event listeners para cambio de vista
+        document.querySelectorAll('.btn-view').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.btn-view').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                gantt.change_view_mode(this.dataset.view);
+            });
+        });
+    }
+    
+    // Calcular estadísticas del proyecto
+    calcularEstadisticas();
+});
+
+function calcularEstadisticas() {
+    const actividades = {{ actividades|tojson }};
+    let completadas = 0;
+    let progresoTotal = 0;
+    let duracionTotal = 0;
+    
+    actividades.forEach(actividad => {
+        if (actividad.progreso >= 100) {
+            completadas++;
+        }
+        progresoTotal += parseFloat(actividad.progreso || 0);
+        duracionTotal += parseInt(actividad.duracion || 0);
+    });
+    
+    const progresoPromedio = actividades.length > 0 ? Math.round(progresoTotal / actividades.length) : 0;
+    
+    document.getElementById('summary-completed').textContent = completadas;
+    document.getElementById('summary-progress').textContent = progresoPromedio + '%';
+    document.getElementById('summary-duration').textContent = duracionTotal;
+}
+
+function exportarGantt() {
+    // Función para exportar el diagrama (placeholder)
+    alert('Función de exportación en desarrollo');
+    
+    // Aquí se podría implementar la exportación a PDF, imagen, etc.
+    // Por ejemplo, usando html2canvas o jsPDF
+}
+
+// Estilos adicionales para el diagrama de Gantt
+const style = document.createElement('style');
+style.textContent = `
+    .gantt .bar-wrapper.nivel-1 .bar {
+        fill: #007bff !important;
+    }
+    
+    .gantt .bar-wrapper.nivel-2 .bar {
+        fill: #28a745 !important;
+    }
+    
+    .gantt .bar-wrapper.nivel-3 .bar {
+        fill: #ffc107 !important;
+    }
+    
+    .gantt .bar-wrapper.nivel-4 .bar {
+        fill: #dc3545 !important;
+    }
+    
+    .gantt .details-container {
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .gantt .details-container h5 {
+        margin-bottom: 10px;
+        color: #333;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    
+    .gantt .details-container p {
+        margin: 5px 0;
+        font-size: 0.9em;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

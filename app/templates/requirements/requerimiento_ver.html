@@ -1,0 +1,727 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Gestión de Requerimientos por Área{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style>
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        transition: all 0.2s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    }
+
+    .requirement-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .location-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #e3f2fd;
+        color: #1976d2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        flex-shrink: 0;
+    }
+
+    .btn-group .btn {
+        min-width: 36px;
+    }
+
+    .badge {
+        font-size: 0.875em;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    }
+
+    .user-context-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border: none;
+        border-radius: 15px;
+    }
+
+    .area-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-clipboard-list me-2"></i>
+        Gestión de Requerimientos
+        {% if user_context.is_superadmin %}
+            <small class="text-muted">(Vista Completa)</small>
+        {% else %}
+            <small class="text-muted">({{ user_context.area_nombre }})</small>
+        {% endif %}
+    </h2>
+    <div class="d-flex align-items-center">
+        {% if user_context.can_create %}
+        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-plus me-1"></i>
+            Nuevo Requerimiento
+        </button>
+        {% endif %}
+        <span class="badge bg-primary text-white fs-6">
+            {{ requerimientos|length }} Total
+        </span>
+    </div>
+</div>
+
+<!-- Información del usuario -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card user-context-card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">
+                            <i class="fas fa-user me-2"></i>
+                            Sesión: {{ current_user.nombre }}
+                        </h6>
+                        <div class="d-flex align-items-center">
+                            <span class="area-badge {% if user_context.is_superadmin %}bg-danger text-white{% else %}bg-info text-white{% endif %}">
+                                {% if user_context.is_superadmin %}
+                                    <i class="fas fa-crown me-1"></i>SUPERADMIN - Acceso Total
+                                {% else %}
+                                    <i class="fas fa-building me-1"></i>Área: {{ user_context.area_nombre }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <small class="text-muted">
+                            {% if user_context.is_superadmin %}
+                                Ve todos los requerimientos del sistema
+                            {% else %}
+                                Ve solo requerimientos de su área
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mensajes de Flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Filtros y búsqueda -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="estadoFilter">
+                    <option value="">Todos los estados</option>
+                    <option value="1">Pendientes</option>
+                    <option value="2">Aceptados</option>
+                    <option value="3">En Preparación</option>
+                    <option value="4">Finalizados</option>
+                    <option value="9">Rechazados</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="sectorFilter">
+                    <option value="">Todos los sectores</option>
+                    {% for sector in sectores %}
+                    <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de requerimientos -->
+{% if requerimientos %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="tablarequerimiento">
+                <thead class="table-light">
+                    <tr>
+                        <th width="6%">ID</th>
+                        <th width="16%">Proyecto</th>
+                        <th width="10%">Fecha</th>
+                        <th width="15%">Ubicación</th>
+                        <th width="20%">Descripción</th>
+                        <th width="10%">Área</th>
+                        <th width="8%">Estado</th>
+                        <th width="15%" class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for requerimiento in requerimientos %}
+                    <tr class="requerimiento-row" 
+                        data-nombre="{{ requerimiento.nombre|lower }}" 
+                        data-estado="{{ requerimiento.estado.id }}"
+                        data-sector="{{ requerimiento.id_sector }}">
+                        <td>
+                            <span class="badge bg-primary fs-6">#{{ requerimiento.id }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-start">
+                                <div class="requirement-icon me-2">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ requerimiento.nombre }}</div>
+                                    <small class="text-muted">{{ requerimiento.estado.nombre }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <i class="fas fa-calendar-alt text-muted me-1"></i>
+                            <small>{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</small>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <div class="location-icon me-2">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <small class="text-muted">{{ requerimiento.sector.nombre }}</small>
+                                </div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <div class="location-icon me-2">
+                                        <i class="fas fa-home"></i>
+                                    </div>
+                                    <small class="text-muted">{{ requerimiento.tiporecinto.nombre }}</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="location-icon me-2">
+                                        <i class="fas fa-door-open"></i>
+                                    </div>
+                                    <div class="fw-bold text-truncate" style="max-width: 120px;" title="{{ requerimiento.recinto.nombre }}">
+                                        {{ requerimiento.recinto.nombre }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ requerimiento.descripcion }}">
+                                {{ requerimiento.descripcion[:80] }}{% if requerimiento.descripcion|length > 80 %}...{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if requerimiento.area_solicitante %}
+                                <span class="badge bg-secondary">{{ requerimiento.area_solicitante.nombre }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">Sin área</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if requerimiento.estado.id == 1 %}
+                                <span class="badge bg-warning">{{ requerimiento.estado.nombre }}</span>
+                            {% elif requerimiento.estado.id == 2 %}
+                                <span class="badge bg-info">{{ requerimiento.estado.nombre }}</span>
+                            {% elif requerimiento.estado.id == 3 %}
+                                <span class="badge bg-primary">{{ requerimiento.estado.nombre }}</span>
+                            {% elif requerimiento.estado.id == 4 %}
+                                <span class="badge bg-success">{{ requerimiento.estado.nombre }}</span>
+                            {% elif requerimiento.estado.id == 5 %}
+                                <span class="badge bg-danger">{{ requerimiento.estado.nombre }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ requerimiento.estado.nombre }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                {% if user_context.can_edit_all or user_context.is_superadmin %}
+                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                        onclick="editarRequerimiento({{ requerimiento.id }})"
+                                        title="Ver/Editar requerimiento">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        onclick="confirmarEliminacion({{ requerimiento.id }}, '{{ requerimiento.nombre }}')"
+                                        title="Eliminar requerimiento">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-outline-info btn-sm" 
+                                        onclick="verDetalleRequerimiento({{ requerimiento.id }})"
+                                        title="Ver detalle del requerimiento">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+    <h5 class="text-muted">
+        {% if user_context.is_superadmin %}
+            ¡No hay requerimientos registrados en el sistema!
+        {% else %}
+            ¡No hay requerimientos en su área!
+        {% endif %}
+    </h5>
+    <p class="text-muted">
+        {% if user_context.can_create %}
+            Comience creando su primer requerimiento.
+        {% else %}
+            Contacte al administrador para crear requerimientos.
+        {% endif %}
+    </p>
+    {% if user_context.can_create %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="fas fa-plus me-1"></i>
+        Crear Primer Requerimiento
+    </button>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Estadísticas en tarjetas modernas -->
+{% if requerimientos %}
+<div class="row mt-4 g-3">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-primary bg-opacity-10 text-primary mb-3">
+                    <i class="fas fa-clipboard-list fa-2x"></i>
+                </div>
+                <h4 class="text-primary fw-bold">{{ requerimientos|length }}</h4>
+                <p class="text-muted mb-0">Total Requerimientos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-warning bg-opacity-10 text-warning mb-3">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <h4 class="text-warning fw-bold">{{ requerimientos|selectattr("estado.id", "equalto", 1)|list|length }}</h4>
+                <p class="text-muted mb-0">Pendientes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-info bg-opacity-10 text-info mb-3">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+                <h4 class="text-info fw-bold">{{ requerimientos|selectattr("estado.id", "equalto", 2)|list|length }}</h4>
+                <p class="text-muted mb-0">Aceptados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="stats-icon bg-success bg-opacity-10 text-success mb-3">
+                    <i class="fas fa-clipboard-check fa-2x"></i>
+                </div>
+                <h4 class="text-success fw-bold">{{ requerimientos|selectattr("estado.id", "equalto", 4)|list|length }}</h4>
+                <p class="text-muted mb-0">Finalizados</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal para Agregar Nuevo Requerimiento -->
+{% if user_context.can_create %}
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="modal-icon me-3">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title mb-0 fw-bold">Agregar Nuevo Requerimiento</h4>
+                        <small class="text-muted">Complete la información del nuevo requerimiento</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formNuevoRequerimiento" action="{{ url_for('requerimientos.add_requerimiento_ver') }}" method="POST">
+                <div class="modal-body pt-2">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-0 pb-0">
+                                    <h6 class="text-primary mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Información Básica
+                                    </h6>
+                                </div>
+                                <div class="card-body pt-3">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Nombre del Requerimiento *</label>
+                                        <input type="text" class="form-control" name="nombre" required 
+                                               placeholder="Ingrese el nombre del requerimiento">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Fecha de Ingreso *</label>
+                                        <input type="date" class="form-control" name="fecha" required id="fecha-input">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Prioridad</label>
+                                        <select class="form-control" name="id_prioridad">
+                                            {% for prioridad in prioridades %}
+                                            <option value="{{ prioridad.id }}" {% if prioridad.id == 1 %}selected{% endif %}>
+                                                {{ prioridad.nombre }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-0 pb-0">
+                                    <h6 class="text-success mb-0">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        Ubicación
+                                    </h6>
+                                </div>
+                                <div class="card-body pt-3">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Sector *</label>
+                                        <select class="form-control" name="id_sector" id="sector-select" required>
+                                            <option value="">Seleccione un Sector</option>
+                                            {% for sector in sectores %}
+                                            <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Tipo de Recinto *</label>
+                                        <select class="form-control" name="id_tiporecinto" id="tiporecinto-select" required disabled>
+                                            <option value="">Primero seleccione un sector</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Recinto *</label>
+                                        <select class="form-control" name="id_recinto" id="recinto-select" required disabled>
+                                            <option value="">Primero seleccione un tipo de recinto</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-0 pb-0">
+                                    <h6 class="text-info mb-0">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        Descripción
+                                    </h6>
+                                </div>
+                                <div class="card-body pt-3">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Descripción *</label>
+                                        <textarea class="form-control" name="descripcion" rows="4" required 
+                                                  placeholder="Describa el requerimiento detalladamente..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        Guardar Requerimiento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha de hoy por defecto
+    const fechaInput = document.getElementById('fecha-input');
+    if (fechaInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        fechaInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Funcionalidad de búsqueda y filtros
+    const searchInput = document.getElementById('searchInput');
+    const estadoFilter = document.getElementById('estadoFilter');
+    const sectorFilter = document.getElementById('sectorFilter');
+    
+    function filtrarRequerimientos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const estadoId = estadoFilter.value;
+        const sectorId = sectorFilter.value;
+        const filas = document.querySelectorAll('.requerimiento-row');
+        let contadorVisible = 0;
+        
+        filas.forEach(fila => {
+            const nombre = fila.getAttribute('data-nombre');
+            const descripcion = fila.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+            const estado = fila.getAttribute('data-estado');
+            const sector = fila.getAttribute('data-sector');
+            
+            const coincideBusqueda = nombre.includes(searchTerm) || descripcion.includes(searchTerm);
+            const coincideEstado = !estadoId || estado === estadoId;
+            const coincideSector = !sectorId || sector === sectorId;
+            
+            if (coincideBusqueda && coincideEstado && coincideSector) {
+                fila.style.display = '';
+                contadorVisible++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Actualizar contador
+        const badge = document.querySelector('.badge.bg-primary.text-white.fs-6');
+        if (badge) {
+            badge.textContent = `${contadorVisible} Visible`;
+        }
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filtrarRequerimientos);
+    if (estadoFilter) estadoFilter.addEventListener('change', filtrarRequerimientos);
+    if (sectorFilter) sectorFilter.addEventListener('change', filtrarRequerimientos);
+
+    // Configuración del formulario nuevo
+    const sectorSelect = document.getElementById('sector-select');
+    const tipoRecintoSelect = document.getElementById('tiporecinto-select');
+    const recintoSelect = document.getElementById('recinto-select');
+
+    if (sectorSelect) {
+        sectorSelect.addEventListener('change', function() {
+            const sectorId = this.value;
+            if (sectorId) {
+                tipoRecintoSelect.disabled = false;
+                
+                fetch(`/get_tiposrecintos_by_sector/${sectorId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        tipoRecintoSelect.innerHTML = '<option value="">Seleccione un Tipo de Recinto</option>';
+                        data.forEach(tipo => {
+                            const option = document.createElement('option');
+                            option.value = tipo.id;
+                            option.textContent = tipo.nombre;
+                            tipoRecintoSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+                    
+                recintoSelect.disabled = true;
+                recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+            } else {
+                tipoRecintoSelect.disabled = true;
+                tipoRecintoSelect.innerHTML = '<option value="">Primero seleccione un sector</option>';
+                recintoSelect.disabled = true;
+                recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+            }
+        });
+    }
+
+    if (tipoRecintoSelect) {
+        tipoRecintoSelect.addEventListener('change', function() {
+            const tipoRecintoId = this.value;
+            if (tipoRecintoId) {
+                recintoSelect.disabled = false;
+                
+                fetch(`/get_recintos_by_tipo/${tipoRecintoId}`) 
+                    .then(response => response.json())
+                    .then(data => {
+                        recintoSelect.innerHTML = '<option value="">Seleccione un Recinto</option>';
+                        data.forEach(recinto => {
+                            const option = document.createElement('option');
+                            option.value = recinto.id;
+                            option.textContent = recinto.nombre;
+                            recintoSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                recintoSelect.disabled = true;
+                recintoSelect.innerHTML = '<option value="">Primero seleccione un tipo de recinto</option>';
+            }
+        });
+    }
+
+    // Manejo del formulario AJAX
+    const form = document.getElementById('formNuevoRequerimiento');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('/add_requerimiento_ver', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar mensaje de éxito
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+                    
+                    // Cerrar modal y limpiar formulario
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
+                    modal.hide();
+                    this.reset();
+                    
+                    // Deshabilitar selects
+                    tipoRecintoSelect.disabled = true;
+                    recintoSelect.disabled = true;
+                    
+                    // Recargar página después de un momento
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud');
+            });
+        });
+    }
+
+    // Auto-dismiss alerts
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+
+// Función para ver detalle (usuarios sin permisos de edición)
+function verDetalleRequerimiento(id) {
+    // Crear modal de solo lectura
+    alert('Funcionalidad de ver detalle en desarrollo');
+}
+
+// Función para editar requerimiento (administradores)
+function editarRequerimiento(id) {
+    alert('Funcionalidad de edición en desarrollo');
+}
+
+// Función de confirmación de eliminación
+function confirmarEliminacion(id, nombre) {
+    if (confirm(`¿Está seguro de que desea eliminar el requerimiento "${nombre}"?`)) {
+        // Implementar eliminación
+        alert('Funcionalidad de eliminación en desarrollo');
+    }
+}
+</script>
+{% endblock %}

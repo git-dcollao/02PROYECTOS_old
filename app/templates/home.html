@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Proyectos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 24px;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+        }
+        
+        .bg-gradient-info {
+            background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+        }
+        
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .stats-section {
+            background: #f8f9fa;
+            padding: 80px 0;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .footer-section {
+            background: #2c3e50;
+            color: white;
+            padding: 40px 0;
+        }
+        
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-project-diagram me-2"></i>
+                SisProyectos
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#inicio">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#caracteristicas">Características</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#estadisticas">Estadísticas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contacto">Contacto</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenedor de alertas -->
+    <div class="alert-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="inicio">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Sistema de Gestión de Proyectos
+                    </h1>
+                    <p class="lead mb-4">
+                        Administre sus proyectos de manera eficiente con nuestra plataforma integral. 
+                        Control completo sobre recursos, equipos y cronogramas.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#caracteristicas" class="btn btn-light btn-lg">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Conocer Más
+                        </a>
+                        <a href="#login-form" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Iniciar Sesión
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Formulario de Login -->
+                <div class="col-lg-4 offset-lg-2">
+                    <div class="login-card p-4" id="login-form">
+                        <h4 class="text-dark text-center mb-4">
+                            <i class="fas fa-sign-in-alt me-2 text-primary"></i>
+                            Acceso al Sistema
+                        </h4>
+                        
+                        <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                            {{ form.hidden_tag() }}
+                            
+                            <!-- Email -->
+                            <div class="mb-3">
+                                {{ form.email.label(class="form-label text-dark") }}
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Contraseña -->
+                            <div class="mb-3">
+                                {{ form.password.label(class="form-label text-dark") }}
+                                <div class="input-group">
+                                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="password") }}
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Recordarme -->
+                            <div class="mb-3 form-check">
+                                {{ form.remember_me(class="form-check-input") }}
+                                {{ form.remember_me.label(class="form-check-label text-dark") }}
+                            </div>
+                            
+                            <!-- Botón de envío -->
+                            <div class="d-grid">
+                                {{ form.submit(class="btn-login") }}
+                            </div>
+                        </form>
+                        
+                        <hr class="my-4">
+                        <div class="text-center">
+                            <small class="text-muted">
+                                ¿Problemas para acceder? Contacte al administrador
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Características -->
+    <section class="py-5" id="caracteristicas">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col">
+                    <h2 class="display-5 fw-bold">Características Principales</h2>
+                    <p class="lead text-muted">Herramientas completas para la gestión de proyectos</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon bg-gradient-primary text-white">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h5>Gestión de Proyectos</h5>
+                        <p class="text-muted">Administre múltiples proyectos con control detallado de actividades y cronogramas.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon bg-gradient-success text-white">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5>Equipos de Trabajo</h5>
+                        <p class="text-muted">Organice equipos eficientemente y asigne recursos según especialidades.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon bg-gradient-info text-white">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5>Reportes y Análisis</h5>
+                        <p class="text-muted">Genere reportes detallados y analice el progreso de sus proyectos.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon bg-gradient-warning text-white">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <h5>Importación Excel</h5>
+                        <p class="text-muted">Importe datos desde archivos Excel con formato jerárquico.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estadísticas -->
+    <section class="stats-section" id="estadisticas">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-number" data-count="150">0</div>
+                    <h5>Proyectos Activos</h5>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-number" data-count="50">0</div>
+                    <h5>Equipos de Trabajo</h5>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-number" data-count="1200">0</div>
+                    <h5>Actividades Gestionadas</h5>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-number" data-count="95">0</div>
+                    <h5>% Eficiencia</h5>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer-section" id="contacto">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5>
+                        <i class="fas fa-project-diagram me-2"></i>
+                        SisProyectos
+                    </h5>
+                    <p class="text-light">
+                        Sistema integral para la gestión eficiente de proyectos, 
+                        equipos y recursos organizacionales.
+                    </p>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h6>Contacto</h6>
+                    <ul class="list-unstyled text-light">
+                        <li><i class="fas fa-envelope me-2"></i> admin@sistema.com</li>
+                        <li><i class="fas fa-phone me-2"></i> +56 9 1234 5678</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Santiago, Chile</li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h6>Soporte</h6>
+                    <ul class="list-unstyled text-light">
+                        <li><a href="#" class="text-light text-decoration-none">Documentación</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Centro de Ayuda</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Reportar Problema</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 Sistema de Gestión de Proyectos. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+            const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function() {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    
+                    if (type === 'password') {
+                        togglePasswordIcon.classList.remove('fa-eye-slash');
+                        togglePasswordIcon.classList.add('fa-eye');
+                    } else {
+                        togglePasswordIcon.classList.remove('fa-eye');
+                        togglePasswordIcon.classList.add('fa-eye-slash');
+                    }
+                });
+            }
+
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Counter animation
+            const counters = document.querySelectorAll('.stat-number');
+            const animateCounter = (counter) => {
+                const target = parseInt(counter.getAttribute('data-count'));
+                let current = 0;
+                const increment = target / 200;
+                
+                const updateCounter = () => {
+                    if (current < target) {
+                        current += increment;
+                        counter.textContent = Math.ceil(current);
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = target;
+                    }
+                };
+                
+                updateCounter();
+            };
+
+            // Intersection Observer for counter animation
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const counter = entry.target;
+                        if (!counter.classList.contains('animated')) {
+                            animateCounter(counter);
+                            counter.classList.add('animated');
+                        }
+                    }
+                });
+            });
+
+            counters.forEach(counter => {
+                observer.observe(counter);
+            });
+        });
+    </script>
+</body>
+</html>

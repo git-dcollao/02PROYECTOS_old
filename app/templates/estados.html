@@ -1,109 +1,422 @@
-{% extends 'bases/base.html' %}
+{% extends 'base_layout.html' %}
 
-{% block title %}Estados{% endblock %}
+{% block title %}Gestión de Estados{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="well text-center">
-        <h1>Estados - Crud</h1>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col md-12">
-                <h2>
-                    Lista de Estados
-                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
-                            type="button">
-                        Nuevo Estado
-                    </button>
-                </h2>
-                
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Nombre</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {%for estado in estados%}
-                    <tr>
-                        <td>{{estado.id}}</td>
-                        <td>{{estado.nombre}}</td>
-
-                        <td>
-                            <a class="btn p-1 btn-primary btn-sm" 
-                               data-bs-target="#exampleModal1{{estado.id}}"
-                               data-bs-toggle="modal"
-                               href="#">Editar</a> 
-                            <form action="{{ url_for('controllers.eliminar_estado', id=estado.id) }}"
-                                method="POST" style="display:inline;">
-                                <button class="btn p-1 btn-danger btn-sm" 
-                                type="submit">Eliminar</button>
-                            </form>
-                        </td>
-                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
-                             id="exampleModal1{{estado.id}}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información del Estado {{estado.nombre}}</h1>
-                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
-                                                type="button"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form action="{{ url_for('controllers.update_estado', id=estado.id) }}" method="POST">   
-                                            <div class="form-group">
-                                                <label>Nombre:</label>
-                                                <input type="hidden" name="id" value="{{estado.id}}">
-                                                <input class="form-control" name="name" value="{{estado.nombre}}"
-                                                       required="1" type="text">
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
-                                            Cerrar
-                                        </button>
-                                    </div>
+<div class="container-fluid py-4">
+    <!-- Header moderno -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-tasks me-2"></i>
+                                Gestión de Estados
+                            </h3>
+                            <p class="mb-0 opacity-75">Administra y configura los estados del sistema para el control de flujo</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-center">
+                                    <div class="h4 mb-0">{{ estados|length }}</div>
+                                    <small class="opacity-75">Total</small>
+                                </div>
+                                <div class="vr mx-2"></div>
+                                <div class="text-center">
+                                    <div class="h4 mb-0">Activos</div>
+                                    <small class="opacity-75">Estados</small>
                                 </div>
                             </div>
                         </div>
-                    </tr>
-                    {%endfor%}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para agregar nuevo estado -->
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Estado</h1>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ url_for('controllers.add_estado') }}" method="POST"> 
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input class="form-control" name="name" required="1" type="text">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list me-2"></i>Lista de Estados
+                            </h5>
                         </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
+                        <div class="text-muted">
+                            <small>{{ estados|length }} registros</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if estados %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 px-4 py-3">ID</th>
+                                    <th class="border-0 px-4 py-3">Nombre del Estado</th>
+                                    <th class="border-0 px-4 py-3">Descripción</th>
+                                    <th class="border-0 px-4 py-3 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for estado in estados %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-light text-dark">{{ estado.id }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="fw-semibold text-dark">{{ estado.nombre }}</div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-muted">Estado de flujo del sistema</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    onclick="abrirModalDetalle({{ estado.id }}, '{{ estado.nombre }}')"
+                                                    title="Ver detalle del estado">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="abrirModalEdicion({{ estado.id }}, '{{ estado.nombre }}')"
+                                                    title="Editar estado">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ estado.id }}, '{{ estado.nombre }}')"
+                                                    title="Eliminar estado">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-inbox fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No hay estados registrados</h5>
+                        <p class="text-muted">Comienza agregando un nuevo estado usando el formulario</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-plus me-2"></i>Añadir Estado
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_estado') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="add_form_token" value="">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-semibold">Nombre del Estado</label>
+                            <input type="text" class="form-control" id="nombre" name="name" required 
+                                   placeholder="Ej: Pendiente, En Proceso, Completado">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Crear Estado
+                            </button>
+                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+
+            <!-- Card de estadísticas -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-info">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Total de Estados:</span>
+                            <span class="badge bg-primary">{{ estados|length }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Estado General:</span>
+                            <span class="badge bg-success">Activos</span>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Los estados controlan el flujo y progreso de los requerimientos
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="well container">
-    
+
+<!-- Modal dinámico para detalles -->
+<div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Detalle del Estado
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleContent">
+                <!-- Contenido dinámico aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal dinámico para edición -->
+<div class="modal fade" id="modalEdicion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Estado
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEdicion">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="form_token" id="edit_form_token" value="">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label fw-semibold">Nombre del Estado</label>
+                        <input type="text" class="form-control" id="editNombre" name="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dinámico para confirmación de eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash-alt fa-3x text-danger opacity-50"></i>
+                </div>
+                <p class="text-center mb-3">
+                    ¿Está seguro de que desea eliminar el estado 
+                    <strong class="text-primary" id="estadoNombre"></strong>?
+                </p>
+                <div class="alert alert-warning border-warning">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <small>Esta acción no se puede deshacer y puede afectar requerimientos relacionados.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales para los modales
+let modalDetalle, modalEdicion, modalEliminar;
+
+// Variable global para la URL base de actualización
+const updateEstadoBaseUrl = '{{ url_for("controllers.update_estado", id=0) }}'.replace('/0', '');
+
+// Función para generar token único
+function generateUniqueToken() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Inicialización optimizada
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar modales una sola vez
+    modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
+    modalEdicion = new bootstrap.Modal(document.getElementById('modalEdicion'));
+    modalEliminar = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    // Generar token para formulario de creación
+    document.getElementById('add_form_token').value = generateUniqueToken();
+    
+    // Mejorar formulario principal
+    const formularioPrincipal = document.querySelector('form[action*="add_estado"]');
+    if (formularioPrincipal) {
+        formularioPrincipal.addEventListener('submit', function(e) {
+            const input = this.querySelector('input[name="name"]');
+            if (!input.value.trim()) {
+                e.preventDefault();
+                mostrarAlerta('Por favor, ingresa un nombre válido para el estado', 'warning');
+                input.focus();
+            }
+        });
+    }
+    
+    // Auto-dismissal de alertas después de 5 segundos
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            try {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            } catch (e) {
+                console.log('Alert ya cerrada');
+            }
+        });
+    }, 5000);
+});
+
+// Función optimizada para abrir modal de detalle
+function abrirModalDetalle(id, nombre) {
+    requestAnimationFrame(() => {
+        const contenido = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-primary"><i class="fas fa-tag me-2"></i>Información General</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-semibold">ID:</td>
+                                    <td><span class="badge bg-light text-dark">${id}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Nombre:</td>
+                                    <td class="fw-bold">${nombre}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="text-primary"><i class="fas fa-flow me-2"></i>Uso del Estado</h6>
+                            <div class="text-center py-3">
+                                <div class="h3 text-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <p class="text-muted mb-0">Estado disponible para control de flujo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('detalleContent').innerHTML = contenido;
+        modalDetalle.show();
+    });
+}
+
+// Función optimizada para abrir modal de edición
+function abrirModalEdicion(id, nombre) {
+    requestAnimationFrame(() => {
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('formEdicion').action = updateEstadoBaseUrl + '/' + id;
+        document.getElementById('formEdicion').method = 'POST';
+        
+        // Generar nuevo token para edición
+        document.getElementById('edit_form_token').value = generateUniqueToken();
+        
+        // Agregar evento de submit
+        const form = document.getElementById('formEdicion');
+        form.onsubmit = function(e) {
+            const input = document.getElementById('editNombre');
+            if (!input.value.trim()) {
+                e.preventDefault();
+                mostrarAlerta('El nombre no puede estar vacío', 'warning');
+                input.focus();
+                return false;
+            }
+        };
+        
+        modalEdicion.show();
+        
+        // Enfocar y seleccionar texto después de que se muestre el modal
+        setTimeout(() => {
+            const input = document.getElementById('editNombre');
+            input.focus();
+            input.select();
+        }, 150);
+    });
+}
+
+// Función para confirmar eliminación (usando modal estático mejorado)
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('estadoNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_estado', id=0) }}".replace('0', id);
+    
+    modalEliminar.show();
+}
+
+// Función auxiliar para mostrar alertas
+function mostrarAlerta(mensaje, tipo = 'info') {
+    const alertContainer = document.createElement('div');
+    alertContainer.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertContainer.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertContainer.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertContainer);
+    
+    // Remover automáticamente después de 5 segundos
+    setTimeout(() => {
+        if (alertContainer.parentNode) {
+            alertContainer.remove();
+        }
+    }, 5000);
+}
+</script>
 {% endblock %}

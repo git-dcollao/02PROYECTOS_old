@@ -1,0 +1,313 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Gestión de Prioridades - Matriz Eisenhower{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Matriz Eisenhower Visual -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-th"></i> Matriz de Eisenhower</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-danger" style="min-height: 150px;">
+                                <div class="card-header bg-danger text-white text-center">
+                                    <h6 class="mb-0">Cuadrante I: Urgente e Importante</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for prioridad in prioridades %}
+                                        {% if prioridad.cuadrante == 1 %}
+                                        <div class="badge bg-danger me-2 mb-2">{{ prioridad.nombre }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <small class="text-muted d-block mt-2">Crisis, emergencias, problemas urgentes</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-warning" style="min-height: 150px;">
+                                <div class="card-header bg-warning text-dark text-center">
+                                    <h6 class="mb-0">Cuadrante II: Importante, No Urgente</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for prioridad in prioridades %}
+                                        {% if prioridad.cuadrante == 2 %}
+                                        <div class="badge bg-warning text-dark me-2 mb-2">{{ prioridad.nombre }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <small class="text-muted d-block mt-2">Planificación, prevención, desarrollo</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary" style="min-height: 150px;">
+                                <div class="card-header" style="background-color: #fd7e14; color: white;">
+                                    <h6 class="mb-0 text-center">Cuadrante III: Urgente, No Importante</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for prioridad in prioridades %}
+                                        {% if prioridad.cuadrante == 3 %}
+                                        <div class="badge me-2 mb-2" style="background-color: #fd7e14; color: white;">{{ prioridad.nombre }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <small class="text-muted d-block mt-2">Interrupciones, algunas llamadas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-secondary" style="min-height: 150px;">
+                                <div class="card-header bg-secondary text-white text-center">
+                                    <h6 class="mb-0">Cuadrante IV: No Urgente, No Importante</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for prioridad in prioridades %}
+                                        {% if prioridad.cuadrante == 4 %}
+                                        <div class="badge bg-secondary me-2 mb-2">{{ prioridad.nombre }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <small class="text-muted d-block mt-2">Trivialidades, pérdidas de tiempo</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Prioridades -->
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-list"></i> Lista de Prioridades</h4>
+                </div>
+                <div class="card-body">
+                    {% if prioridades %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Orden</th>
+                                    <th>Nombre</th>
+                                    <th>Cuadrante</th>
+                                    <th>Características</th>
+                                    <th>Color</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prioridad in prioridades %}
+                                <tr>
+                                    <td><span class="badge bg-primary">{{ prioridad.orden }}</span></td>
+                                    <td>{{ prioridad.nombre }}</td>
+                                    <td>
+                                        <span class="badge" style="background-color: {{ prioridad.color }};">
+                                            Cuadrante {{ prioridad.cuadrante }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {% if prioridad.urgencia %}
+                                                <span class="badge bg-danger">Urgente</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No Urgente</span>
+                                            {% endif %}
+                                            
+                                            {% if prioridad.importancia %}
+                                                <span class="badge bg-warning text-dark">Importante</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">No Importante</span>
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="color-preview" style="width: 30px; height: 20px; background-color: {{ prioridad.color }}; border: 1px solid #ddd; border-radius: 3px;"></div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editModal{{ prioridad.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ prioridad.id }}, '{{ prioridad.nombre }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay prioridades registradas.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulario para agregar -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus"></i> Nueva Prioridad</h4>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_prioridad') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="add_form_token" value="">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="name" required placeholder="Ej: Crítico">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" name="descripcion" rows="3" placeholder="Descripción de la prioridad"></textarea>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="urgencia">
+                                    <label class="form-check-label">Urgente</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="importancia">
+                                    <label class="form-check-label">Importante</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Color</label>
+                            <input type="color" class="form-control form-control-color" name="color" value="#6c757d">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-save"></i> Guardar Prioridad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALES FUERA DE LA TABLA -->
+
+<!-- Modales de Edición -->
+{% for prioridad in prioridades %}
+<div class="modal fade" id="editModal{{ prioridad.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Prioridad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('controllers.update_prioridad', id=prioridad.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="form_token" id="edit_form_token_{{ prioridad.id }}" value="">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" name="name" value="{{ prioridad.nombre }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="3">{{ prioridad.descripcion }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="urgencia" {% if prioridad.urgencia %}checked{% endif %}>
+                                <label class="form-check-label">Urgente</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="importancia" {% if prioridad.importancia %}checked{% endif %}>
+                                <label class="form-check-label">Importante</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color" name="color" value="{{ prioridad.color }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar la prioridad <strong id="prioridadNombre"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Esta acción afectará todos los requerimientos que tengan esta prioridad asignada.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('prioridadNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_prioridad', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Generar token único para prevenir envíos duplicados
+function generateUniqueToken() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Auto-dismiss alerts
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar token para formulario de agregar
+    document.getElementById('add_form_token').value = generateUniqueToken();
+    
+    // Inicializar tokens para formularios de editar
+    {% for prioridad in prioridades %}
+    document.getElementById('edit_form_token_{{ prioridad.id }}').value = generateUniqueToken();
+    {% endfor %}
+    
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

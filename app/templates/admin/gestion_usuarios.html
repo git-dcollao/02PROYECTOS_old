@@ -1,0 +1,477 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Mensajes de Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-users-cog"></i> Gestión de Usuarios por Recinto
+                    </h2>
+                    <p class="text-muted mb-0">Asignación de recintos adicionales a trabajadores de mis recintos</p>
+                </div>
+                <div>
+                    <span class="badge bg-primary fs-6">
+                        <i class="fas fa-user-shield"></i> ADMINISTRADOR
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    {% if trabajadores and estructura %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success"><i class="fas fa-users"></i> Trabajadores</h5>
+                    <h3 class="text-success">{{ trabajadores|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info"><i class="fas fa-building"></i> Recintos Disponibles</h5>
+                    <h3 class="text-info">{{ estadisticas.total_recintos }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning"><i class="fas fa-link"></i> Asignaciones</h5>
+                    <h3 class="text-warning">{{ estadisticas.total_asignaciones }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary"><i class="fas fa-tasks"></i> Mis Recintos</h5>
+                    <h3 class="text-primary">{{ estadisticas.recintos_gestionados }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de recintos gestionados -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Recintos que Gestiono
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for recinto in recintos_gestionados %}
+                        <div class="col-md-4 mb-2">
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-building"></i> {{ recinto.nombre }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <small class="text-muted">
+                        Solo puedes asignar recintos adicionales a trabajadores que pertenecen a estos recintos.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matriz de Asignaciones -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-table"></i> Matriz de Asignaciones
+            </h5>
+            <button class="btn btn-outline-secondary btn-sm" onclick="actualizarMatriz()">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+        <div class="card-body">
+            {% if trabajadores %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered matriz-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th rowspan="3" class="align-middle text-center worker-header">
+                                <i class="fas fa-user"></i><br>Trabajador
+                            </th>
+                            {% for sector, tipos_dict in estructura.items() %}
+                                {% set sector_colspan = tipos_dict.values() | map('length') | sum %}
+                                <th colspan="{{ sector_colspan }}" class="text-center sector-header">
+                                    {{ sector.nombre }}
+                                </th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for sector, tipos_dict in estructura.items() %}
+                                {% for tipo, recintos_list in tipos_dict.items() %}
+                                    <th colspan="{{ recintos_list|length }}" class="text-center tipo-header">
+                                        {{ tipo.nombre }}
+                                    </th>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for sector, tipos_dict in estructura.items() %}
+                                {% for tipo, recintos_list in tipos_dict.items() %}
+                                    {% for recinto in recintos_list %}
+                                        <th class="text-center recinto-header" title="{{ recinto.nombre }}">
+                                            <small>{{ recinto.nombre[:15] }}{% if recinto.nombre|length > 15 %}...{% endif %}</small>
+                                        </th>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trabajador in trabajadores %}
+                        <tr>
+                            <td class="worker-cell">
+                                <div class="d-flex align-items-center">
+                                    <div class="worker-avatar me-2">
+                                        {{ trabajador.nombre[:2].upper() }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ trabajador.nombre }}</strong><br>
+                                        <small class="text-muted">{{ trabajador.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            {% for sector, tipos_dict in estructura.items() %}
+                                {% for tipo, recintos_list in tipos_dict.items() %}
+                                    {% for recinto in recintos_list %}
+                                        <td class="text-center assignment-cell">
+                                            {% set is_assigned = recinto.id in asignaciones.get(trabajador.id, []) %}
+                                            {% set is_home_recinto = trabajador.recinto_id == recinto.id %}
+                                            
+                                            {% if is_home_recinto %}
+                                                <span class="badge bg-success" title="Recinto de origen">
+                                                    <i class="fas fa-home"></i>
+                                                </span>
+                                            {% else %}
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input class="form-check-input assignment-checkbox" 
+                                                           type="checkbox" 
+                                                           id="checkbox_{{ trabajador.id }}_{{ recinto.id }}"
+                                                           {% if is_assigned %}checked{% endif %}
+                                                           onchange="toggleAsignacionCheckbox({{ trabajador.id }}, {{ recinto.id }}, this.checked)"
+                                                           title="{% if is_assigned %}Desasignar{% else %}Asignar{% endif %} {{ recinto.nombre }}">
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay trabajadores para gestionar</h5>
+                <p class="text-muted">
+                    No tienes trabajadores en los recintos que gestionas, o no tienes recintos asignados.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+            <h5 class="text-muted">No tienes recintos asignados</h5>
+            <p class="text-muted">
+                Contacta con un Super Administrador para que te asigne recintos para gestionar.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirmar Acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+        <div>Procesando...</div>
+    </div>
+</div>
+
+<style>
+.matriz-table {
+    font-size: 0.85rem;
+}
+
+.worker-header {
+    background-color: #343a40 !important;
+    color: white;
+    width: 200px;
+    min-width: 200px;
+}
+
+.sector-header {
+    background-color: #495057 !important;
+    color: white;
+}
+
+.tipo-header {
+    background-color: #6c757d !important;
+    color: white;
+}
+
+.recinto-header {
+    background-color: #adb5bd !important;
+    color: #333;
+    width: 120px;
+    min-width: 120px;
+}
+
+.worker-cell {
+    background-color: #f8f9fa;
+    font-weight: 500;
+    width: 200px;
+    min-width: 200px;
+}
+
+.worker-avatar {
+    width: 32px;
+    height: 32px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.assignment-cell {
+    width: 120px;
+    min-width: 120px;
+    padding: 8px 4px;
+}
+
+.assignment-checkbox {
+    transform: scale(1.3);
+    cursor: pointer;
+}
+
+.assignment-checkbox:hover {
+    transform: scale(1.4);
+}
+
+.assignment-checkbox:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-spinner {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    color: #007bff;
+}
+
+@media (max-width: 768px) {
+    .worker-header, .worker-cell {
+        width: 150px;
+        min-width: 150px;
+    }
+    
+    .recinto-header, .assignment-cell {
+        width: 80px;
+        min-width: 80px;
+    }
+}
+</style>
+
+<script>
+let pendingAction = null;
+
+function toggleAsignacionCheckbox(trabajadorId, recintoId, isChecked) {
+    // Buscar información del trabajador y recinto
+    const trabajadorName = document.querySelector(`tr:has(input[id*="${trabajadorId}_${recintoId}"])`).querySelector('strong').textContent;
+    const checkbox = document.getElementById(`checkbox_${trabajadorId}_${recintoId}`);
+    const recintoName = checkbox.title.replace('Asignar ', '').replace('Desasignar ', '');
+    
+    const actionText = isChecked ? 'asignar' : 'desasignar';
+    const btnClass = isChecked ? 'btn-success' : 'btn-danger';
+    
+    document.getElementById('confirmModalLabel').textContent = `Confirmar ${actionText}`;
+    document.getElementById('confirmModalBody').innerHTML = `
+        <p>¿Está seguro que desea <strong>${actionText}</strong> el recinto:</p>
+        <p class="text-center">
+            <span class="badge bg-info">${recintoName}</span>
+        </p>
+        <p>al trabajador:</p>
+        <p class="text-center">
+            <span class="badge bg-primary">${trabajadorName}</span>
+        </p>
+    `;
+    
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.className = `btn ${btnClass}`;
+    confirmBtn.textContent = actionText.charAt(0).toUpperCase() + actionText.slice(1);
+    
+    // Guardar la acción pendiente
+    pendingAction = { trabajadorId, recintoId, asignar: isChecked, checkbox: checkbox };
+    
+    // Mostrar modal
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+document.getElementById('confirmBtn').addEventListener('click', function() {
+    if (!pendingAction) return;
+    
+    const { trabajadorId, recintoId, asignar, checkbox } = pendingAction;
+    
+    // Cerrar modal y mostrar loading
+    bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    fetch('{{ url_for("controllers.asignar_recinto_usuario") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            trabajador_id: trabajadorId,
+            recinto_id: recintoId,
+            asignar: asignar
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        if (data.success) {
+            // El checkbox ya está actualizado, solo actualizamos el título
+            if (asignar) {
+                checkbox.title = `Desasignar ${checkbox.title.replace('Asignar ', '')}`;
+            } else {
+                checkbox.title = `Asignar ${checkbox.title.replace('Desasignar ', '')}`;
+            }
+            
+            // Mostrar mensaje de éxito
+            showAlert('success', data.message);
+        } else {
+            // Revertir el checkbox si hubo error
+            checkbox.checked = !asignar;
+            showAlert('danger', data.error || 'Error desconocido');
+        }
+        
+        pendingAction = null;
+    })
+    .catch(error => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        // Revertir el checkbox si hubo error
+        checkbox.checked = !asignar;
+        showAlert('danger', 'Error de conexión: ' + error.message);
+        pendingAction = null;
+    });
+});
+
+function actualizarMatriz() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Cerrar modal si se hace clic fuera o se cancela
+document.getElementById('confirmModal').addEventListener('hidden.bs.modal', function () {
+    if (pendingAction && pendingAction.checkbox) {
+        // Revertir el checkbox si se cancela la acción
+        pendingAction.checkbox.checked = !pendingAction.asignar;
+    }
+    pendingAction = null;
+});
+
+// Manejar el botón cancelar específicamente
+document.querySelector('[data-bs-dismiss="modal"]').addEventListener('click', function() {
+    if (pendingAction && pendingAction.checkbox) {
+        // Revertir el checkbox si se cancela la acción
+        pendingAction.checkbox.checked = !pendingAction.asignar;
+    }
+});
+</script>
+{% endblock %}

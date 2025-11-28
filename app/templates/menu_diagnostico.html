@@ -1,0 +1,208 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Diagnóstico del Menú{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-stethoscope fs-4 me-3"></i>
+                        <div>
+                            <h3 class="mb-1">Diagnóstico Completo del Menú</h3>
+                            <small class="opacity-75">Sistema de verificación y análisis del menú dinámico</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Test 1: Estado de autenticación -->
+                    <div class="alert alert-info border-0 shadow-sm mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="alert-icon me-3">
+                                <i class="fas fa-user-check fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Test 1: Estado de Autenticación</h4>
+                        </div>
+                        {% set user = get_current_user() %}
+                        {% if user %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>✅ Usuario autenticado:</strong> {{ user.nombre }}</p>
+                                    <p><strong>📧 Email:</strong> {{ user.email }}</p>
+                                    <p><strong>🆔 ID:</strong> {{ user.id }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>🎭 Rol:</strong> 
+                                        <span class="badge bg-primary">{{ user.rol.value if user.rol else 'Sin rol' }}</span>
+                                    </p>
+                                    <p><strong>⚡ Estado:</strong> 
+                                        <span class="badge bg-success">{{ 'Activo' if user.activo else 'Inactivo' }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <p><strong>❌ Usuario NO autenticado o no disponible</strong></p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Test 2: Funciones del menú -->
+                    <div class="alert alert-warning border-0 shadow-sm mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="alert-icon me-3">
+                                <i class="fas fa-cogs fs-3"></i>
+                            </div>
+                            <h4 class="mb-0">Test 2: Funciones del Menú</h4>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="border rounded p-3">
+                                    <h6 class="fw-bold">get_menu_item_count():</h6>
+                                    {% set count = get_menu_item_count() %}
+                                    {% if count is not none %}
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-success me-2">✅</span>
+                                            <span><strong>Resultado:</strong> {{ count }} elementos</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-danger me-2">❌</span>
+                                            <span><strong>Error:</strong> Función devuelve None</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="border rounded p-3">
+                                    <h6 class="fw-bold">has_menu_access('/dashboard'):</h6>
+                                    {% set access = has_menu_access('/dashboard') %}
+                                    {% if access is not none %}
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge {{ 'bg-success' if access else 'bg-warning' }} me-2">
+                                                {{ "✅" if access else "⚠️" }}
+                                            </span>
+                                            <span><strong>Acceso a dashboard:</strong> {{ access }}</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-danger me-2">❌</span>
+                                            <span><strong>Error:</strong> Función devuelve None</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+            <!-- Test 3: Contenido del menú -->
+            <div class="alert alert-success">
+                <h4><i class="fas fa-list"></i> Test 3: Contenido del Menú</h4>
+                
+                {% set user_menu = get_user_menu() %}
+                {% if user_menu %}
+                    <p><strong>✅ Menú obtenido:</strong> {{ user_menu|length }} categorías</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Icono</th>
+                                    <th>Páginas</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in user_menu %}
+                                    <tr>
+                                        <td><strong>{{ category.category }}</strong></td>
+                                        <td><i class="{{ category.icon }}"></i></td>
+                                        <td><span class="badge bg-primary">{{ category.count }}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="collapse" data-bs-target="#cat-{{ loop.index }}">
+                                                Ver páginas
+                                            </button>
+                                            <div class="collapse mt-2" id="cat-{{ loop.index }}">
+                                                {% for page in category.pages %}
+                                                    <div class="small">
+                                                        <i class="{{ page.icon }}"></i> 
+                                                        <a href="{{ page.url }}">{{ page.name }}</a>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p><strong>❌ Menú vacío o None</strong></p>
+                    <p>Posibles causas:</p>
+                    <ul>
+                        <li>Usuario no tiene permisos configurados</li>
+                        <li>Error en la función get_user_menu()</li>
+                        <li>Base de datos sin páginas configuradas</li>
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Test 4: HTML del menú renderizado -->
+            <div class="alert alert-secondary">
+                <h4><i class="fas fa-code"></i> Test 4: Renderizado del Menú</h4>
+                
+                {% set user = get_current_user() %}
+                {% if user %}
+                    <p><strong>🎨 Intentando renderizar el menú simple...</strong></p>
+                    
+                    <!-- Mostrar menú inline para debug -->
+                    <div style="border: 2px dashed #007bff; padding: 15px; margin: 10px 0; background: #f8f9fa;">
+                        <h6>Menú renderizado aquí:</h6>
+                        {% if get_user_menu()|length > 0 %}
+                            <p><strong>✅ Menú disponible:</strong></p>
+                            <ul>
+                            {% for category in get_user_menu() %}
+                                <li><strong>{{ category.category }}</strong> ({{ category.count }} páginas)</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p><strong>❌ Menú vacío</strong></p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p><strong>❌ No se puede renderizar:</strong> Usuario no autenticado</p>
+                {% endif %}
+            </div>
+
+                    <!-- Botones de navegación -->
+                    <div class="text-center mt-5">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                                <i class="fas fa-home me-2"></i>Volver al Inicio
+                            </a>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-info">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                            <button onclick="location.reload()" class="btn btn-outline-primary">
+                                <i class="fas fa-refresh me-2"></i>Recargar
+                            </button>
+                            <a href="/auth/logout" class="btn btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS para los collapse -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+

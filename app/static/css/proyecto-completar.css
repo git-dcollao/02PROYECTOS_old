@@ -1,0 +1,1501 @@
+/* =====================================================
+   ESTILOS PRINCIPALES PARA PROYECTO COMPLETAR
+   ===================================================== */
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #5a9bff);
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.table td {
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.requerimiento-row:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    transition: background-color 0.2s ease;
+}
+
+/* =====================================================
+   ESTILOS PARA DHTMLX GANTT
+   ===================================================== */
+
+.dhtmlx_cal_container {
+    border: 1px solid #cecece;
+    border-radius: 0.375rem;
+}
+
+.gantt_container {
+    border-radius: 0.375rem;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.gantt_task_line {
+    border-radius: 4px;
+}
+
+.gantt_task_progress {
+    border-radius: 4px;
+}
+
+.gantt_grid_scale,
+.gantt_task_scale {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+.gantt_row.odd {
+    background: #f8f9fa;
+}
+
+.gantt_row {
+    border-bottom: 1px solid #e9ecef;
+    min-height: 40px;
+}
+
+.gantt_row:hover {
+    background: rgba(0, 123, 255, 0.08) !important;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.gantt_grid_data .gantt_cell {
+    border-right: 1px solid #e9ecef;
+    padding: 6px 8px;
+    vertical-align: middle;
+    font-size: 12px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+}
+
+/* Habilitar redimensionamiento de columnas */
+.gantt_grid_scale .gantt_grid_head_cell {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    padding: 10px 8px;
+    white-space: nowrap;
+    text-align: center;
+    position: relative;
+    cursor: default;
+}
+
+/* Agregar divisor redimensionable entre columnas */
+.gantt_grid_head_cell::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 25%;
+    height: 50%;
+    width: 2px;
+    background: #dee2e6;
+    cursor: col-resize;
+}
+
+/* =====================================================
+   ESTILOS PARA CONTROLES DE GANTT
+   ===================================================== */
+
+.gantt-proportion-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.proportion-slider {
+    min-width: 120px;
+    flex: 1;
+}
+
+.proportion-value {
+    font-size: 11px;
+    color: #6c757d;
+    white-space: nowrap;
+    min-width: 60px;
+}
+
+.gantt-controls-card {
+    border-left: 4px solid #007bff;
+}
+
+/* =====================================================
+   ESTILOS PARA GANTT HTML FALLBACK - MEJORADOS
+   ===================================================== */
+
+.gantt-html-container {
+    background: white;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.gantt-table-compact th,
+.gantt-table-compact td {
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+    line-height: 1.3;
+}
+
+/* Contenedor principal del Gantt visual */
+.gantt-visual-container {
+    min-height: 400px;
+    max-height: 800px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: #fff;
+    overflow: auto !important;
+    position: relative;
+}
+
+/* Grid izquierdo con nombres de tareas */
+.gantt-grid {
+    background: #fff;
+    border-right: 2px solid #dee2e6;
+    min-height: 100%;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+/* Encabezado del grid */
+.gantt-header {
+    background: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Contenedor de tareas del grid */
+.gantt-tasks-visual {
+    overflow-y: visible;
+    min-height: 100%;
+}
+
+/* Filas de tareas en el grid */
+.gantt-task-row-visual {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+    min-height: 35px;
+    display: flex;
+    align-items: center;
+}
+
+.gantt-task-row-visual:hover {
+    background-color: rgba(0, 123, 255, 0.05) !important;
+}
+
+/* Timeline derecho con barras */
+.gantt-timeline {
+    background: #fff;
+    overflow: auto;
+    min-height: 100%;
+    position: relative;
+}
+
+/* Encabezado del timeline */
+.gantt-timeline-header {
+    background: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    white-space: nowrap;
+    overflow-x: visible;
+}
+
+/* Contenedor de barras de tareas */
+.gantt-timeline-tasks {
+    position: relative;
+    overflow: visible;
+    min-height: 100%;
+    background: #fff;
+}
+
+/* Barras individuales de tareas */
+.gantt-task-bar-visual {
+    position: relative;
+    min-height: 35px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.gantt-task-bar-visual:hover {
+    background-color: rgba(0, 123, 255, 0.05) !important;
+}
+
+/* Mejoras para el scroll sincronizado */
+.gantt-visual-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.gantt-visual-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.gantt-visual-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.gantt-visual-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Estilos para los controles de visualización */
+.gantt-controls-section {
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+.gantt-timeline-header {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.gantt-timeline-tasks {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.gantt-task-bar-visual {
+    transition: opacity 0.2s ease;
+}
+
+.gantt-task-bar-visual:hover {
+    opacity: 0.9;
+}
+
+/* =====================================================
+   ESTILOS RESPONSIVOS
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .table th,
+    .table td {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .gantt_container {
+        min-height: 300px;
+    }
+    
+    .gantt_grid_data .gantt_cell {
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+    
+    .gantt-visual-container .col-md-4,
+    .gantt-visual-container .col-md-8 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .gantt-timeline {
+        margin-top: 1rem;
+        border-top: 2px solid #dee2e6;
+    }
+    
+    .proportion-slider {
+        min-width: 80px;
+    }
+    
+    .btn-group-sm .btn {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.7rem;
+    }
+    
+    .modal-xl {
+        max-width: 95%;
+    }
+    
+    .gantt-controls-card .row {
+        flex-direction: column;
+    }
+    
+    .gantt-controls-card .col-md-6 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* =====================================================
+   MEJORAS DE ACCESIBILIDAD
+   ===================================================== */
+
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: #007bff;
+}
+
+.alert {
+    border-radius: 0.375rem;
+}
+
+.modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* =====================================================
+   ANIMACIONES Y TRANSICIONES
+   ===================================================== */
+
+.card {
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.alert {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =====================================================
+   ESTILOS PARA SPINNER Y LOADING
+   ===================================================== */
+
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+.gantt-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #6c757d;
+}
+
+/* =====================================================
+   ESTILOS PARA BADGES Y ETIQUETAS
+   ===================================================== */
+
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.025em;
+}
+
+.badge.bg-primary {
+    background-color: #007bff !important;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+/* =====================================================
+   ESTILOS PARA TOOLTIPS PERSONALIZADOS
+   ===================================================== */
+
+[title]:hover {
+    position: relative;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* =====================================================
+   ESTILOS ESPECÍFICOS PARA ESTADÍSTICAS
+   ===================================================== */
+
+.stats-card {
+    border-radius: 0.5rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.stats-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* =====================================================
+   ESTILOS PARA FILTROS Y BÚSQUEDA
+   ===================================================== */
+
+.filter-container {
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* =====================================================
+   MEJORAS PARA IMPRESIÓN
+   ===================================================== */
+
+@media print {
+    .modal-content {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .btn, 
+    .modal-header .btn-close,
+    .modal-footer {
+        display: none !important;
+    }
+    
+    .gantt_container,
+    .gantt-visual-container {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+    
+    .table {
+        font-size: 10px;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6;
+        box-shadow: none;
+    }
+}
+
+.gantt_grid_head_cell:hover::after {
+    background: rgba(0, 123, 255, 0.3);
+}
+
+/* Mejorar el divisor visual entre columnas */
+.gantt_cell {
+    border-right: 2px solid #e9ecef !important;
+    position: relative;
+    cursor: default;
+}
+
+/* Habilitar redimensionamiento para celdas de datos */
+.gantt_cell::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -2px;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    z-index: 10;
+    cursor: col-resize;
+    transition: background 0.2s ease;
+}
+
+.gantt_cell:hover::after {
+    background: rgba(0, 123, 255, 0.2);
+}
+
+/* Indicador visual de resize para celdas */
+.gantt_cell::before {
+    content: '';
+    position: absolute;
+    top: 5%;
+    right: -1px;
+    width: 2px;
+    height: 90%;
+    background: #bdbdbd;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    cursor: col-resize;
+    z-index: 20;
+}
+
+.gantt_cell:hover::before {
+    opacity: 0.7;
+    background: #2196f3;
+}
+
+/* Estado activo durante redimensionamiento de celdas */
+.gantt_cell.column-resizing {
+    background: rgba(33, 150, 243, 0.1) !important;
+    border-right: 2px solid #2196f3 !important;
+}
+
+.gantt_cell.column-resizing::after {
+    background: rgba(33, 150, 243, 0.4) !important;
+    width: 6px;
+}
+
+/* Mejorar la selección visual durante resize */
+.gantt_grid_data .gantt_cell:hover {
+    background: rgba(0, 123, 255, 0.05) !important;
+    cursor: col-resize;
+}
+
+/* Área de manejo específica para celdas */
+.gantt_cell .cell-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 100;
+}
+
+.gantt_cell .cell-resize-handle:hover {
+    background: rgba(33, 150, 243, 0.3);
+}
+
+/* Hover effect para columnas redimensionables */
+.gantt_grid_scale .gantt_grid_head_cell:hover {
+    background: #e3f2fd !important;
+    cursor: col-resize;
+}
+
+/* Mejorar la visualización del grid */
+.gantt_grid {
+    border-right: 2px solid #dee2e6;
+    background: white;
+}
+
+/* Líneas divisorias más visibles */
+.gantt_grid_data .gantt_row {
+    border-right: 1px solid #dee2e6;
+}
+
+.gantt_grid_data .gantt_cell {
+    border-right: 1px solid #e9ecef;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+/* Columnas con resize habilitado */
+.gantt_grid_scale .gantt_grid_head_cell[data-column-name] {
+    cursor: col-resize;
+    position: relative;
+    user-select: none;
+}
+
+.gantt_grid_scale .gantt_grid_head_cell[data-column-name]:hover {
+    background: linear-gradient(to bottom, #e3f2fd, #f8f9fa) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Indicador visual de redimensionamiento activo */
+.gantt_grid_scale .gantt_grid_head_cell.resizing {
+    background: #bbdefb !important;
+    cursor: col-resize !important;
+}
+
+/* Separador redimensionable mejorado */
+.gantt_grid_scale .gantt_grid_head_cell::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    right: -1px;
+    width: 2px;
+    height: 80%;
+    background: #bdbdbd;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    cursor: col-resize;
+    z-index: 20;
+}
+
+.gantt_grid_scale .gantt_grid_head_cell:hover::before {
+    opacity: 1;
+    background: #2196f3;
+}
+
+/* Mejorar la respuesta visual durante el resize */
+.gantt_grid_scale .gantt_grid_head_cell.column-resizing {
+    background: #e1f5fe !important;
+    border-right: 2px solid #0277bd !important;
+}
+
+/* Cursor de redimensionamiento para toda el área de la columna */
+.gantt_grid_scale .gantt_grid_head_cell[style*="cursor"] {
+    cursor: col-resize !important;
+}
+
+/* Estilo específico para el área de resize */
+.gantt_grid_scale .gantt_grid_head_cell .resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 100;
+}
+
+.gantt_grid_scale .gantt_grid_head_cell .resize-handle:hover {
+    background: rgba(33, 150, 243, 0.2);
+}
+
+/* Mejorar la visualización de las filas */
+.gantt_row {
+    border-bottom: 1px solid #e9ecef !important;
+    min-height: 35px !important;
+    transition: background-color 0.2s ease;
+}
+
+.gantt_row.odd {
+    background: #f8f9fa !important;
+}
+
+.gantt_row:hover {
+    background: rgba(0, 123, 255, 0.08) !important;
+    cursor: pointer;
+}
+
+/* Indicador visual cuando se está redimensionando */
+.gantt_grid.resizing {
+    user-select: none;
+    cursor: col-resize !important;
+}
+
+.gantt_grid.resizing .gantt_cell {
+    pointer-events: none;
+}
+
+/* Línea guía durante el redimensionamiento */
+.resize-guide {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #2196f3;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* Estilo para el marcador de "hoy" */
+.gantt_marker.today {
+    background: rgba(220, 53, 69, 0.3);
+    border-left: 2px solid #dc3545;
+}
+
+.gantt_marker.today .gantt_marker_content {
+    background: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Mejorar tooltips */
+.gantt_tooltip {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    max-width: 400px;
+    z-index: 10000;
+}
+
+/* Responsive adjustments para grilla */
+@media (max-width: 1400px) {
+    .gantt_grid {
+        min-width: 600px;
+    }
+    
+    [id^="dhtmlxGantt"] {
+        height: 500px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .gantt_grid {
+        min-width: 800px;
+    }
+    
+    [id^="dhtmlxGantt"] {
+        height: 700px !important;
+    }
+}
+
+/* Scrollbar personalizada para el área del Gantt */
+[id^="ganttContainer"]::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+[id^="ganttContainer"]::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+[id^="ganttContainer"]::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+[id^="ganttContainer"]::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mejoras responsivas para DHTMLX */
+@media (max-width: 1200px) {
+    [id^="dhtmlxGantt"] {
+        height: 450px !important;
+        min-height: 400px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    [id^="dhtmlxGantt"] {
+        height: 700px !important;
+    }
+}
+
+/* Estilos para scroll horizontal independiente */
+.gantt_layout_content {
+    overflow-x: auto;
+}
+
+.gantt_grid {
+    overflow-x: auto;
+    border-right: 2px solid #dee2e6;
+}
+
+.gantt_timeline {
+    overflow-x: auto;
+}
+
+/* Personalizar scrollbars */
+.gantt_layout_content::-webkit-scrollbar {
+    height: 12px;
+    width: 12px;
+}
+
+.gantt_layout_content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.gantt_layout_content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.gantt_layout_content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mejorar visualización de texto en columnas */
+.gantt_cell {
+    line-height: 1.3 !important;
+}
+
+/* Estilo para recursos múltiples */
+.recursos-multiple {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recurso-item {
+    background: #e3f2fd;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    border-left: 3px solid #2196f3;
+}
+
+/* Estilos para nombres de actividades con sangría */
+.actividad-nivel-1 {
+    font-weight: 600;
+    color: #333;
+}
+
+.actividad-nivel-2 {
+    font-weight: 500;
+    color: #555;
+    padding-left: 15px;
+}
+
+.actividad-nivel-3 {
+    font-weight: 400;
+    color: #666;
+    padding-left: 30px;
+}
+
+/* Estilos adicionales para clases de tareas DHTMLX */
+.gantt-task-completed .gantt_task_line {
+    background: #4CAF50 !important;
+    border: 1px solid #388E3C !important;
+}
+
+.gantt-task-in-progress .gantt_task_line {
+    background: #2196F3 !important;
+    border: 1px solid #1976D2 !important;
+}
+
+.gantt-task-not-started .gantt_task_line {
+    background: #FF9800 !important;
+    border: 1px solid #F57C00 !important;
+}
+
+/* Resaltar fila seleccionada */
+.gantt_row.gantt_selected {
+    background: rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Estilos específicos para DHTMLX Gantt containers */
+[id^="dhtmlxGantt"] {
+    width: 100% !important;
+    height: 600px !important;
+    min-height: 500px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Estilos mejorados para modal más ancho */
+.modal-xxl {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    margin: 2.5vh auto !important;
+}
+
+.modal-xxl .modal-content {
+    height: 95vh !important;
+    max-height: 95vh !important;
+    border-radius: 0.5rem !important;
+}
+
+.modal-xxl .modal-body {
+    height: calc(95vh - 120px) !important;
+    overflow-y: auto !important;
+    padding: 0 !important;
+}
+
+/* Ajustes específicos para pantallas grandes */
+@media (min-width: 1400px) {
+    .modal-xxl {
+        max-width: 95vw !important;
+        width: 95vw !important;
+    }
+    
+    .modal-xxl .modal-content {
+        height: 95vh !important;
+        max-height: 95vh !important;
+    }
+    
+    .modal-xxl .modal-body {
+        height: calc(95vh - 120px) !important;
+    }
+}
+
+/* Para pantallas extra grandes (1920px+) */
+@media (min-width: 1920px) {
+    .modal-xxl {
+        max-width: 95vw !important;
+        width: 95vw !important;
+        margin: 2.5vh auto !important;
+    }
+    
+    .modal-xxl .modal-content {
+        height: 95vh !important;
+        max-height: 95vh !important;
+    }
+    
+    .modal-xxl .modal-body {
+        height: calc(95vh - 120px) !important;
+    }
+}
+
+/* Ajustar el contenedor del Gantt para mejor visualización */
+[id^="dhtmlxGantt"] {
+    width: 100% !important;
+    height: calc(95vh - 250px) !important;
+    min-height: 600px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Responsive adjustments para grilla con modal más grande */
+@media (max-width: 1400px) {
+    .gantt_grid {
+        min-width: 700px;
+    }
+    
+    [id^="dhtmlxGantt"] {
+        height: calc(95vh - 280px) !important;
+        min-height: 500px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .gantt_grid {
+        min-width: 900px;
+    }
+    
+    [id^="dhtmlxGantt"] {
+        height: calc(95vh - 220px) !important;
+        min-height: 700px !important;
+    }
+}
+
+/* Mejoras para el scroll y contenido del modal */
+.modal-xxl .modal-dialog-scrollable .modal-body {
+    overflow-y: visible !important;
+}
+
+.modal-xxl .container-fluid {
+    padding: 1rem !important;
+    height: 100% !important;
+}
+
+/* Asegurar que el layout del Gantt use todo el espacio disponible */
+.gantt_layout_content {
+    overflow-x: auto;
+    height: 100% !important;
+}
+
+.gantt_container {
+    height: 100% !important;
+}
+
+/* CORREGIDO: Redimensionamiento de layout cells del Gantt */
+.gantt_layout_root .gantt_layout_x {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Configuración específica para el primer layout cell (grilla) */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child {
+    width: 35% !important;
+    min-width: 250px !important;
+    max-width: 70% !important;
+    position: relative;
+    border-right: 3px solid #dee2e6 !important;
+    cursor: default;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Configuración específica para el separador */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell.gantt_layout_cell_resizer {
+    width: 4px !important;
+    min-width: 4px !important;
+    max-width: 8px !important;
+    background: #e9ecef !important;
+    cursor: ew-resize !important;
+    position: relative !important;
+    border-left: 1px solid #dee2e6 !important;
+    border-right: 1px solid #dee2e6 !important;
+    z-index: 10 !important;
+    flex-shrink: 0;
+}
+
+/* Configuración específica para el segundo layout cell (timeline) */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:last-child {
+    width: calc(65% - 4px) !important;
+    min-width: 30% !important;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Forzar que la grilla se mantenga dentro del primer contenedor */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child .gantt_grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto;
+    overflow-y: visible;
+    border-right: none !important;
+}
+
+/* Forzar que el timeline se mantenga dentro del último contenedor */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:last-child .gantt_timeline {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* Separador redimensionable mejorado */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    background: transparent;
+    cursor: ew-resize;
+    z-index: 100;
+    border-right: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child:hover::after {
+    background: rgba(0, 123, 255, 0.2);
+    border-right-color: #007bff;
+}
+
+/* Indicador visual en el separador */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child::before {
+    content: '⋮⋮';
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 2px;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 101;
+    pointer-events: none;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child:hover::before {
+    opacity: 1;
+    color: #007bff;
+    background: #e3f2fd;
+}
+
+/* Estados durante redimensionamiento */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell.resizing {
+    border-right-color: #007bff !important;
+    background: rgba(0, 123, 255, 0.05);
+    box-shadow: inset -2px 0 4px rgba(0, 123, 255, 0.1);
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell.resizing::after {
+    background: rgba(0, 123, 255, 0.4) !important;
+    border-right-color: #007bff !important;
+    width: 8px;
+}
+
+/* Mejorar el comportamiento del separador central */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell_resizer::before {
+    content: '⋮';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #6c757d;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell_resizer:hover {
+    background: #007bff !important;
+    border-color: #0056b3 !important;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell_resizer:hover::before {
+    color: white;
+    opacity: 1;
+}
+
+/* Transiciones suaves para redimensionamiento */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell {
+    transition: width 0.2s ease;
+}
+
+/* Asegurar que el contenido se mantenga dentro de los contenedores */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell .gantt_layout_content {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden;
+}
+
+/* Responsive adjustments para layout cells corregidos */
+@media (max-width: 768px) {
+    .gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child {
+        width: 40% !important;
+        min-width: 200px !important;
+    }
+    
+    .gantt_layout_root .gantt_layout_x .gantt_layout_cell:last-child {
+        width: calc(60% - 4px) !important;
+    }
+}
+
+@media (min-width: 1400px) {
+    .gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child {
+        min-width: 300px !important;
+        max-width: 60% !important;
+    }
+}
+
+/* Manejo de overflow corregido */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:last-child {
+    overflow: auto;
+}
+
+/* Scrollbars para layout cells específicos */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Estados activos para mejor UX */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child:active::after {
+    background: rgba(0, 123, 255, 0.6) !important;
+    border-right-color: #0056b3 !important;
+}
+
+/* Línea guía durante redimensionamiento de layout corregida */
+.layout-resize-guide {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #007bff;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.8;
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+/* SIMPLIFICADO: Redimensionamiento directo para DHTMLX Gantt */
+.gantt_layout_cell[data-column="grid"] {
+    width: var(--grid-width, 35%) !important;
+    min-width: 250px !important;
+    max-width: 70% !important;
+    flex-shrink: 0 !important;
+    position: relative;
+    border-right: 3px solid #dee2e6 !important;
+}
+
+.gantt_layout_cell[data-column="timeline"] {
+    width: var(--timeline-width, 65%) !important;
+    min-width: 30% !important;
+    flex: 1 !important;
+}
+
+/* Separador redimensionable simple */
+.gantt_layout_cell_resizer {
+    width: 3px !important;
+    background: #dee2e6 !important;
+    cursor: ew-resize !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+.gantt_layout_cell_resizer:hover {
+    background: #007bff !important;
+}
+
+.gantt_layout_cell_resizer::before {
+    content: '⋮';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #6c757d;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.gantt_layout_cell_resizer:hover::before {
+    color: white;
+    opacity: 1;
+}
+
+/* Controles de proporción mejorados */
+.gantt-proportion-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.gantt-proportion-controls .form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0;
+    min-width: 80px;
+    color: #495057;
+}
+
+.gantt-proportion-controls .proportion-slider {
+    flex: 1;
+    margin: 0 10px;
+    accent-color: #007bff;
+}
+
+.gantt-proportion-controls .proportion-value {
+    min-width: 70px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #007bff;
+    text-align: center;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+/* Variables CSS para proporciones */
+:root {
+    --grid-width: 35%;
+    --timeline-width: 65%;
+}
+
+/* Eliminar estilos conflictivos anteriores */
+.gantt_grid,
+.gantt_timeline,
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child,
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:last-child {
+    /* Resetear estilos conflictivos */
+    width: auto !important;
+    max-width: none !important;
+    flex: none !important;
+}
+
+/* Estados durante redimensionamiento */
+.gantt_layout_cell.resizing-layout {
+    border-right-color: #007bff !important;
+    background: rgba(0, 123, 255, 0.05);
+    box-shadow: inset -2px 0 4px rgba(0, 123, 255, 0.1);
+}
+
+/* Línea guía durante redimensionamiento manual */
+.proportion-resize-guide {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(to bottom, #007bff, #0056b3);
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Estados activos para mejor UX */
+.gantt_grid:active::after {
+    background: rgba(0, 123, 255, 0.7) !important;
+    border-right-color: #0056b3 !important;
+}
+
+/* ELIMINAR estilos conflictivos anteriores del layout */
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child,
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:last-child,
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child::after,
+.gantt_layout_root .gantt_layout_x .gantt_layout_cell:first-child::before {
+    /* Anulados - usar los nuevos estilos de .gantt_grid y .gantt_timeline */
+    all: unset;
+}
+
+/* Mejorar scrollbars para el timeline del Gantt */
+.gantt_task_area,
+.gantt_task_data,
+.gantt_timeline_area {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Scrollbars webkit para mejor compatibilidad */
+.gantt_task_area::-webkit-scrollbar,
+.gantt_task_data::-webkit-scrollbar,
+.gantt_timeline_area::-webkit-scrollbar {
+    height: 12px;
+    width: 12px;
+}
+
+.gantt_task_area::-webkit-scrollbar-track,
+.gantt_task_data::-webkit-scrollbar-track,
+.gantt_timeline_area::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.gantt_task_area::-webkit-scrollbar-thumb,
+.gantt_task_data::-webkit-scrollbar-thumb,
+.gantt_timeline_area::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.gantt_task_area::-webkit-scrollbar-thumb:hover,
+.gantt_task_data::-webkit-scrollbar-thumb:hover,
+.gantt_timeline_area::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Asegurar que las escalas del timeline también tengan scroll */
+.gantt_task_scale {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+.gantt_task_scale::-webkit-scrollbar {
+    height: 8px;
+}
+
+.gantt_task_scale::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+.gantt_task_scale::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 4px;
+}
+
+/* Mejorar la sincronización visual del scroll */
+.gantt_layout_content {
+    position: relative;
+}
+
+/* Indicador visual para scroll horizontal */
+.gantt_task_area::before {
+    content: '⟷ Usa Shift + Rueda para scroll horizontal';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 10px;
+    color: #6c757d;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 6px;
+    border-radius: 3px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.gantt_task_area:hover::before {
+    opacity: 1;
+}
+
+/* Mejorar la visibilidad del contenido durante scroll */
+.gantt_task_area {
+    position: relative;
+    background: white;
+}
+
+/* Sombra para indicar que hay más contenido horizontalmente */
+.gantt_task_area {
+    box-shadow: inset -10px 0 10px -10px rgba(0,0,0,0.1);
+}

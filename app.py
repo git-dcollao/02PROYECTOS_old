@@ -1,33 +1,33 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from config import DevelopmentConfig
 
-app = Flask(__name__)
-app.config.from_object('config.DevelopmentConfig')
+db = SQLAlchemy()
+migrate = Migrate()
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+def create_app(config_class=None):
+    app = Flask(__name__)
+    if config_class:
+        app.config.from_object(config_class)
+    else:
+        app.config.from_object('config.DevelopmentConfig')
 
-from app import models
+    db.init_app(app)
+    migrate.init_app(app, db)
 
-#from app import create_app
-#from config import DevelopmentConfig
-#from flask import Flask
-#from flask_sqlalchemy import SQLAlchemy
-#from flask_migrate import Migrate
-#
-## Crear la instancia de la app
-##app = create_app(config_class=DevelopmentConfig)
-#
-##if __name__ == "__main__":
-#    # Ejecutar la app usando configuraciones globales
-##    app.run(debug=DevelopmentConfig.DEBUG, host=DevelopmentConfig.HOST, port=DevelopmentConfig.PORT)
-#
-#app = Flask(__name__)
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-#db = SQLAlchemy(app)
-#migrate = Migrate(app, db)
-#
+    with app.app_context():
+        from app import models
+
+    return app
+
+from app import create_app
+
+# Crear la aplicación usando la función factory
+app = create_app(DevelopmentConfig)
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5050)
 #from app import models
 #
 #def create_app():

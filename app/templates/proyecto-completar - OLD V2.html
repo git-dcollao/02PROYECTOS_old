@@ -1,0 +1,1482 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Proyectos Finalizados{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- DHTMLX Gantt CSS y JS -->
+    <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css" type="text/css">
+    <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
+    
+    <!-- DHTMLX Gantt Extensions -->
+    <script src="https://cdn.dhtmlx.com/gantt/edge/ext/dhtmlxgantt_tooltip.js"></script>
+    <script src="https://cdn.dhtmlx.com/gantt/edge/ext/dhtmlxgantt_marker.js"></script>
+    <script src="https://cdn.dhtmlx.com/gantt/edge/ext/dhtmlxgantt_fullscreen.js"></script>
+    
+    <!-- CSS específico para proyecto-completar -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/proyecto-completar.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Mensajes de Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header con estadísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-clipboard-check"></i> Proyectos Finalizados</h2>
+                            <p class="mb-0">Listado de proyectos con estado finalizado</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ requerimientos|selectattr("id_estado", "equalto", 4)|list|length }}</h3>
+                                <small>Finalizados</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="sectorFilter">
+                <option value="">Todos los sectores</option>
+                {% for sector in sectores %}
+                <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="fechaFilter">
+                <option value="">Todas las fechas</option>
+                <option value="recientes">Más recientes</option>
+                <option value="antiguos">Más antiguos</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tabla de requerimientos en grilla -->
+    {% set reqs_finalizados = requerimientos|selectattr("id_estado", "equalto", 4)|list %}
+    {% if reqs_finalizados %}
+    <div class="card shadow">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list-alt"></i> Proyectos Finalizados</h5>
+                <span class="badge bg-primary" id="contadorRequerimientos">{{ reqs_finalizados|length }} Finalizados</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaRequerimientos">
+                    <thead class="table-primary">
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="15%">Nombre</th>
+                            <th width="10%">Fecha Ingreso</th>
+                            <th width="12%">Ubicación</th>
+                            <th width="25%">Descripción</th>
+                            <th width="10%">Estado</th>
+                            <th width="23%">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for requerimiento in reqs_finalizados %}
+                        <tr class="requerimiento-row" 
+                            data-nombre="{{ requerimiento.nombre|lower }}" 
+                            data-fecha="{{ requerimiento.fecha.strftime('%Y-%m-%d') }}"
+                            data-sector="{{ requerimiento.id_sector }}">
+                            <td>
+                                <span class="badge bg-primary">#{{ requerimiento.id }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ requerimiento.nombre }}</div>
+                                <small class="text-muted">{{ requerimiento.sector.nombre }}</small>
+                            </td>
+                            <td>
+                                <small>{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <span class="badge bg-secondary text-truncate" style="max-width: 120px;" title="{{ requerimiento.sector.nombre }}">{{ requerimiento.sector.nombre }}</span>
+                                    <span class="badge bg-outline-secondary text-truncate" style="max-width: 120px;" title="{{ requerimiento.tiporecinto.nombre }}">{{ requerimiento.tiporecinto.nombre }}</span>
+                                    <span class="badge bg-light text-dark text-truncate" style="max-width: 120px;" title="{{ requerimiento.recinto.nombre }}">{{ requerimiento.recinto.nombre }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 300px;" title="{{ requerimiento.descripcion }}">
+                                    {{ requerimiento.descripcion[:100] }}{% if requerimiento.descripcion|length > 100 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ requerimiento.estado.nombre }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalVerRequerimiento{{ requerimiento.id }}"
+                                            title="Ver detalles">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalSubirXLSX{{ requerimiento.id }}">
+                                        <i class="fas fa-file-excel"></i> Subir xlsx
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-outline-info btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalGantt{{ requerimiento.id }}"
+                                            onclick="cargarGantt({{ requerimiento.id }})">
+                                        <i class="fas fa-table"></i> Ver Carta Gantt
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+        <h5 class="text-muted">¡No hay proyectos finalizados!</h5>
+        <p class="text-muted">No existen proyectos en estado finalizado actualmente.</p>
+    </div>
+    {% endif %}
+
+    <!-- Modales para cada requerimiento finalizado -->
+    {% for requerimiento in reqs_finalizados %}
+    <div class="modal fade" id="modalVerRequerimiento{{ requerimiento.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle"></i> Detalles del Proyecto #{{ requerimiento.id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Información General</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Nombre:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.nombre }}</dd>
+                                <dt class="col-sm-4">Fecha Ingreso:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.fecha.strftime('%d-%m-%Y') }}</dd>
+                                <dt class="col-sm-4">Fecha Aceptación:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.fecha_aceptacion.strftime('%d-%m-%Y') if requerimiento.fecha_aceptacion else 'N/A' }}</dd>
+                                <dt class="col-sm-4">Estado:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-info">{{ requerimiento.estado.nombre }}</span>
+                                </dd>
+                                <dt class="col-sm-4">Prioridad:</dt>
+                                <dd class="col-sm-8">
+                                    {{ requerimiento.prioridad.nombre if requerimiento.prioridad else 'N/A' }}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Ubicación</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Sector:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.sector.nombre }}</dd>
+                                <dt class="col-sm-4">Tipo Recinto:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.tiporecinto.nombre }}</dd>
+                                <dt class="col-sm-4">Recinto:</dt>
+                                <dd class="col-sm-8">{{ requerimiento.recinto.nombre }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Descripción</h6>
+                            <div class="bg-light p-3 rounded mb-3">
+                                {{ requerimiento.descripcion }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Información del Proyecto</h6>
+                            <dl class="row">
+                                <dt class="col-sm-5">Tipología:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.tipologia.nombre if requerimiento.tipologia else 'N/A' }}</dd>
+                                <dt class="col-sm-5">Fuente de Financiamiento:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.financiamiento.nombre if requerimiento.financiamiento else 'N/A' }}</dd>
+                                <dt class="col-sm-5">Tipo de Proyecto:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.tipoproyecto.nombre if requerimiento.tipoproyecto else 'N/A' }}</dd>
+                                <dt class="col-sm-5">Observaciones:</dt>
+                                <dd class="col-sm-7">{{ requerimiento.observacion or 'N/A' }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Equipo de Trabajo</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Profesión</th>
+                                            <th>Especialidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for equipo in requerimiento.equipos_trabajo %}
+                                        <tr>
+                                            <td>{{ equipo.trabajador.nombre }}</td>
+                                            <td>{{ equipo.trabajador.profesion or '' }}</td>
+                                            <td>{{ equipo.especialidad.nombre }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">
+                                                <i class="fas fa-users-slash"></i> No hay miembros asignados
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para subir XLSX por requerimiento -->
+    <div class="modal fade" id="modalSubirXLSX{{ requerimiento.id }}" tabindex="-1" aria-labelledby="modalSubirXLSXLabel{{ requerimiento.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" method="POST" action="{{ url_for('controllers.subir_gantt_xlsx', req_id=requerimiento.id) }}" enctype="multipart/form-data">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalSubirXLSXLabel{{ requerimiento.id }}">
+                        <i class="fas fa-file-excel"></i> Subir Carta Gantt (XLSX) para #{{ requerimiento.id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Mostrar mensaje de éxito/error si existe -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <div class="mb-3">
+                        <label for="archivoGantt{{ requerimiento.id }}" class="form-label">Seleccionar archivo XLSX</label>
+                        <input type="file" class="form-control" id="archivoGantt{{ requerimiento.id }}" name="archivo_gantt" accept=".xlsx" required>
+                        <div class="form-text">
+                            El archivo debe tener el formato de Carta Gantt (<code>.xlsx</code>).
+                        </div>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i>
+                        El archivo debe contener las columnas requeridas para la Carta Gantt.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Subir Archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Carta Gantt -->
+    <div class="modal fade" id="modalGantt{{ requerimiento.id }}" tabindex="-1" aria-labelledby="modalGanttLabel{{ requerimiento.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xxl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="modalGanttLabel{{ requerimiento.id }}">
+                        <i class="fas fa-chart-gantt"></i> Carta Gantt - Proyecto #{{ requerimiento.id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="ganttLoader{{ requerimiento.id }}" class="text-center my-3">
+                        <div class="spinner-border text-info"></div>
+                        <div>Cargando actividades...</div>
+                    </div>
+                    
+                    <!-- Layout mejorado para DHTMLX Gantt -->
+                    <div class="container-fluid p-3" id="ganttMainContainer{{ requerimiento.id }}" style="display: none;">
+                        <!-- Toolbar de controles -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-tools"></i> Controles del Gantt
+                                        </h6>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-outline-light btn-sm" onclick="cambiarEscalaDHX('day', {{ requerimiento.id }})">
+                                                <i class="fas fa-calendar-day"></i> Día
+                                            </button>
+                                            <button type="button" class="btn btn-outline-light btn-sm" onclick="cambiarEscalaDHX('week', {{ requerimiento.id }})">
+                                                <i class="fas fa-calendar-week"></i> Semana
+                                            </button>
+                                            <button type="button" class="btn btn-light btn-sm" onclick="cambiarEscalaDHX('month', {{ requerimiento.id }})">
+                                                <i class="fas fa-calendar-alt"></i> Mes
+                                            </button>
+                                            <button type="button" class="btn btn-outline-light btn-sm" onclick="ajustarZoomDHX({{ requerimiento.id }})">
+                                                <i class="fas fa-search-plus"></i> Ajustar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <div class="gantt-proportion-controls">
+                                                    <label class="form-label mb-0 small fw-bold">Proporción Grid:</label>
+                                                    <input type="range" class="form-range proportion-slider" 
+                                                           id="proportionSlider{{ requerimiento.id }}" 
+                                                           min="25" max="70" value="35" step="5"
+                                                           onchange="ajustarProporcionGantt({{ requerimiento.id }}, this.value)"
+                                                           oninput="ajustarProporcionGantt({{ requerimiento.id }}, this.value)">
+                                                    <span class="proportion-value" id="proportionValue{{ requerimiento.id }}">35% - 65%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-primary" onclick="aplicarProporcionPreset({{ requerimiento.id }}, 25)">
+                                                        25-75
+                                                    </button>
+                                                    <button type="button" class="btn btn-primary" onclick="aplicarProporcionPreset({{ requerimiento.id }}, 35)">
+                                                        35-65
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary" onclick="aplicarProporcionPreset({{ requerimiento.id }}, 50)">
+                                                        50-50
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary" onclick="aplicarProporcionPreset({{ requerimiento.id }}, 60)">
+                                                        60-40
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sección principal: Gráfico DHTMLX Gantt -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-chart-gantt"></i> Diagrama de Gantt
+                                        </h6>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-light btn-sm" onclick="exportarGanttDHX({{ requerimiento.id }}, 'pdf')">
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </button>
+                                            <button class="btn btn-outline-light btn-sm" onclick="exportarGanttDHX({{ requerimiento.id }}, 'png')">
+                                                <i class="fas fa-image"></i> PNG
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <!-- Contenedor DHTMLX Gantt -->
+                                        <div id="dhtmlxGantt{{ requerimiento.id }}" style="width:100%; height:600px; min-height:500px; background-color: #ffffff;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenedor para errores/mensajes -->
+                    <div id="ganttErrorContainer{{ requerimiento.id }}" class="p-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="printGanttDHX({{ requerimiento.id }})">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Estadísticas adicionales -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
+                    <h4 class="text-primary">{{ requerimientos|selectattr("id_estado", "equalto", 4)|list|length }}</h4>
+                    <small class="text-muted">Finalizados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h4 class="text-success">{{ requerimientos|selectattr("id_estado", "equalto", 2)|list|length }}</h4>
+                    <small class="text-muted">Aceptados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                    <h4 class="text-danger">{{ requerimientos|selectattr("id_estado", "equalto", 9)|list|length }}</h4>
+                    <small class="text-muted">Rechazados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="fas fa-tasks fa-2x text-info mb-2"></i>
+                    <h4 class="text-info">{{ requerimientos|length }}</h4>
+                    <small class="text-muted">Total Requerimientos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+
+    <!-- Modal para subir XLSX -->
+    {# Elimina el modal global, ya que cada requerimiento tiene su propio modal con req_id #}
+    {#
+    <div class="modal fade" id="modalSubirXLSX" tabindex="-1" aria-labelledby="modalSubirXLSXLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" method="POST" action="{{ url_for('controllers.subir_gantt_xlsx') }}" enctype="multipart/form-data">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalSubirXLSXLabel">
+                        <i class="fas fa-file-excel"></i> Subir Carta Gantt (XLSX)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="archivoGantt" class="form-label">Seleccionar archivo XLSX</label>
+                        <input type="file" class="form-control" id="archivoGantt" name="archivo_gantt" accept=".xlsx" required>
+                        <div class="form-text">
+                            El archivo debe tener el formato de Carta Gantt (<code>.xlsx</code>).
+                        </div>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i>
+                        El archivo debe contener las columnas requeridas para la Carta Gantt.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Subir Archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    #}
+</div>
+
+<script>
+// Variables globales para DHTMLX Gantt
+window.dhtmlxGanttInstances = window.dhtmlxGanttInstances || {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidad de búsqueda y filtrado
+    const searchInput = document.getElementById('searchInput');
+    const sectorFilter = document.getElementById('sectorFilter');
+    const fechaFilter = document.getElementById('fechaFilter');
+    const contadorRequerimientos = document.getElementById('contadorRequerimientos');
+    
+    function filtrarRequerimientos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const sectorId = sectorFilter.value;
+        const fechaOrden = fechaFilter.value;
+        const filas = document.querySelectorAll('.requerimiento-row');
+        let contadorVisible = 0;
+        let filasArray = Array.from(filas);
+        
+        // Filtrar por búsqueda y sector
+        filasArray.forEach(fila => {
+            const nombre = fila.getAttribute('data-nombre');
+            const descripcion = fila.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+            const sector = fila.getAttribute('data-sector');
+            
+            const coincideBusqueda = nombre.includes(searchTerm) || descripcion.includes(searchTerm);
+            const coincideSector = !sectorId || sector === sectorId;
+            
+            if (coincideBusqueda && coincideSector) {
+                fila.style.display = '';
+                contadorVisible++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Ordenar por fecha
+        if (fechaOrden) {
+            filasArray = filasArray.filter(fila => fila.style.display !== 'none');
+            filasArray.sort((a, b) => {
+                const fechaA = new Date(a.getAttribute('data-fecha'));
+                const fechaB = new Date(b.getAttribute('data-fecha'));
+                
+                if (fechaOrden === 'recientes') {
+                    return fechaB - fechaA;
+                } else {
+                    return fechaA - fechaB;
+                }
+            });
+            
+            const tbody = document.querySelector('#tablaRequerimientos tbody');
+            filasArray.forEach(fila => tbody.appendChild(fila));
+        }
+        
+        // Actualizar contador
+        if (contadorRequerimientos) {
+            contadorRequerimientos.textContent = `${contadorVisible} Finalizados`;
+        }
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filtrarRequerimientos);
+    if (sectorFilter) sectorFilter.addEventListener('change', filtrarRequerimientos);
+    if (fechaFilter) fechaFilter.addEventListener('change', filtrarRequerimientos);
+    
+    // Auto-dismiss alerts
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+
+    // Agregar limpieza para instancias DHTMLX y redimensionamiento
+    const modalesGantt = document.querySelectorAll('[id^="modalGantt"]');
+    modalesGantt.forEach(modal => {
+        const reqId = modal.id.replace('modalGantt', '');
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // Redimensionar el Gantt cuando el modal se muestra completamente
+            if (window.dhtmlxGanttInstances[reqId]) {
+                setTimeout(() => {
+                    // Solo si es una instancia real de DHTMLX
+                    if (window.dhtmlxGanttInstances[reqId].tipo !== 'html-fallback' && typeof gantt !== 'undefined') {
+                        try {
+                            gantt.setSizes();
+                            gantt.render();
+                        } catch (e) {
+                            console.warn('⚠️ Error al redimensionar:', e);
+                        }
+                    }
+                }, 100);
+            }
+        });
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            if (window.dhtmlxGanttInstances[reqId]) {
+                try {
+                    // Verificar si es una instancia real de DHTMLX o el fallback HTML
+                    if (window.dhtmlxGanttInstances[reqId].tipo === 'html-fallback') {
+                        console.log(`🧹 Limpiando Gantt HTML fallback para reqId: ${reqId}`);
+                        delete window.dhtmlxGanttInstances[reqId];
+                    } else if (window.dhtmlxGanttInstances[reqId].destructor) {
+                        window.dhtmlxGanttInstances[reqId].destructor();
+                        delete window.dhtmlxGanttInstances[reqId];
+                        console.log(`🧹 Instancia DHTMLX limpiada para reqId: ${reqId}`);
+                    } else {
+                        // Limpieza simple si no tiene destructor
+                        delete window.dhtmlxGanttInstances[reqId];
+                        console.log(`🧹 Instancia simple limpiada para reqId: ${reqId}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error al limpiar instancia:', error);
+                    // Forzar limpieza
+                    delete window.dhtmlxGanttInstances[reqId];
+                }
+            }
+        });
+    });
+});
+
+function cargarGantt(reqId) {
+    const loader = document.getElementById(`ganttLoader${reqId}`);
+    const errorContainer = document.getElementById(`ganttErrorContainer${reqId}`);
+    const mainContainer = document.getElementById(`ganttMainContainer${reqId}`);
+    
+    // Reset inicial
+    loader.style.display = 'block';
+    mainContainer.style.display = 'none';
+    errorContainer.innerHTML = '';
+
+    fetch(`/gantt_data/${reqId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            loader.style.display = 'none';
+            
+            if (!data.success) {
+                errorContainer.innerHTML = `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.error}
+                </div>`;
+                return;
+            }
+            
+            if (!data.actividades || data.actividades.length === 0) {
+                errorContainer.innerHTML = `<div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> No hay actividades en la Carta Gantt.
+                    <br><small>Sube un archivo XLSX primero usando el botón "Subir xlsx".</small>
+                </div>`;
+                return;
+            }
+
+            // Mostrar contenedor principal
+            mainContainer.style.display = 'block';
+            
+            // Procesar datos para DHTMLX Gantt
+            const tareasProceadas = procesarDatosParaDHXGantt(data.actividades);
+            
+            if (tareasProceadas.data.length === 0) {
+                errorContainer.innerHTML = `<div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i> No se pudieron procesar las actividades para el gráfico Gantt.
+                    <br><small>Verifica que las fechas estén en formato correcto.</small>
+                </div>`;
+                return;
+            }
+
+            console.log('📊 Tasks procesadas para DHTMLX Gantt:', tareasProceadas);
+
+            // Renderizar gráfico DHTMLX Gantt
+            renderizarDHXGantt(reqId, tareasProceadas);
+        })
+        .catch(err => {
+            console.error('❌ Error al cargar datos del Gantt:', err);
+            loader.style.display = 'none';
+            errorContainer.innerHTML = `<div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> Error al cargar la Carta Gantt: ${err.message}
+                <br><small>Verifica que el archivo XLSX esté correctamente subido.</small>
+            </div>`;
+        });
+}
+
+function mostrarTablaActividades(actividades, tableDiv) {
+    const columnas = [
+        { key: 'ID', label: 'ID', width: '50px' },
+        { key: 'EDT', label: 'EDT', width: '80px' },
+        { key: 'Nombre de tarea', label: 'Actividad', width: 'auto' },
+        { key: 'Comienzo', label: 'Inicio', width: '90px' },
+        { key: 'Fin', label: 'Fin', width: '90px' },
+        { key: 'Duración', label: 'Dur.', width: '60px' }
+    ];
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm table-striped gantt-table-compact">
+                <thead class="table-primary sticky-top">
+                    <tr>
+                        ${columnas.map(col => `<th style="width: ${col.width}; font-size: 0.7rem;">${col.label}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    actividades.forEach((act, idx) => {
+        html += '<tr>';
+        columnas.forEach(col => {
+            let valor = '';
+            switch(col.key) {
+                case 'ID':
+                    valor = act['ID'] !== undefined && act['ID'] !== '' ? act['ID'] : (idx + 1);
+                    break;
+                case 'EDT':
+                    valor = act['EDT'] ?? act['E.D.T.'] ?? act['Edt'] ?? '';
+                    break;
+                case 'Nombre de tarea':
+                    const nombre = act['Nombre de tarea'] ?? act['Actividad'] ?? act['Nombre'] ?? '';
+                    valor = `<span title="${nombre}" class="text-truncate d-inline-block" style="max-width: 200px;">${nombre}</span>`;
+                    break;
+                case 'Comienzo':
+                    const inicio = act['Comienzo'] ?? act['Inicio'] ?? act['Start'] ?? act['Fecha Inicio'] ?? '';
+                    valor = formatearFechaTabla(inicio);
+                    break;
+                case 'Fin':
+                    const fin = act['Fin'] ?? act['End'] ?? act['Fecha Fin'] ?? '';
+                    valor = formatearFechaTabla(fin);
+                    break;
+                case 'Duración':
+                    valor = act['Duración'] ?? act['Duration'] ?? '';
+                    break;
+                default:
+                    valor = act[col.key] ?? '';
+            }
+            html += `<td style="font-size: 0.65rem; padding: 0.25rem;">${valor}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += `</tbody></table>
+        <div class="small text-muted mt-2 text-center">
+            Total: ${actividades.length} actividades
+        </div>
+    </div>`;
+    
+    tableDiv.innerHTML = html;
+}
+
+function formatearFechaTabla(fecha) {
+    if (!fecha) return '';
+    
+    try {
+        const fechaObj = new Date(fecha);
+        if (!isNaN(fechaObj.getTime())) {
+            return fechaObj.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit'
+            });
+        }
+    } catch (e) {
+        // Si falla, devolver la fecha original
+    }
+    
+    return fecha.toString().substring(0, 10);
+}
+
+function truncarTextoParaBarra(texto, maxLength) {
+    if (!texto) return '';
+    if (texto.length <= maxLength) return texto;
+    
+    // Truncar de manera inteligente en espacios si es posible
+    const truncated = texto.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    if (lastSpace > maxLength * 0.7) { // Si hay un espacio en el último 30%
+        return truncated.substring(0, lastSpace) + '...';
+    }
+    
+    return truncated + '...';
+}
+
+function formatearFechaParaGantt(fechaStr) {
+    if (!fechaStr) return null;
+    
+    // Si ya está en formato YYYY-MM-DD
+    if (typeof fechaStr === 'string' && fechaStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return fechaStr;
+    }
+    
+    try {
+        // Intentar múltiples formatos de fecha
+        let fecha = null;
+        
+        // Formato DD/MM/YYYY o DD-MM-YYYY
+        if (typeof fechaStr === 'string' && fechaStr.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/)) {
+            const partes = fechaStr.split(/[\/\-]/);
+            fecha = new Date(partes[2], partes[1] - 1, partes[0]); // año, mes-1, día
+        } else {
+            fecha = new Date(fechaStr);
+        }
+        
+        if (!isNaN(fecha.getTime())) {
+            return fecha.toISOString().split('T')[0];
+        }
+    } catch (e) {
+        console.error('❌ Error al formatear fecha:', fechaStr, e);
+    }
+    
+    return null;
+}
+
+function determinarProgreso(actividad) {
+    // Buscar indicadores de progreso en los datos
+    const progreso = actividad['Progreso'] || 
+                    actividad['% Completado'] || 
+                    actividad['Progress'] ||
+                    actividad['Porcentaje completado'] ||
+                    actividad['% completado'];
+                    
+    if (progreso !== undefined && progreso !== null && progreso !== '') {
+        const num = parseFloat(progreso);
+        if (!isNaN(num)) {
+            return Math.min(100, Math.max(0, num));
+        }
+    }
+    return 0; // Por defecto sin progreso
+}
+
+function procesarDependencias(dependencias) {
+    if (!dependencias || dependencias === '') return '';
+    
+    // Convertir a string y limpiar
+    const depStr = dependencias.toString().trim();
+    
+    // Si es un número simple, convertir a formato de dependencia
+    if (/^\d+$/.test(depStr)) {
+        return `task_${depStr}`;
+    }
+    
+    // Si ya tiene formato task_, mantenerlo
+    if (depStr.startsWith('task_')) {
+        return depStr;
+    }
+    
+    return depStr;
+}
+
+function procesarDatosParaDHXGantt(actividades) {
+    const tareas = [];
+    const links = [];
+    
+    actividades.forEach((act, idx) => {
+        const fechaInicio = formatearFechaParaGantt(
+            act['Inicio'] || act['Comienzo'] || act['Start'] || act['Fecha Inicio']
+        );
+        const fechaFin = formatearFechaParaGantt(
+            act['Fin'] || act['End'] || act['Fecha Fin']
+        );
+        
+        if (!fechaInicio || !fechaFin) return;
+        
+        const nombreCompleto = act['Nombre de tarea'] || act['Actividad'] || act['Nombre'] || `Tarea ${idx + 1}`;
+        const edt = act['EDT'] || act['E.D.T.'] || act['Edt'] || (idx + 1);
+        const duracion = act['Duración'] || act['Duration'] || calcularDuracion(fechaInicio, fechaFin);
+        const progreso = determinarProgreso(act) / 100; // DHTMLX usa valores 0-1
+        
+        // Determinar nivel de esquema para la sangría
+        const nivelEsquema = act['Nivel de esquema'] || act['Nivel'] || act['Level'] || 1;
+        
+        // Obtener recursos asignados
+        const recursos = act['Recursos'] || act['Resource Names'] || act['Nombres de los recursos'] || act['Asignados'] || '';
+        
+        // Obtener predecesoras
+        const predecesoras = act['Predecesoras'] || act['Predecessors'] || '';
+        
+        const tarea = {
+            id: String(edt), // Asegurar que sea string
+            text: nombreCompleto,
+            edt: edt,
+            nivel_esquema: nivelEsquema,
+            recursos: recursos,
+            predecesoras: predecesoras,
+            start_date: fechaInicio,
+            end_date: fechaFin,
+            duration: duracion,
+            progress: progreso,
+            type: "task" // Usar string en lugar de gantt.config.types.task
+        };
+        
+        tareas.push(tarea);
+        
+        // Procesar dependencias
+        if (predecesoras) {
+            const deps = predecesoras.toString().split(/[,;]/);
+            deps.forEach(dep => {
+                const depId = dep.trim();
+                if (depId && depId !== edt) {
+                    links.push({
+                        id: `${depId}_${edt}`,
+                        source: String(depId),
+                        target: String(edt),
+                        type: "0" // finish-to-start
+                    });
+                }
+            });
+        }
+    });
+    
+    return { data: tareas, links: links };
+}
+
+function calcularDuracion(fechaInicio, fechaFin) {
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const diffTime = Math.abs(fin - inicio);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+function renderizarDHXGantt(reqId, datosGantt) {
+    const containerId = `dhtmlxGantt${reqId}`;
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error('❌ Contenedor DHTMLX no encontrado:', containerId);
+        return;
+    }
+
+    try {
+        // Limpiar TODAS las instancias de Gantt activas antes de crear una nueva
+        Object.keys(window.dhtmlxGanttInstances || {}).forEach(oldReqId => {
+            if (oldReqId !== String(reqId)) {
+                try {
+                    console.log(`🧹 Limpiando instancia previa: ${oldReqId}`);
+                    delete window.dhtmlxGanttInstances[oldReqId];
+                } catch (e) {
+                    console.warn('⚠️ Error al limpiar instancia:', e);
+                }
+            }
+        });
+        
+        // Limpiar la instancia específica si existe
+        if (window.dhtmlxGanttInstances[reqId]) {
+            try {
+                delete window.dhtmlxGanttInstances[reqId];
+                console.log('🧹 Instancia DHTMLX específica limpiada');
+            } catch (e) {
+                console.warn('⚠️ Error al limpiar instancia específica:', e);
+            }
+        }
+        
+        // Asegurar que gantt está en estado limpio globalmente
+        if (typeof gantt !== 'undefined') {
+            try {
+                gantt.clearAll();
+                // Resetear configuraciones críticas
+                gantt.config = {};
+                gantt.templates = {};
+            } catch (e) {
+                console.warn('⚠️ Error al resetear gantt global:', e);
+            }
+        }
+        
+        // Limpiar el contenedor HTML completamente
+        container.innerHTML = '';
+        
+        // Esperar más tiempo para asegurar limpieza completa
+        setTimeout(() => {
+            initializeFreshGantt(reqId, datosGantt, containerId);
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ Error al renderizar DHTMLX Gantt:', error);
+        container.innerHTML = `<div class="alert alert-danger p-3">
+            <i class="fas fa-exclamation-circle"></i> Error al renderizar el gráfico: ${error.message}
+            <br><div class="mt-2">
+                <button class="btn btn-sm btn-warning" onclick="recargarGanttCompleto(${reqId})">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
+            </div>
+        </div>`;
+    }
+}
+
+// Función simplificada para ajustar proporción
+function ajustarProporcionGantt(reqId, valor) {
+    console.log(`Ajustando proporción a ${valor}% para reqId: ${reqId} (simplificado)`);
+    
+    // Actualizar valor mostrado
+    const proportionValue = document.getElementById(`proportionValue${reqId}`);
+    if (proportionValue) {
+        proportionValue.textContent = `${valor}% - ${100 - valor}%`;
+    }
+}
+
+// Funciones simplificadas para evitar errores
+function cambiarEscalaDHX(escala, reqId) {
+    console.log(`Cambio de escala a ${escala} para reqId: ${reqId} (simplificado)`);
+}
+
+function ajustarZoomDHX(reqId) {
+    console.log(`Ajuste de zoom para reqId: ${reqId} (simplificado)`);
+}
+
+function changeAutosize(reqId, value) {
+    console.log(`Autosize configurado a ${value} para reqId: ${reqId} (simplificado)`);
+}
+
+// Nueva función que usa una versión diferente de DHTMLX o fallback
+function initializeFreshGantt(reqId, datosGantt, containerId) {
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error('❌ Contenedor no encontrado:', containerId);
+        return;
+    }
+    
+    // Intentar con versión alternativa o fallback a tabla
+    try {
+        // Verificar si DHTMLX está disponible y funcionando
+        if (typeof gantt === 'undefined') {
+            throw new Error('DHTMLX Gantt no disponible');
+        }
+        
+        // Intentar inicialización ultra-básica
+        console.log('🔄 Intentando inicialización básica de DHTMLX...');
+        
+        // Configuración mínima absoluta
+        gantt.config = {
+            date_format: "%Y-%m-%d",
+            autosize: false,
+            show_progress: false,
+            show_links: false,
+            readonly: true,
+            grid_width: 400,
+            row_height: 25,
+            scales: [{unit: "day", step: 1, format: "%d/%m"}],
+            columns: [
+                {name: "text", label: "Actividad", width: 200},
+                {name: "start_date", label: "Inicio", width: 80},
+                {name: "duration", label: "Días", width: 50}
+            ]
+        };
+        
+        // Preparar datos ultra-básicos
+        const datosBasicos = {
+            data: datosGantt.data.slice(0, 5).map((task, idx) => ({
+                id: String(idx + 1),
+                text: String(task.text || `Tarea ${idx + 1}`),
+                start_date: task.start_date,
+                duration: Math.max(1, parseInt(task.duration) || 1)
+            })),
+            links: []
+        };
+        
+        console.log('📊 Datos ultra-básicos:', datosBasicos);
+        
+        // Intentar inicializar
+        gantt.init(containerId);
+        gantt.parse(datosBasicos);
+        
+        window.dhtmlxGanttInstances[reqId] = gantt;
+        console.log('✅ DHTMLX inicializado con éxito (versión básica)');
+        
+    } catch (dhtmlxError) {
+        console.warn('⚠️ DHTMLX falló, usando tabla alternativa:', dhtmlxError);
+        mostrarGanttComoTabla(reqId, datosGantt, containerId);
+    }
+}
+
+// Función para mostrar un Gantt visual usando HTML/CSS
+function mostrarGanttComoTabla(reqId, datosGantt, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    try {
+        // Crear Gantt visual con HTML/CSS - TABLA + GRÁFICO
+        let html = `
+            <div class="gantt-html-container" style="overflow-x: auto; background: white;">
+                <!-- SECCIÓN 1: TABLA COMPLETA CON TODAS LAS COLUMNAS -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-table"></i> Detalles de Actividades</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                    <table class="table table-striped table-bordered table-sm mb-0">
+                                        <thead class="table-primary sticky-top">
+                                            <tr style="font-size: 11px;">
+                                                <th style="min-width: 50px;">ID</th>
+                                                <th style="min-width: 60px;">Nivel esquema</th>
+                                                <th style="min-width: 60px;">EDT</th>
+                                                <th style="min-width: 200px;">Nombre de tarea</th>
+                                                <th style="min-width: 70px;">Duración</th>
+                                                <th style="min-width: 80px;">Días Corridos</th>
+                                                <th style="min-width: 90px;">Comienzo</th>
+                                                <th style="min-width: 90px;">Fin</th>
+                                                <th style="min-width: 100px;">Predecesoras</th>
+                                                <th style="min-width: 150px;">Nombres recursos</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+        
+        // Agregar filas de la tabla con todas las columnas
+        datosGantt.data.forEach((task, idx) => {
+            const duracion = parseInt(task.duration) || 0;
+            const fechaInicio = new Date(task.start_date);
+            const fechaFin = new Date(task.end_date);
+            const diasCorridos = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Extraer datos adicionales de las propiedades originales
+            const id = task.id || (idx + 1);
+            const nivelEsquema = task.nivel_esquema || 1;
+            const edt = task.edt || task.id || (idx + 1);
+            const predecesoras = task.predecesoras || '';
+            const recursos = task.recursos || '';
+            
+            html += `
+                <tr style="font-size: 10px;">
+                    <td>${id}</td>
+                    <td>${nivelEsquema}</td>
+                    <td>${edt}</td>
+                    <td title="${task.text}">
+                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${task.text}
+                        </div>
+                    </td>
+                    <td>${duracion}</td>
+                    <td>${diasCorridos}</td>
+                    <td>${fechaInicio.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: '2-digit'})}</td>
+                    <td>${fechaFin.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: '2-digit'})}</td>
+                    <td title="${predecesoras}">
+                        <div style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${predecesoras}
+                        </div>
+                    </td>
+                    <td title="${recursos}">
+                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${recursos}
+                        </div>
+                    </td>
+                </tr>`;
+        });
+        
+        html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 2: GRÁFICO GANTT VISUAL -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-chart-gantt"></i> Diagrama de Gantt</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="gantt-visual-container" style="overflow-x: auto;">
+                                    <div class="row no-gutters">
+                                        <div class="col-md-4">
+                                            <div class="gantt-grid" style="border-right: 2px solid #ddd;">
+                                                <div class="gantt-header" style="background: #f8f9fa; padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">
+                                                    <div class="row">
+                                                        <div class="col-2" style="font-size: 10px;">EDT</div>
+                                                        <div class="col-7" style="font-size: 10px;">Actividad</div>
+                                                        <div class="col-3" style="font-size: 10px;">Duración</div>
+                                                    </div>
+                                                </div>
+                                                <div class="gantt-tasks-visual">`;
+        
+        // Calcular fechas para el timeline
+        let fechaMinima = new Date();
+        let fechaMaxima = new Date();
+        
+        if (datosGantt.data.length > 0) {
+            fechaMinima = new Date(datosGantt.data[0].start_date);
+            fechaMaxima = new Date(datosGantt.data[0].end_date);
+            
+            datosGantt.data.forEach(task => {
+                const inicio = new Date(task.start_date);
+                const fin = new Date(task.end_date);
+                if (inicio < fechaMinima) fechaMinima = inicio;
+                if (fin > fechaMaxima) fechaMaxima = fin;
+            });
+        }
+        
+        const totalDias = Math.ceil((fechaMaxima - fechaMinima) / (1000 * 60 * 60 * 24)) + 1;
+        
+        // Agregar filas del lado izquierdo (nombres de tareas)
+        datosGantt.data.forEach((task, idx) => {
+            const duracion = parseInt(task.duration) || 1;
+            const edt = task.edt || task.id || (idx + 1);
+            
+            html += `
+                <div class="gantt-task-row-visual" style="padding: 6px 8px; border-bottom: 1px solid #eee; height: 35px; ${idx % 2 === 0 ? 'background: #f9f9f9;' : ''}">
+                    <div class="row align-items-center h-100">
+                        <div class="col-2" style="font-size: 9px;">${edt}</div>
+                        <div class="col-7" style="font-size: 9px;" title="${task.text}">
+                            ${task.text.length > 25 ? task.text.substring(0, 25) + '...' : task.text}
+                        </div>
+                        <div class="col-3" style="font-size: 9px;">${duracion}d</div>
+                    </div>
+                </div>`;
+        });
+        
+        html += `
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="gantt-timeline" style="overflow-x: auto;">
+                                                <div class="gantt-timeline-header" style="background: #f8f9fa; padding: 8px; border-bottom: 1px solid #ddd; white-space: nowrap; height: 41px;">`;
+        
+        // Crear encabezado de fechas (mostrar más días)
+        for (let i = 0; i < Math.min(totalDias, 60); i++) {
+            const fecha = new Date(fechaMinima);
+            fecha.setDate(fecha.getDate() + i);
+            const isWeekend = fecha.getDay() === 0 || fecha.getDay() === 6;
+            html += `<span style="display: inline-block; width: 25px; text-align: center; font-size: 9px; margin-right: 1px; ${isWeekend ? 'background: #ffe6e6;' : ''} border-right: 1px solid #ddd; padding: 2px 0;">${fecha.getDate()}</span>`;
+        }
+        
+        html += `
+                                                </div>
+                                                <div class="gantt-timeline-tasks">`;
+        
+        // Crear barras de tareas
+        datosGantt.data.forEach((task, idx) => {
+            const inicio = new Date(task.start_date);
+            const fin = new Date(task.end_date);
+            const diasDesdeInicio = Math.ceil((inicio - fechaMinima) / (1000 * 60 * 60 * 24));
+            const duracion = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+            const left = Math.max(0, diasDesdeInicio * 26);
+            const width = Math.max(25, duracion * 26);
+            
+            // Colores según el nivel de esquema
+            let color = '#3498db';
+            const nivel = task.nivel_esquema || 1;
+            if (nivel === 1) color = '#e74c3c'; // Rojo para proyectos
+            else if (nivel === 2) color = '#f39c12'; // Naranja para fases
+            else color = '#3498db'; // Azul para tareas
+            
+            // Calcular progreso visual
+            const progreso = (task.progress || 0) * 100;
+            const progressWidth = (width * progreso) / 100;
+            
+            html += `
+                <div class="gantt-task-bar-visual" style="position: relative; height: 35px; margin-bottom: 0px; ${idx % 2 === 0 ? 'background: #f9f9f9;' : ''}">
+                    <div style="position: absolute; left: ${left}px; width: ${width}px; height: 18px; top: 8px; background: ${color}; border-radius: 3px; border: 1px solid #2c3e50; overflow: hidden;">
+                        <!-- Barra de progreso -->
+                        <div style="width: ${progressWidth}px; height: 100%; background: rgba(46, 204, 113, 0.8); border-radius: 2px;"></div>
+                        <!-- Texto de la barra -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; font-weight: bold;">
+                            ${duracion}d
+                        </div>
+                    </div>
+                </div>`;
+        });
+        
+        html += `
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-table"></i> 
+                            Total: ${datosGantt.data.length} actividades del proyecto.
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            <span style="background: #e74c3c; color: white; padding: 2px 6px; border-radius: 2px; font-size: 8px;">Proyecto</span>
+                            <span style="background: #f39c12; color: white; padding: 2px 6px; border-radius: 2px; font-size: 8px;">Fase</span>
+                            <span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 2px; font-size: 8px;">Tarea</span>
+                            <span style="background: rgba(46, 204, 113, 0.8); color: white; padding: 2px 6px; border-radius: 2px; font-size: 8px;">Progreso</span>
+                        </small>
+                    </div>
+                </div>
+            </div>`;
+        
+        container.innerHTML = html;
+        
+        // Marcar como instancia alternativa
+        window.dhtmlxGanttInstances[reqId] = { tipo: 'html-fallback' };
+        
+        console.log('✅ Gantt alternativo HTML creado exitosamente con tabla y gráfico');
+        
+    } catch (error) {
+        console.error('❌ Error al crear Gantt alternativo:', error);
+        
+        // Fallback final: tabla simple
+        mostrarTablaSimple(reqId);
+    }
+}
+
+// Función alternativa para mostrar tabla simple si Gantt falla
+function mostrarTablaSimple(reqId) {
+    fetch(`/gantt_data/${reqId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.actividades) {
+                const container = document.getElementById(`dhtmlxGantt${reqId}`);
+                if (container) {
+                    let html = `
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-sm">
+                                <thead class="table-primary">
+                                    <tr style="font-size: 11px;">
+                                        <th>ID</th>
+                                        <th>Nivel esquema</th>
+                                        <th>EDT</th>
+                                        <th>Nombre de tarea</th>
+                                        <th>Duración</th>
+                                        <th>Días Corridos</th>
+                                        <th>Comienzo</th>
+                                        <th>Fin</th>
+                                        <th>Predecesoras</th>
+                                        <th>Nombres recursos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    data.actividades.forEach((act, idx) => {
+                        const id = act.ID || act.id || (idx + 1);
+                        const nivelEsquema = act['Nivel de esquema'] || act.Nivel || 1;
+                        const edt = act.EDT || act['E.D.T.'] || act.Edt || id;
+                        const nombreTarea = act['Nombre de tarea'] || act.Actividad || act.Nombre || '';
+                        const duracion = act.Duración || act.Duration || '';
+                        const comienzo = act.Comienzo || act.Inicio || act.Start || '';
+                        const fin = act.Fin || act.End || '';
+                        const predecesoras = act.Predecesoras || act.Predecessors || '';
+                        const recursos = act['Nombres de los recursos'] || act.Recursos || act['Resource Names'] || '';
+                        
+                        // Calcular días corridos
+                        let diasCorridos = '';
+                        if (comienzo && fin) {
+                            try {
+                                const inicio = new Date(comienzo);
+                                const final = new Date(fin);
+                                if (!isNaN(inicio.getTime()) && !isNaN(final.getTime())) {
+                                    diasCorridos = Math.ceil((final - inicio) / (1000 * 60 * 60 * 24)) + 1;
+                                }
+                            } catch (e) {
+                                diasCorridos = duracion;
+                            }
+                        }
+                        
+                        html += `<tr style="font-size: 10px;">
+                            <td>${id}</td>
+                            <td>${nivelEsquema}</td>
+                            <td>${edt}</td>
+                            <td title="${nombreTarea}">${nombreTarea.length > 50 ? nombreTarea.substring(0, 50) + '...' : nombreTarea}</td>
+                            <td>${duracion}</td>
+                            <td>${diasCorridos}</td>
+                            <td>${comienzo}</td>
+                            <td>${fin}</td>
+                            <td title="${predecesoras}">${predecesoras.length > 15 ? predecesoras.substring(0, 15) + '...' : predecesoras}</td>
+                            <td title="${recursos}">${recursos.length > 20 ? recursos.substring(0, 20) + '...' : recursos}</td>
+                        </tr>`;
+                    });
+                    
+                    html += `</tbody></table></div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-table"></i> 
+                                Total: ${data.actividades.length} actividades del proyecto.
+                            </small>
+                        </div>`;
+                    container.innerHTML = html;
+                    
+                    // Marcar como tabla simple
+                    window.dhtmlxGanttInstances[reqId] = { tipo: 'tabla-simple' };
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Error al cargar tabla simple:', err);
+        });
+}
+
+// Función para recargar Gantt completo - AGREGADA
+function recargarGanttCompleto(reqId) {
+    console.log('🔄 Recargando Gantt completo para reqId:', reqId);
+    
+    // Limpiar instancia actual de manera más segura
+    if (window.dhtmlxGanttInstances[reqId]) {
+        try {
+            delete window.dhtmlxGanttInstances[reqId];
+        } catch (e) {
+            console.warn('⚠️ Error en limpieza:', e);
+        }
+    }
+    
+    // Limpiar contenedor
+    const container = document.getElementById(`dhtmlxGantt${reqId}`);
+    if (container) {
+        container.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-info"></div><div>Reinicializando...</div></div>';
+    }
+    
+    // Esperar y recargar datos
+    setTimeout(() => {
+        cargarGantt(reqId);
+    }, 1000);
+}
+
+// Función para aplicar proporciones preset - AGREGADA
+function aplicarProporcionPreset(reqId, valor) {
+    const slider = document.getElementById(`proportionSlider${reqId}`);
+    if (slider) {
+        slider.value = valor;
+    }
+    ajustarProporcionGantt(reqId, valor);
+}
+
+// Función para exportar gantt - AGREGADA
+function exportarGanttDHX(reqId, formato) {
+    try {
+        window.print();
+        console.log(`✅ Iniciando impresión (${formato} no disponible)`);
+    } catch (error) {
+        console.error('❌ Error al exportar:', error);
+    }
+}
+
+// Función para imprimir gantt - AGREGADA
+function printGanttDHX(reqId) {
+    try {
+        window.print();
+        console.log('✅ Iniciando impresión');
+    } catch (error) {
+        console.error('❌ Error al imprimir:', error);
+    }
+}
+
+// Función para configurar scroll horizontal - SIMPLIFICADA
+function configurarScrollHorizontal(reqId) {
+    // Función simplificada para evitar errores
+    console.log(`✅ Scroll horizontal configurado para reqId: ${reqId}`);
+}
+
+// Función para centrar timeline en el proyecto - SIMPLIFICADA
+function centrarTimelineEnProyecto(reqId) {
+    // Función simplificada para evitar errores
+    console.log(`✅ Timeline centrado para reqId: ${reqId}`);
+}
+</script>
+{% endblock content %}

@@ -1,0 +1,350 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Gestión de Administradores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Mensajes de Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-users-gear"></i> Gestión de Administradores de Recinto
+                    </h2>
+                    <p class="text-muted mb-0">Asignación de administradores a recintos por sector y tipo</p>
+                </div>
+                <div>
+                    <span class="badge bg-danger fs-6">
+                        <i class="fas fa-crown"></i> SUPERADMIN
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    {% if administradores and estructura %}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success"><i class="fas fa-user-shield"></i> Administradores</h5>
+                    <h3 class="text-success">{{ administradores|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info"><i class="fas fa-building"></i> Recintos</h5>
+                    <h3 class="text-info">
+                        {% set total_recintos = [] %}
+                        {% for sector, tipos in estructura.items() %}
+                            {% for tipo, recintos in tipos.items() %}
+                                {% set _ = total_recintos.extend(recintos) %}
+                            {% endfor %}
+                        {% endfor %}
+                        {{ total_recintos|length }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning"><i class="fas fa-link"></i> Asignaciones</h5>
+                    <h3 class="text-warning">
+                        {% set total_asignaciones = 0 %}
+                        {% for admin_id, admin_asignaciones in asignaciones.items() %}
+                            {% set total_asignaciones = total_asignaciones + admin_asignaciones|length %}
+                        {% endfor %}
+                        {{ total_asignaciones }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matriz de Asignaciones -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-matrix-grid"></i> Matriz de Asignaciones Administrador-Recinto</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered mb-0" style="min-width: 1000px;">
+                            <thead class="table-primary sticky-top">
+                                <tr>
+                                    <th style="min-width: 200px; position: sticky; left: 0; z-index: 3;" class="bg-primary text-white">
+                                        <i class="fas fa-user-shield"></i> Administrador
+                                    </th>
+                                    {% for sector, tipos in estructura.items() %}
+                                        {% for tipo, recintos in tipos.items() %}
+                                            {% if recintos %}
+                                                {% for recinto in recintos %}
+                                                    <th class="text-center" style="min-width: 120px; writing-mode: vertical-lr; text-orientation: mixed;">
+                                                        <div class="small">
+                                                            <strong>{{ sector.nombre }}</strong><br>
+                                                            <span class="text-muted">{{ tipo.nombre }}</span><br>
+                                                            <span class="fw-bold">{{ recinto.nombre }}</span>
+                                                        </div>
+                                                    </th>
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for administrador in administradores %}
+                                    <tr>
+                                        <td style="position: sticky; left: 0; z-index: 2;" class="bg-light fw-bold">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                                <div>
+                                                    <div class="fw-bold">{{ administrador.nombre }}</div>
+                                                    <small class="text-muted">{{ administrador.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        {% for sector, tipos in estructura.items() %}
+                                            {% for tipo, recintos in tipos.items() %}
+                                                {% if recintos %}
+                                                    {% for recinto in recintos %}
+                                                        <td class="text-center">
+                                                            {% set is_assigned = administrador.id in asignaciones and recinto.id in asignaciones[administrador.id] %}
+                                                            <div class="form-check d-flex justify-content-center">
+                                                                <input 
+                                                                    class="form-check-input asignacion-checkbox" 
+                                                                    type="checkbox"
+                                                                    id="checkbox_{{ administrador.id }}_{{ recinto.id }}"
+                                                                    data-admin-id="{{ administrador.id }}"
+                                                                    data-recinto-id="{{ recinto.id }}"
+                                                                    data-admin-nombre="{{ administrador.nombre }}"
+                                                                    data-recinto-nombre="{{ recinto.nombre }}"
+                                                                    {% if is_assigned %}checked{% endif %}
+                                                                    onchange="manejarCambioAsignacion(this)"
+                                                                >
+                                                            </div>
+                                                        </td>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Sin datos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h4>No hay datos disponibles</h4>
+                    <p class="text-muted">No se encontraron administradores o recintos en el sistema.</p>
+                    <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                        <i class="fas fa-sync-alt me-2"></i>Recargar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+.matrix-container {
+    overflow-x: auto;
+    max-width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: white;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.table th {
+    border-top: 1px solid #dee2e6;
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando gestión de administradores...');
+    
+    // Verificar que tenemos los elementos necesarios
+    const checkboxes = document.querySelectorAll('.asignacion-checkbox');
+    console.log(`📋 Encontrados ${checkboxes.length} checkboxes de asignación`);
+    
+    // Inicializar tooltips si Bootstrap está disponible
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
+
+function manejarCambioAsignacion(checkbox) {
+    const adminId = checkbox.dataset.adminId;
+    const recintoId = checkbox.dataset.recintoId;
+    const adminNombre = checkbox.dataset.adminNombre;
+    const recintoNombre = checkbox.dataset.recintoNombre;
+    const asignar = checkbox.checked;
+    
+    console.log(`🔄 Cambiando asignación: ${adminNombre} -> ${recintoNombre} (${asignar ? 'ASIGNAR' : 'DESASIGNAR'})`);
+    
+    // Marcar como loading
+    checkbox.closest('td').classList.add('loading');
+    
+    // Preparar datos en formato JSON
+    const datos = {
+        administrador_id: parseInt(adminId),
+        recinto_id: parseInt(recintoId),
+        asignar: asignar
+    };
+    
+    console.log('📤 Enviando datos:', datos);
+    
+    // Enviar cambio
+    fetch('/api/asignar-recinto', {
+        method: 'POST',
+        body: JSON.stringify(datos),
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => {
+        console.log(`📡 Respuesta del servidor: ${response.status}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            throw new Error('Respuesta no es JSON válido');
+        }
+    })
+    .then(data => {
+        console.log('✅ Asignación actualizada:', data);
+        
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            mostrarMensaje('success', `Asignación ${asignar ? 'creada' : 'eliminada'} correctamente`);
+        } else {
+            throw new Error(data.message || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error al actualizar asignación:', error);
+        
+        // Revertir checkbox
+        checkbox.checked = !asignar;
+        
+        // Mostrar error
+        mostrarMensaje('error', `Error: ${error.message}`);
+    })
+    .finally(() => {
+        // Quitar loading
+        checkbox.closest('td').classList.remove('loading');
+    });
+}
+
+function mostrarMensaje(tipo, mensaje) {
+    const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = tipo === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="${iconClass} me-2"></i>${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function probarConexion() {
+    console.log('🔌 Probando conexión...');
+    
+    fetch('/api/health-check', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            mostrarMensaje('success', '✅ Conexión exitosa al servidor');
+        } else {
+            throw new Error(`Error de conexión: ${response.status}`);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error de conexión:', error);
+        mostrarMensaje('error', `❌ Error de conexión: ${error.message}`);
+    });
+}
+
+function actualizarMatriz() {
+    console.log('🔄 Actualizando matriz...');
+    mostrarMensaje('success', '🔄 Recargando página...');
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+</script>
+{% endblock %}

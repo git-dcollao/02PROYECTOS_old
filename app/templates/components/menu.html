@@ -1,0 +1,357 @@
+<!-- Componente de Menú Dinámico -->
+<!-- Macro para renderizar el menú lateral -->
+{% macro render_sidebar_menu() %}
+<div class="sidebar-menu" id="sidebar-menu">
+    <div class="menu-header">
+        <h4><i class="fas fa-bars"></i> Menú</h4>
+        <button class="btn btn-sm btn-outline-secondary menu-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    </div>
+    
+    <div class="menu-content">
+        {% set user_menu = get_user_menu() %}
+        {% if user_menu %}
+            {% for category in user_menu %}
+                <div class="menu-category" data-category="{{ category.category }}">
+                    <div class="category-header" onclick="toggleCategory('{{ loop.index }}')">
+                        <i class="{{ category.icon }}"></i>
+                        <span class="category-title">{{ category.category }}</span>
+                        <span class="badge badge-secondary">{{ category.count }}</span>
+                        <i class="fas fa-chevron-down category-arrow"></i>
+                    </div>
+                    
+                    <div class="category-content" id="category-{{ loop.index }}">
+                        {% for page in category.pages %}
+                            <a href="{{ page.url }}" 
+                               class="menu-item {{ 'active' if request.path == page.url else '' }}"
+                               title="{{ page.description }}">
+                                <i class="{{ page.icon }}"></i>
+                                <span class="item-title">{{ page.name }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-menu-items">
+                <i class="fas fa-info-circle"></i>
+                <p>No hay elementos de menú disponibles</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Información del usuario -->
+    {% if current_user.is_authenticated %}
+        <div class="menu-footer">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <div class="user-details">
+                    <strong>{{ current_user.nombre }}</strong>
+                    <small>{{ current_user.rol.value if current_user.rol else 'Sin rol' }}</small>
+                </div>
+            </div>
+            <a href="/auth/logout" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-sign-out-alt"></i> Salir
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- CSS específico para el menú -->
+<style>
+.sidebar-menu {
+    width: 280px;
+    height: 100vh;
+    background: #2c3e50;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-menu.collapsed {
+    width: 60px;
+}
+
+.menu-header {
+    padding: 1rem;
+    border-bottom: 1px solid #34495e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.menu-toggle {
+    border: none;
+    background: transparent;
+    color: white;
+    padding: 0.25rem;
+}
+
+.menu-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+.menu-category {
+    margin-bottom: 0.5rem;
+}
+
+.category-header {
+    padding: 0.75rem 1rem;
+    background: #34495e;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.category-header:hover {
+    background: #3d5a7a;
+}
+
+.category-header i {
+    width: 20px;
+    margin-right: 0.5rem;
+}
+
+.category-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.badge {
+    margin-right: 0.5rem;
+}
+
+.category-arrow {
+    transition: transform 0.2s;
+}
+
+.category-header.expanded .category-arrow {
+    transform: rotate(180deg);
+}
+
+.category-content {
+    background: #394c63;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.category-content.open {
+    max-height: 500px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1.5rem;
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.menu-item:hover {
+    background: #4a6741;
+    color: white;
+    text-decoration: none;
+    border-left-color: #27ae60;
+}
+
+.menu-item.active {
+    background: #2980b9;
+    color: white;
+    border-left-color: #3498db;
+}
+
+.menu-item i {
+    width: 18px;
+    margin-right: 0.75rem;
+    text-align: center;
+}
+
+.item-title {
+    font-size: 0.9rem;
+}
+
+.no-menu-items {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #7f8c8d;
+}
+
+.menu-footer {
+    border-top: 1px solid #34495e;
+    padding: 1rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.user-info i {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+.user-details {
+    flex: 1;
+    line-height: 1.2;
+}
+
+.user-details strong {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.user-details small {
+    color: #bdc3c7;
+    font-size: 0.75rem;
+}
+
+/* Adaptación para dispositivos móviles */
+@media (max-width: 768px) {
+    .sidebar-menu {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+    
+    .sidebar-menu.open {
+        transform: translateX(0);
+    }
+    
+    .sidebar-menu.collapsed {
+        width: 100%;
+    }
+}
+
+/* Ajuste del contenido principal */
+body {
+    margin-left: 280px;
+    transition: margin-left 0.3s ease;
+}
+
+body.sidebar-collapsed {
+    margin-left: 60px;
+}
+
+@media (max-width: 768px) {
+    body {
+        margin-left: 0;
+    }
+}
+</style>
+
+<!-- JavaScript para funcionalidad del menú -->
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar-menu');
+    const body = document.body;
+    
+    sidebar.classList.toggle('collapsed');
+    body.classList.toggle('sidebar-collapsed');
+    
+    // Guardar estado en localStorage
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    localStorage.setItem('sidebar-collapsed', isCollapsed);
+}
+
+function toggleCategory(categoryIndex) {
+    const categoryContent = document.getElementById(`category-${categoryIndex}`);
+    const categoryHeader = categoryContent.previousElementSibling;
+    
+    categoryContent.classList.toggle('open');
+    categoryHeader.classList.toggle('expanded');
+    
+    // Calcular altura real para animación suave
+    if (categoryContent.classList.contains('open')) {
+        categoryContent.style.maxHeight = categoryContent.scrollHeight + 'px';
+    } else {
+        categoryContent.style.maxHeight = '0px';
+    }
+}
+
+// Restaurar estado del sidebar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    
+    if (sidebarCollapsed) {
+        document.getElementById('sidebar-menu').classList.add('collapsed');
+        document.body.classList.add('sidebar-collapsed');
+    }
+    
+    // Abrir categoría activa automáticamente
+    const activeItem = document.querySelector('.menu-item.active');
+    if (activeItem) {
+        const categoryContent = activeItem.closest('.category-content');
+        if (categoryContent) {
+            const categoryHeader = categoryContent.previousElementSibling;
+            categoryContent.classList.add('open');
+            categoryHeader.classList.add('expanded');
+            categoryContent.style.maxHeight = categoryContent.scrollHeight + 'px';
+        }
+    }
+});
+
+// Cerrar menú en móvil al hacer clic en un enlace
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', function() {
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar-menu').classList.remove('open');
+        }
+    });
+});
+
+// Botón para abrir menú en móvil
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('sidebar-menu');
+    sidebar.classList.toggle('open');
+}
+</script>
+{% endmacro %}
+
+<!-- Macro para mostrar breadcrumbs basados en menú -->
+{% macro render_breadcrumbs() %}
+{% set user_menu = get_user_menu() %}
+{% if user_menu %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/dashboard"><i class="fas fa-home"></i> Inicio</a>
+            </li>
+            
+            {% set found_page = false %}
+            {% for category in user_menu %}
+                {% if not found_page %}
+                    {% for page in category.pages %}
+                        {% if request.path == page.url %}
+                            <li class="breadcrumb-item">
+                                <span><i class="{{ category.icon }}"></i> {{ category.category }}</span>
+                            </li>
+                            <li class="breadcrumb-item active">
+                                <i class="{{ page.icon }}"></i> {{ page.name }}
+                            </li>
+                            {% set found_page = true %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+{% endif %}
+{% endmacro %}

@@ -1,109 +1,305 @@
-{% extends 'bases/base.html' %}
+{% extends 'base_layout.html' %}
 
-{% block title %}Equipo{% endblock %}
+{% block title %}Gestión de Equipos{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="well text-center">
-        <h1>Equipo - Crud</h1>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col md-12">
-                <h2>
-                    Lista de equipos
-                    <button class="btn btn-primary float-end" data-bs-target="#exampleModal" data-bs-toggle="modal"
-                            type="button">
-                        Nuevo equipo
-                    </button>
-                </h2>
-                
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Nombre</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {%for equipo in equipos%}
-                    <tr>
-                        <td>{{equipo.id}}</td>
-                        <td>{{equipo.nombre}}</td>
-
-                        <td>
-                            <a class="btn p-1 btn-primary btn-sm" 
-                               data-bs-target="#exampleModal1{{equipo.id}}"
-                               data-bs-toggle="modal"
-                               href="#">Editar</a> 
-                            <form action="{{ url_for('controllers.eliminar_equipo', id=equipo.id) }}"
-                                method="POST" style="display:inline;">
-                                <button class="btn p-1 btn-danger btn-sm" 
-                                type="submit">Eliminar</button>
-                            </form>
-                        </td>
-                        <div aria-hidden="true" aria-labelledby="exampleModalLabel1" class="modal fade"
-                             id="exampleModal1{{equipo.id}}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel1">Editar información de la equipo {{equipo.nombre}}</h1>
-                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"
-                                                type="button"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form action="{{ url_for('controllers.update_equipo', id=equipo.id) }}" method="POST">   
-                                            <div class="form-group">
-                                                <label>Nombre:</label>
-                                                <input type="hidden" name="id" value="{{equipo.id}}">
-                                                <input class="form-control" name="name" value="{{equipo.nombre}}"
-                                                       required="1" type="text">
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-danger" data-bs-dismiss="modal" type="button">
-                                            Cerrar
-                                        </button>
-                                    </div>
+<div class="container-fluid py-4">
+    <!-- Header moderno -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-gradient-primary text-grey">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-users-cog me-2"></i>
+                                Gestión de Equipos
+                            </h3>
+                            <p class="mb-0 opacity-75">Administra y configura los equipos de trabajo del sistema</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-center">
+                                    <div class="h4 mb-0">{{ equipos|length }}</div>
+                                    <small class="opacity-75">Total</small>
+                                </div>
+                                <div class="vr mx-2"></div>
+                                <div class="text-center">
+                                    <div class="h4 mb-0">Activos</div>
+                                    <small class="opacity-75">Estado</small>
                                 </div>
                             </div>
                         </div>
-                    </tr>
-                    {%endfor%}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para agregar nuevo estado -->
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar Equipo</h1>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ url_for('controllers.add_equipo') }}" method="POST"> 
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input class="form-control" name="name" required="1" type="text">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list me-2"></i>Lista de Equipos
+                            </h5>
                         </div>
-                        <button type="submit" class="btn btn-primary">Agregar</button>
+                        <div class="text-muted">
+                            <small>{{ equipos|length }} registros</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if equipos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 px-4 py-3">ID</th>
+                                    <th class="border-0 px-4 py-3">Nombre del Equipo</th>
+                                    <th class="border-0 px-4 py-3 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for equipo in equipos %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <span class="badge bg-light text-dark">{{ equipo.id }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="fw-semibold text-dark">{{ equipo.nombre }}</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-end">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="abrirModalEdicion({{ equipo.id }}, '{{ equipo.nombre }}')"
+                                                    title="Editar equipo">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmarEliminacion({{ equipo.id }}, '{{ equipo.nombre }}')"
+                                                    title="Eliminar equipo">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-inbox fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">No hay equipos registrados</h5>
+                        <p class="text-muted">Comienza agregando un nuevo equipo usando el formulario</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-success">
+                        <i class="fas fa-plus me-2"></i>Añadir Equipo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('controllers.add_equipo') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="add_form_token" value="">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-semibold">Nombre del Equipo</label>
+                            <input type="text" class="form-control" id="nombre" name="name" required 
+                                   placeholder="Ej: Equipo Arquitectura, Equipo Construcción">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Crear Equipo
+                            </button>
+                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+
+            <!-- Card de estadísticas -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-info">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Total de Equipos:</span>
+                            <span class="badge bg-primary">{{ equipos|length }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Estado General:</span>
+                            <span class="badge bg-success">Activos</span>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Los equipos agrupan trabajadores para la ejecución de proyectos específicos
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="well container">
-    
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash-alt fa-3x text-danger opacity-50"></i>
+                </div>
+                <p class="text-center mb-3">
+                    ¿Está seguro de que desea eliminar el equipo 
+                    <strong class="text-primary" id="equipoNombre"></strong>?
+                </p>
+                <div class="alert alert-warning border-warning">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <small>Esta acción no se puede deshacer y puede afectar proyectos relacionados.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+// Función para generar token único
+function generateUniqueToken() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Variable global para la URL base de actualización
+const updateEquipoBaseUrl = '{{ url_for("controllers.update_equipo", id=0) }}'.replace('/0', '');
+
+// Función para crear modal de edición dinámicamente
+function abrirModalEdicion(id, nombre) {
+    // Eliminar modal existente si existe
+    const existingModal = document.getElementById(`dynamicEditModal${id}`);
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Construir la URL usando la base generada por Jinja2
+    const updateUrl = updateEquipoBaseUrl + '/' + id;
+    
+    // Crear el modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="dynamicEditModal${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit"></i> Editar Equipo
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="${updateUrl}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="form_token" id="edit_form_token_${id}" value="">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="nombre${id}" class="form-label">Nombre del Equipo</label>
+                                <input type="text" class="form-control" 
+                                       id="nombre${id}" 
+                                       name="name" 
+                                       value="${nombre}" 
+                                       required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Actualizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Generar nuevo token para edición
+    document.getElementById(`edit_form_token_${id}`).value = generateUniqueToken();
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById(`dynamicEditModal${id}`));
+    modal.show();
+    
+    // Limpiar modal cuando se cierre
+    document.getElementById(`dynamicEditModal${id}`).addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function confirmarEliminacion(id, nombre) {
+    document.getElementById('equipoNombre').textContent = nombre;
+    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_equipo', id=0) }}".replace('0', id);
+    
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    // Generar token para formulario de creación
+    document.getElementById('add_form_token').value = generateUniqueToken();
+    
+    // Optimizar para evitar parpadeo
+    requestAnimationFrame(() => {
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                if (alert.classList.contains('alert-dismissible')) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            });
+        }, 5000);
+    });
+});
+</script>
 {% endblock %}

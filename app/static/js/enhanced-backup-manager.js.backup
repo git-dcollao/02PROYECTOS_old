@@ -1,0 +1,767 @@
+/**
+ * Backup Manager Mejorado - Senior Implementation
+ * =============================================
+ * 
+ * Características:
+ * ✅ Progress tracking en tiempo real
+ * ✅ Sistema de logging detallado
+ * ✅ Monitoring de recursos del sistema
+ * ✅ UI responsiva con feedback inmediato
+ * ✅ Error handling robusto
+ * ✅ Optimizaciones de performance
+ */
+
+class EnhancedBackupManager {
+    constructor() {
+        console.log('🚀 [EnhancedBackupManager] Inicializando manager mejorado...');
+        
+        this.progressModal = null;
+        this.progressInterval = null;
+        this.isOperationActive = false;
+        this.currentOperation = null;
+        
+        // Configuración de polling para progreso
+        this.progressPollingConfig = {
+            interval: 2000,    // Cada 2 segundos
+            timeout: 600000    // 10 minutos máximo
+        };
+        
+        // Elementos del DOM
+        this.elements = {
+            backupsList: null,
+            progressBar: null,
+            progressText: null,
+            progressDetails: null,
+            systemStatus: null
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        try {
+            console.log('🔧 [EnhancedBackupManager] Configurando elementos del DOM...');
+            
+            // Obtener elementos del DOM
+            this.elements.backupsList = document.getElementById('backupsList');
+            
+            if (!this.elements.backupsList) {
+                console.error('❌ [EnhancedBackupManager] Elemento backupsList no encontrado');
+                return;
+            }
+            
+            // Crear modal de progreso
+            this.createProgressModal();
+            
+            // Inicializar componentes
+            this.loadBackups();
+            this.loadSystemStatus();
+            this.bindEvents();
+            
+            console.log('✅ [EnhancedBackupManager] Inicialización completada');
+            
+        } catch (error) {
+            console.error('💥 [EnhancedBackupManager] Error en inicialización:', error);
+        }
+    }
+    
+    createProgressModal() {
+        /**
+         * Crear modal de progreso dinámico con información detallada
+         */
+        const modalHTML = `
+            <div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-cog fa-spin"></i> Restaurando Backup
+                            </h5>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Barra de progreso principal -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">Progreso General</span>
+                                    <span id="progressPercent">0%</span>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                         style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Estado actual -->
+                            <div class="mb-3">
+                                <h6><i class="fas fa-info-circle"></i> Estado Actual:</h6>
+                                <p id="currentOperation" class="mb-0 text-muted">Iniciando...</p>
+                            </div>
+                            
+                            <!-- Detalles de la operación -->
+                            <div class="mb-3">
+                                <h6><i class="fas fa-list"></i> Detalles:</h6>
+                                <div id="operationDetails" class="bg-light p-2 rounded">
+                                    <small class="text-muted">Cargando información...</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Métricas de tiempo -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> Tiempo transcurrido: 
+                                        <span id="elapsedTime">0s</span>
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-sync"></i> Última actualización: 
+                                        <span id="lastUpdate">Ahora</span>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Log de actividad (colapsable) -->
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#activityLog">
+                                    <i class="fas fa-terminal"></i> Ver Log de Actividad
+                                </button>
+                                <div class="collapse mt-2" id="activityLog">
+                                    <div id="activityLogContent" class="bg-dark text-light p-2 rounded" 
+                                         style="height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.8em;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <small class="text-muted me-auto">
+                                <i class="fas fa-info-circle"></i> Esta operación puede tardar varios minutos
+                            </small>
+                            <button type="button" class="btn btn-danger" onclick="enhancedBackupManager.cancelOperation()" disabled>
+                                <i class="fas fa-stop"></i> Cancelar (En desarrollo)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Agregar al DOM si no existe
+        if (!document.getElementById('progressModal')) {
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        this.progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
+        
+        console.log('✅ [EnhancedBackupManager] Modal de progreso creado');
+    }
+    
+    async restoreBackup(filename) {
+        /**
+         * Restaurar backup con tracking de progreso en tiempo real
+         */
+        console.log(`🔄 [EnhancedBackupManager] Iniciando restauración: ${filename}`);
+        
+        try {
+            // Verificar estado inicial de la BD
+            console.log('🔍 [Debug] Verificando estado inicial de la BD...');
+            await this.debugDatabaseStatus('ANTES de la restauración');
+            
+            // Validaciones iniciales
+            if (this.isOperationActive) {
+                this.showAlert('Ya hay una operación en curso', 'warning');
+                return;
+            }
+            
+            // Confirmar operación
+            const confirmed = await this.showConfirmDialog(
+                'Confirmación de Restauración',
+                `¿Está seguro de restaurar el backup "${filename}"?\n\n⚠️ ADVERTENCIA: Esta operación sobrescribirá todos los datos actuales de la base de datos.`
+            );
+            
+            if (!confirmed) {
+                console.log('ℹ️ [EnhancedBackupManager] Restauración cancelada por el usuario');
+                return;
+            }
+            
+            // Inicializar tracking de progreso
+            this.isOperationActive = true;
+            this.currentOperation = `Restauración de ${filename}`;
+            
+            // Mostrar modal de progreso
+            this.showProgressModal();
+            this.startProgressTracking();
+            
+            // Agregar log inicial
+            this.addToActivityLog('Iniciando restauración de backup...');
+            this.addToActivityLog(`Archivo: ${filename}`);
+            
+            // Realizar petición de restauración
+            console.log('📡 [EnhancedBackupManager] Enviando petición de restauración...');
+            
+            const response = await fetch('/admin/backup/restore-file', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.api?.csrfToken || ''
+                },
+                body: JSON.stringify({ filename: filename })
+            });
+            
+            const result = await response.json();
+            
+            // Detener tracking
+            this.stopProgressTracking();
+            
+            if (response.ok && result.success) {
+                console.log('✅ [EnhancedBackupManager] Restauración exitosa:', result);
+                
+                this.addToActivityLog('✅ Restauración completada exitosamente');
+                
+                // Mostrar estadísticas si están disponibles
+                if (result.stats) {
+                    this.addToActivityLog(`📊 Estadísticas:`);
+                    this.addToActivityLog(`   • Tiempo total: ${result.stats.total_time}`);
+                    this.addToActivityLog(`   • Statements ejecutados: ${result.stats.statements_executed}`);
+                    this.addToActivityLog(`   • Throughput: ${result.stats.throughput}`);
+                }
+                
+                // Esperar un momento para que el usuario vea el resultado
+                setTimeout(async () => {
+                    this.hideProgressModal();
+                    this.showAlert('Backup restaurado exitosamente', 'success');
+                    
+                    // Verificar estado final de la BD
+                    console.log('🔍 [Debug] Verificando estado final de la BD...');
+                    await this.debugDatabaseStatus('DESPUÉS de la restauración');
+                    
+                    this.loadBackups(); // Recargar lista
+                }, 3000);
+                
+            } else {
+                console.error('❌ [EnhancedBackupManager] Error en restauración:', result);
+                this.addToActivityLog(`❌ Error: ${result.message || 'Error desconocido'}`);
+                
+                setTimeout(() => {
+                    this.hideProgressModal();
+                    this.showAlert(result.message || 'Error en la restauración', 'danger');
+                }, 2000);
+            }
+            
+        } catch (error) {
+            console.error('💥 [EnhancedBackupManager] Error en restauración:', error);
+            
+            this.stopProgressTracking();
+            this.addToActivityLog(`💥 Error de conexión: ${error.message}`);
+            
+            setTimeout(() => {
+                this.hideProgressModal();
+                this.showAlert('Error de conexión durante la restauración', 'danger');
+            }, 2000);
+            
+        } finally {
+            this.isOperationActive = false;
+            this.currentOperation = null;
+        }
+    }
+    
+    startProgressTracking() {
+        /**
+         * Iniciar polling de progreso en tiempo real
+         */
+        console.log('📡 [EnhancedBackupManager] Iniciando tracking de progreso...');
+        
+        // Actualizar cada 2 segundos
+        this.progressInterval = setInterval(async () => {
+            try {
+                await this.updateProgress();
+            } catch (error) {
+                console.error('❌ [EnhancedBackupManager] Error actualizando progreso:', error);
+            }
+        }, this.progressPollingConfig.interval);
+        
+        // Timeout de seguridad (10 minutos)
+        setTimeout(() => {
+            if (this.progressInterval) {
+                console.warn('⏰ [EnhancedBackupManager] Timeout de progreso alcanzado');
+                this.stopProgressTracking();
+            }
+        }, this.progressPollingConfig.timeout);
+    }
+    
+    async updateProgress() {
+        /**
+         * Actualizar información de progreso desde el servidor
+         */
+        try {
+            const response = await fetch('/admin/backup/progress');
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 [updateProgress] Datos recibidos:', data);
+                
+                if (data.success && data.progress) {
+                    const progress = data.progress;
+                    
+                    console.log(`📊 [updateProgress] Progreso: ${progress.progress_percent}% - ${progress.current_operation}`);
+                    
+                    // Actualizar barra de progreso
+                    const progressBar = document.getElementById('progressBar');
+                    const progressPercent = document.getElementById('progressPercent');
+                    
+                    if (progressBar && progressPercent) {
+                        progressBar.style.width = `${progress.progress_percent}%`;
+                        progressPercent.textContent = `${Math.round(progress.progress_percent)}%`;
+                        console.log(`✅ [updateProgress] Barra actualizada: ${progress.progress_percent}%`);
+                    } else {
+                        console.warn('⚠️ [updateProgress] Elementos de progreso no encontrados');
+                    }
+                    
+                    // Actualizar operación actual
+                    const currentOperation = document.getElementById('currentOperation');
+                    if (currentOperation) {
+                        currentOperation.textContent = progress.current_operation;
+                    }
+                    
+                    // Actualizar tiempo transcurrido
+                    const elapsedTime = document.getElementById('elapsedTime');
+                    if (elapsedTime) {
+                        elapsedTime.textContent = progress.elapsed_time;
+                    }
+                    
+                    // Agregar al log de actividad si hay cambios significativos
+                    if (progress.progress_percent > (this.lastProgressPercent || 0) + 5) {
+                        this.addToActivityLog(`📊 Progreso: ${Math.round(progress.progress_percent)}%`);
+                        this.lastProgressPercent = progress.progress_percent;
+                    }
+                    
+                    // Detectar finalización
+                    if (progress.progress_percent >= 100 || !progress.is_active) {
+                        console.log('✅ [updateProgress] Operación completada, deteniendo polling');
+                        this.stopProgressTracking();
+                    }
+                    
+                } else {
+                    console.warn('⚠️ [updateProgress] Respuesta sin datos de progreso válidos:', data);
+                }
+                
+            } else {
+                console.error('❌ [updateProgress] Error HTTP:', response.status, response.statusText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ [updateProgress] Error:', error);
+            this.stopProgressTracking();
+        }
+    }
+                    
+                    // Actualizar tiempos
+                    const elapsedTime = document.getElementById('elapsedTime');
+                    const lastUpdate = document.getElementById('lastUpdate');
+                    
+                    if (elapsedTime) {
+                        elapsedTime.textContent = progress.elapsed_time;
+                    }
+                    
+                    if (lastUpdate) {
+                        lastUpdate.textContent = progress.last_update_ago;
+                    }
+                    
+                    // Log de progreso en consola
+                    console.log(`📊 [Progress] ${Math.round(progress.progress_percent)}% - ${progress.current_operation}`);
+                    
+                    // Si no está activo, detener tracking
+                    if (!progress.is_active) {
+                        console.log('ℹ️ [EnhancedBackupManager] Operación no activa, deteniendo tracking');
+                        this.stopProgressTracking();
+                    }
+                }
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ [EnhancedBackupManager] Error obteniendo progreso:', error);
+        }
+    }
+    
+    stopProgressTracking() {
+        /**
+         * Detener tracking de progreso
+         */
+        if (this.progressInterval) {
+            clearInterval(this.progressInterval);
+            this.progressInterval = null;
+            console.log('🛑 [EnhancedBackupManager] Tracking de progreso detenido');
+        }
+    }
+    
+    showProgressModal() {
+        /**
+         * Mostrar modal de progreso
+         */
+        if (this.progressModal) {
+            // Resetear contenido
+            this.resetProgressModal();
+            this.progressModal.show();
+            console.log('👁️ [EnhancedBackupManager] Modal de progreso mostrado');
+        }
+    }
+    
+    hideProgressModal() {
+        /**
+         * Ocultar modal de progreso
+         */
+        if (this.progressModal) {
+            this.progressModal.hide();
+            console.log('🙈 [EnhancedBackupManager] Modal de progreso ocultado');
+        }
+    }
+    
+    resetProgressModal() {
+        /**
+         * Resetear contenido del modal de progreso
+         */
+        // Resetear barra de progreso
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressPercent) progressPercent.textContent = '0%';
+        
+        // Limpiar textos
+        const currentOperation = document.getElementById('currentOperation');
+        const operationDetails = document.getElementById('operationDetails');
+        const activityLogContent = document.getElementById('activityLogContent');
+        
+        if (currentOperation) currentOperation.textContent = 'Iniciando...';
+        if (operationDetails) operationDetails.innerHTML = '<small class=\"text-muted\">Cargando información...</small>';
+        if (activityLogContent) activityLogContent.innerHTML = '';
+    }
+    
+    addToActivityLog(message) {
+        /**
+         * Agregar mensaje al log de actividad con timestamp
+         */
+        const logContent = document.getElementById('activityLogContent');
+        if (logContent) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span class=\"text-muted\">[${timestamp}]</span> ${message}`;
+            logContent.appendChild(logEntry);
+            
+            // Scroll automático hacia abajo
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+    }
+    
+    async showConfirmDialog(title, message) {
+        /**
+         * Mostrar dialog de confirmación usando el sistema del API Client
+         * NOTA: window.confirm fue reemplazado por una clase ConfirmDialog personalizada
+         */
+        try {
+            // Usar el sistema de confirmación del API Client
+            if (window.confirm && typeof window.confirm.confirm === 'function') {
+                console.log('🔍 [showConfirmDialog] Usando ConfirmDialog personalizado');
+                return await window.confirm.confirm(message, title);
+            } else {
+                console.log('🔍 [showConfirmDialog] Fallback a confirm nativo');
+                // Fallback al confirm nativo si no está disponible
+                return window.confirm(`${title}\n\n${message}`);
+            }
+        } catch (error) {
+            console.error('❌ [showConfirmDialog] Error:', error);
+            // Último recurso: confirm nativo
+            return window.confirm(`${title}\n\n${message}`);
+        }
+    }
+    
+    showAlert(message, type = 'info') {
+        /**
+         * Mostrar alerta toast o similar
+         */
+        // Implementación simple con alert, se puede mejorar con toasts
+        console.log(`🔔 [Alert ${type.toUpperCase()}] ${message}`);
+        
+        // Crear toast dinámico si bootstrap está disponible
+        if (typeof bootstrap !== 'undefined') {
+            this.createToast(message, type);
+        } else {
+            alert(message);
+        }
+    }
+    
+    createToast(message, type) {
+        /**
+         * Crear toast Bootstrap dinámico
+         */
+        const toastHTML = `
+            <div class=\"toast align-items-center text-white bg-${type === 'danger' ? 'danger' : type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'primary'}\" 
+                 role=\"alert\" aria-live=\"assertive\" aria-atomic=\"true\">
+                <div class=\"d-flex\">
+                    <div class=\"toast-body\">
+                        ${message}
+                    </div>
+                    <button type=\"button\" class=\"btn-close btn-close-white me-2 m-auto\" data-bs-dismiss=\"toast\"></button>
+                </div>
+            </div>
+        `;
+        
+        // Crear container de toasts si no existe
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Agregar toast
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        // Mostrar toast
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        // Remover elemento después de ocultarse
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+    
+    async loadBackups() {
+        /**
+         * Cargar lista de backups (método heredado del manager original)
+         */
+        try {
+            console.log('📋 [EnhancedBackupManager] Cargando lista de backups...');
+            
+            const response = await fetch('/admin/backup/list');
+            const data = await response.json();
+            
+            if (data.success && data.backups) {
+                this.renderBackupsList(data.backups);
+                console.log(`✅ [EnhancedBackupManager] ${data.backups.length} backups cargados`);
+            } else {
+                console.error('❌ [EnhancedBackupManager] Error cargando backups:', data.message);
+                this.showAlert('Error cargando lista de backups', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('💥 [EnhancedBackupManager] Error en loadBackups:', error);
+            this.showAlert('Error de conexión al cargar backups', 'danger');
+        }
+    }
+    
+    renderBackupsList(backups) {
+        /**
+         * Renderizar lista de backups en formato de tabla (grilla)
+         */
+        if (!this.elements.backupsList) {
+            console.error('❌ [EnhancedBackupManager] Elemento backupsList no disponible');
+            return;
+        }
+        
+        if (backups.length === 0) {
+            this.elements.backupsList.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay backups disponibles</h5>
+                        <p class="text-muted mb-0">Cree un backup para comenzar</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        backups.forEach(backup => {
+            html += this.renderBackupRow(backup);
+        });
+        
+        this.elements.backupsList.innerHTML = html;
+        console.log(`📋 [EnhancedBackupManager] Lista renderizada: ${backups.length} items`);
+    }
+    
+    renderBackupRow(backup) {
+        /**
+         * Renderizar fila individual de backup en la tabla
+         */
+        const statusIcon = backup.status === 'success' ? 
+            '<i class="fas fa-check-circle text-success"></i> Exitoso' : 
+            '<i class="fas fa-exclamation-circle text-warning"></i> Disponible';
+            
+        return `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-database text-primary me-2"></i>
+                        <div>
+                            <span class="fw-bold">${backup.filename}</span>
+                            ${backup.description ? `<br><small class="text-muted">${backup.description}</small>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="text-nowrap">${backup.date_formatted}</span>
+                </td>
+                <td>
+                    <span class="badge bg-info">${backup.size_formatted}</span>
+                </td>
+                <td>
+                    ${statusIcon}
+                </td>
+                <td class="text-end">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-warning btn-sm" 
+                                onclick="enhancedBackupManager.restoreBackup('${backup.filename}')"
+                                title="Restaurar backup">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="btn btn-primary btn-sm" 
+                                onclick="window.open('/admin/backup/download/${backup.filename}', '_blank')"
+                                title="Descargar backup">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" 
+                                onclick="enhancedBackupManager.deleteBackup('${backup.filename}')"
+                                title="Eliminar backup">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    
+    async loadSystemStatus() {
+        /**
+         * Cargar estado del sistema
+         */
+        try {
+            console.log('🖥️ [EnhancedBackupManager] Cargando estado del sistema...');
+            
+            const response = await fetch('/admin/backup/system-status');
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ [EnhancedBackupManager] Estado del sistema obtenido:', data.system_status);
+                // Aquí se puede actualizar UI con información del sistema
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ [EnhancedBackupManager] Error obteniendo estado del sistema:', error);
+        }
+    }
+    
+    bindEvents() {
+        /**
+         * Vincular eventos de la interfaz
+         */
+        console.log('🔗 [EnhancedBackupManager] Vinculando eventos...');
+        
+        // Aquí se pueden agregar más event listeners según sea necesario
+        
+        console.log('✅ [EnhancedBackupManager] Eventos vinculados');
+    }
+    
+    cancelOperation() {
+        /**
+         * Cancelar operación actual (en desarrollo)
+         */
+        console.log('🛑 [EnhancedBackupManager] Cancelación de operación (función en desarrollo)');
+        this.showAlert('Función de cancelación en desarrollo', 'warning');
+    }
+    
+    async deleteBackup(filename) {
+        /**
+         * Eliminar backup específico
+         */
+        try {
+            console.log(`🗑️ [EnhancedBackupManager] Iniciando eliminación de backup: ${filename}`);
+            
+            // Confirmar eliminación usando el sistema del API Client
+            const confirmed = await this.showConfirmDialog(
+                'Confirmar Eliminación',
+                `¿Está seguro de que desea eliminar el backup "${filename}"?\n\nEsta acción no se puede deshacer.`
+            );
+            
+            if (!confirmed) {
+                console.log('ℹ️ [EnhancedBackupManager] Eliminación cancelada por el usuario');
+                return;
+            }
+            
+            // Realizar eliminación
+            const response = await fetch(`/admin/backup/delete/${filename}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showAlert(`Backup "${filename}" eliminado exitosamente`, 'success');
+                // Recargar lista de backups
+                this.loadBackups();
+            } else {
+                this.showAlert(`Error al eliminar backup: ${result.message}`, 'error');
+            }
+            
+        } catch (error) {
+            console.error('❌ [EnhancedBackupManager] Error en eliminación:', error);
+            this.showAlert('Error de conexión durante la eliminación', 'error');
+        }
+    }
+    
+    async debugDatabaseStatus(moment = '') {
+        /**
+         * Debug: Verificar estado actual de la base de datos
+         */
+        try {
+            console.log(`🔍 [Debug] Consultando estado de BD ${moment}...`);
+            
+            const response = await fetch('/admin/backup/debug/db-status');
+            const data = await response.json();
+            
+            if (data.success) {
+                const status = data.database_status;
+                console.log(`📊 [Debug BD ${moment}] Total tablas: ${status.total_tables}`);
+                console.log(`📊 [Debug BD ${moment}] Tablas principales:`, status.main_tables);
+                console.log(`📊 [Debug BD ${moment}] Últimas actualizaciones:`, status.recent_updates);
+                
+                // Mostrar en la consola del navegador para fácil visualización
+                console.table(status.main_tables);
+                
+                return status;
+            } else {
+                console.error(`❌ [Debug BD ${moment}] Error:`, data.message);
+                return null;
+            }
+            
+        } catch (error) {
+            console.error(`❌ [Debug BD ${moment}] Error de conexión:`, error);
+            return null;
+        }
+    }
+}
+
+// Inicializar manager mejorado cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🌐 [DOM] DOM cargado, inicializando EnhancedBackupManager...');
+    
+    // Verificar dependencias
+    if (typeof bootstrap === 'undefined') {
+        console.warn('⚠️ [EnhancedBackupManager] Bootstrap no detectado, algunas funciones pueden no trabajar correctamente');
+    }
+    
+    // Crear instancia global
+    window.enhancedBackupManager = new EnhancedBackupManager();
+    
+    console.log('✅ [EnhancedBackupManager] Manager mejorado listo');
+});

@@ -32,6 +32,38 @@ body {
     font-size: 0.75rem;    /* 12px */
 }
 
+/* Estilos específicos de requerimientos que complementan el CSS global */
+
+/* Ajustes específicos para textarea de descripción en requerimientos */
+.modal-app.modal-edit-form textarea[name="descripcion"] {
+    min-height: 200px;
+    font-family: inherit;
+}
+
+/* Estilos eliminados - ahora se usan los globales en modal-styles.css */
+
+/* Responsive para modales de edición */
+@media (max-width: 768px) {
+    .modal-dialog.modal-edit-requerimiento {
+        max-width: 95% !important;
+        margin: 0.5rem auto;
+    }
+    
+    .modal-edit-requerimiento .col-md-4 {
+        margin-bottom: 1rem;     /* Más espacio en móvil */
+    }
+    
+    .modal-edit-requerimiento textarea[name="descripcion"] {
+        min-height: 100px !important;  /* Más compacto en móvil */
+    }
+}
+
+@media (min-width: 1200px) {
+    .modal-dialog.modal-edit-requerimiento {
+        max-width: 1200px !important;  /* Ancho máximo en pantallas grandes */
+    }
+}
+
 /* Ajustes para botones */
 .btn-sm {
     font-size: 0.75rem;    /* 12px */
@@ -272,4 +304,64 @@ label + select {
     padding: 0.25rem 0.75rem;   /* Reducido de 0.75rem 1.25rem */
     margin-bottom: 0.5rem;  /* Reducido de 1rem */
     font-size: 0.75rem;    /* 12px */
+}
+
+/* ==== ESTILOS ESPECÍFICOS DE REQUERIMIENTOS ==== */
+/* Iconos y elementos visuales */
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.requirement-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.location-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+/* Efectos hover y transiciones */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
 }

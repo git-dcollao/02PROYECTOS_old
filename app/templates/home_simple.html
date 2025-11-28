@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Proyectos - Simple</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        .hero-content {
+            color: white;
+        }
+        
+        .hero-content h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .feature h3 {
+            margin-bottom: 10px;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .login-card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            background: white;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 5px;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Contenido Hero -->
+        <div class="hero-content">
+            <h1>🚀 SisProyectos</h1>
+            <p>Sistema completo de gestión de proyectos diseñado para optimizar la planificación, seguimiento y control de todas tus iniciativas.</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <h3>📊 Dashboard</h3>
+                    <p>Visualización completa</p>
+                </div>
+                <div class="feature">
+                    <h3>📋 Gestión</h3>
+                    <p>Control total</p>
+                </div>
+                <div class="feature">
+                    <h3>👥 Colaboración</h3>
+                    <p>Trabajo en equipo</p>
+                </div>
+                <div class="feature">
+                    <h3>📈 Reportes</h3>
+                    <p>Análisis detallado</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tarjeta de Login -->
+        <div class="login-card">
+            <h2>🔐 Iniciar Sesión</h2>
+            
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                {{ form.hidden_tag() }}
+                
+                {% if form.errors %}
+                    <div class="error-message">
+                        {% for field_name, field_errors in form.errors.items() %}
+                            {% for error in field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="email">📧 Email</label>
+                    {{ form.email(class="form-control", placeholder="Ingrese su email") }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">🔑 Contraseña</label>
+                    {{ form.password(class="form-control", placeholder="Ingrese su contraseña") }}
+                </div>
+                
+                <div class="checkbox-group">
+                    {{ form.remember_me(class="form-check-input") }}
+                    <label for="remember_me">Recordarme</label>
+                </div>
+                
+                <button type="submit" class="btn">
+                    Ingresar al Sistema
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
+                <p>🧪 <strong>Credenciales de prueba:</strong></p>
+                <p>Email: admin@sistema.com</p>
+                <p>Contraseña: admin123</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

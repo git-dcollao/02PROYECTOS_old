@@ -1,0 +1,375 @@
+/* Trabajadores CSS - Diseño de Lista Compacta */
+
+/* ===== OPTION 2: COMPACT LIST DESIGN ===== */
+
+/* Layout principal */
+.trabajadores-container-list {
+    min-height: calc(100vh - 200px);
+    background: #f8fafc;
+    padding: 20px;
+}
+
+/* Container de la lista */
+.trabajadores-list-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+/* Header de la lista */
+.list-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.list-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.list-counter {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Barra de búsqueda integrada */
+.integrated-search {
+    padding: 16px 24px;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.search-input-integrated {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.search-input-integrated:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Lista de trabajadores */
+.trabajadores-list {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+}
+
+/* Item de la lista */
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.list-item:hover {
+    background: #f8fafc;
+    border-left: 4px solid #667eea;
+    padding-left: 20px;
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+/* Avatar compacto */
+.list-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+/* Información principal */
+.list-info {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+}
+
+.info-primary {
+    display: flex;
+    flex-direction: column;
+}
+
+.primary-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 2px;
+}
+
+.primary-email {
+    font-size: 13px;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.info-secondary {
+    text-align: center;
+}
+
+.secondary-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #a0aec0;
+    margin-bottom: 4px;
+}
+
+.secondary-value {
+    font-size: 13px;
+    color: #4a5568;
+}
+
+/* Badges compactos */
+.badge-compact {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.badge-compact.rol {
+    background: #e6fffa;
+    color: #234e52;
+    border: 1px solid #4fd1c7;
+}
+
+.badge-compact.sector {
+    background: #fef5e7;
+    color: #744210;
+    border: 1px solid #f6ad55;
+}
+
+.badge-compact.superadmin {
+    background: #fed7d7;
+    color: #742a2a;
+    border: 1px solid #fc8181;
+    animation: pulse-subtle 2s infinite;
+}
+
+@keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* Acciones compactas */
+.list-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 16px;
+}
+
+.action-compact {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.action-compact.edit {
+    background: #ebf4ff;
+    color: #3182ce;
+}
+
+.action-compact.edit:hover {
+    background: #3182ce;
+    color: white;
+}
+
+.action-compact.reset {
+    background: #fffaf0;
+    color: #c05621;
+}
+
+.action-compact.reset:hover {
+    background: #c05621;
+    color: white;
+}
+
+.action-compact.delete {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.action-compact.delete:hover {
+    background: #c53030;
+    color: white;
+}
+
+/* Estados especiales */
+.list-item.superadmin {
+    background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%);
+    border-left: 4px solid #f59e0b;
+    padding-left: 20px;
+}
+
+.list-item.superadmin .list-avatar {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Scroll personalizado */
+.trabajadores-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.trabajadores-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.trabajadores-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.trabajadores-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Estado vacío */
+.empty-list {
+    text-align: center;
+    padding: 60px 20px;
+    color: #718096;
+}
+
+.empty-list i {
+    font-size: 48px;
+    color: #e2e8f0;
+    margin-bottom: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .list-info {
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .info-secondary:nth-child(4),
+    .info-secondary:nth-child(5) {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .list-info {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .info-secondary {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .secondary-label {
+        margin-bottom: 0;
+    }
+    
+    .list-actions {
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+
+/* Filtros rápidos */
+.quick-filters {
+    padding: 12px 24px;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    padding: 4px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover,
+.filter-chip.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Estadísticas rápidas */
+.list-stats {
+    padding: 12px 24px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #718096;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
