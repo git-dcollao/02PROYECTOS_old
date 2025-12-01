@@ -132,7 +132,6 @@ $archivos = @(
     "check_control_page.py",
     "check_data.py",
     "check_database_status.py",
-    "check_db.py",
     "check_final_backup.py",
     "check_pages_data.py",
     "check_references.py",

@@ -76,7 +76,6 @@ services:
       start_period: 60s
     command: >
       sh -c "echo '🔄 Esperando base de datos...' &&
-             python check_db.py &&
              echo '🚀 Iniciando aplicación Flask...' &&
              python init_app.py"
 
