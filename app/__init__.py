@@ -277,6 +277,14 @@ def create_app(config_class=Config):
     except ImportError as e:
         logger.warning(f'No se pudo registrar blueprint de emergencia: {e}')
     
+    # Registrar Blueprint de validación de avances
+    try:
+        from app.controllers.validar_avances_controller import validar_avances_bp
+        app.register_blueprint(validar_avances_bp)
+        logger.info('Blueprint de validación de avances registrado correctamente')
+    except ImportError as e:
+        logger.warning(f'No se pudo registrar blueprint de validación de avances: {e}')
+    
     # Inicializar rutas dinámicas después de registrar los blueprints
     try:
         from app.utils.dynamic_routes import initialize_dynamic_routes

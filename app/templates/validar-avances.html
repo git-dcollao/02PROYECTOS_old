@@ -1,0 +1,735 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}Validación de Avances{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- CSS Global Obligatorio -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+    <!-- CSS Específico de Página -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/validar-avances.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-black shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="mb-0"><i class="fas fa-check-double"></i> Validación de Avances</h2>
+                            <p class="mb-0">Revisión y aprobación de avances reportados por trabajadores</p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-light" onclick="cargarAvances()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                            <button class="btn btn-success" onclick="exportarExcel()">
+                                <i class="fas fa-file-excel"></i> Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4" id="estadisticas" style="display: none;">
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h3 class="mb-0" id="totalPendientes">0</h3>
+                    <small class="text-muted">Pendientes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h3 class="mb-0" id="totalValidados">0</h3>
+                    <small class="text-muted">Validados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                    <h3 class="mb-0" id="totalRechazados">0</h3>
+                    <small class="text-muted">Rechazados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-list fa-2x text-primary mb-2"></i>
+                    <h3 class="mb-0" id="totalAvances">0</h3>
+                    <small class="text-muted">Total Registros</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Proyecto</label>
+                            <select class="form-select" id="filtroProyecto" onchange="aplicarFiltros()">
+                                <option value="">Todos los proyectos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Trabajador</label>
+                            <select class="form-select" id="filtroTrabajador" onchange="aplicarFiltros()">
+                                <option value="">Todos los trabajadores</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="filtroEstado" onchange="aplicarFiltros()">
+                                <option value="pendiente" selected>Pendientes</option>
+                                <option value="validado">Validados</option>
+                                <option value="rechazado">Rechazados</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-secondary w-100" onclick="limpiarFiltros()">
+                                <i class="fas fa-eraser"></i> Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="row" id="loadingSpinner" style="display: none;">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-3 text-muted">Cargando avances...</p>
+        </div>
+    </div>
+
+    <!-- Tabla de Avances -->
+    <div class="row" id="avancesContainer" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-table"></i> Avances Reportados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="tablaAvances">
+                            <thead>
+                                <tr>
+                                    <th width="5%">Estado</th>
+                                    <th width="15%">Proyecto</th>
+                                    <th width="15%">Actividad</th>
+                                    <th width="12%">EDT</th>
+                                    <th width="12%">Trabajador</th>
+                                    <th width="8%">% Anterior</th>
+                                    <th width="8%">% Nuevo</th>
+                                    <th width="8%">% Validado</th>
+                                    <th width="10%">Fecha Reporte</th>
+                                    <th width="7%">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="avancesTableBody">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No hay avances -->
+    <div class="row" id="noAvances" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay avances para mostrar</h4>
+                    <p class="text-muted">No se encontraron avances con los filtros seleccionados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Modal Ver Detalle -->
+<div class="modal fade modal-app modal-size-medium modal-auto-height" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-app">
+                <h5 class="modal-title"><i class="fas fa-info-circle"></i> Detalle del Avance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-app">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Proyecto</label>
+                        <p class="form-control-plaintext" id="detalleProyecto"></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Actividad</label>
+                        <p class="form-control-plaintext" id="detalleActividad"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">EDT</label>
+                        <p class="form-control-plaintext" id="detalleEDT"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Trabajador</label>
+                        <p class="form-control-plaintext" id="detalleTrabajador"></p>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">% Anterior</label>
+                        <p class="form-control-plaintext" id="detalleAnterior"></p>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">% Nuevo</label>
+                        <p class="form-control-plaintext" id="detalleNuevo"></p>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">Diferencia</label>
+                        <p class="form-control-plaintext" id="detalleDiferencia"></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Comentarios del Trabajador</label>
+                        <p class="form-control-plaintext" id="detalleComentarios"></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Fecha de Reporte</label>
+                        <p class="form-control-plaintext" id="detalleFecha"></p>
+                    </div>
+                    <div class="col-12" id="detalleValidacionDiv" style="display: none;">
+                        <hr>
+                        <h6 class="fw-bold">Información de Validación</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Validado por</label>
+                                <p class="form-control-plaintext" id="detalleValidadoPor"></p>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Fecha</label>
+                                <p class="form-control-plaintext" id="detalleFechaValidacion"></p>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Comentario</label>
+                                <p class="form-control-plaintext" id="detalleComentarioValidacion"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-footer-app">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Validar -->
+<div class="modal fade modal-app modal-size-medium modal-auto-height" id="modalValidar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-app">
+                <h5 class="modal-title"><i class="fas fa-check"></i> Validar Avance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-app">
+                <input type="hidden" id="validarHistorialId">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Se aprobará el porcentaje reportado por el trabajador.
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Actividad</label>
+                        <p class="form-control-plaintext" id="validarActividad"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">% Reportado</label>
+                        <p class="form-control-plaintext text-success fs-4" id="validarPorcentaje"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Trabajador</label>
+                        <p class="form-control-plaintext" id="validarTrabajador"></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Comentario (opcional)</label>
+                        <textarea class="form-control" id="validarComentario" rows="3" placeholder="Agregar comentarios sobre la validación..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-footer-app">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmarValidacion()">
+                    <i class="fas fa-check"></i> Validar Avance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Corregir -->
+<div class="modal fade modal-app modal-size-medium modal-auto-height" id="modalCorregir" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-app">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Corregir Porcentaje</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-app">
+                <input type="hidden" id="corregirHistorialId">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Ajuste el porcentaje antes de validar.
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Actividad</label>
+                        <p class="form-control-plaintext" id="corregirActividad"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">% Reportado</label>
+                        <p class="form-control-plaintext text-muted" id="corregirPorcentajeOriginal"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Trabajador</label>
+                        <p class="form-control-plaintext" id="corregirTrabajador"></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Porcentaje Corregido <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="corregirPorcentajeNuevo" min="0" max="100" step="0.1" required>
+                        <small class="text-muted">Ingrese el porcentaje correcto (0-100)</small>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Motivo de la Corrección <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="corregirComentario" rows="3" placeholder="Explique por qué se corrige el porcentaje..." required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-footer-app">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmarCorreccion()">
+                    <i class="fas fa-save"></i> Corregir y Validar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rechazar -->
+<div class="modal fade modal-app modal-size-medium modal-auto-height" id="modalRechazar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-app">
+                <h5 class="modal-title"><i class="fas fa-ban"></i> Rechazar Avance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-app">
+                <input type="hidden" id="rechazarHistorialId">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> El avance será rechazado y NO se actualizará el porcentaje validado.
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Actividad</label>
+                        <p class="form-control-plaintext" id="rechazarActividad"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">% Reportado</label>
+                        <p class="form-control-plaintext text-danger" id="rechazarPorcentaje"></p>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Trabajador</label>
+                        <p class="form-control-plaintext" id="rechazarTrabajador"></p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Motivo del Rechazo <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rechazarMotivo" rows="4" placeholder="Explique por qué se rechaza este avance..." required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-footer-app">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmarRechazo()">
+                    <i class="fas fa-ban"></i> Rechazar Avance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let avancesData = [];
+let estadisticasData = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Página de validación de avances cargada');
+    cargarDatosIniciales();
+});
+
+async function cargarDatosIniciales() {
+    await cargarEstadisticas();
+    await cargarFiltrosProyectos();
+    await cargarFiltrosTrabajadores();
+    await cargarAvances();
+}
+
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch('/validar-avances/estadisticas');
+        const data = await response.json();
+        
+        if (data.success) {
+            estadisticasData = data.estadisticas;
+            document.getElementById('totalPendientes').textContent = data.estadisticas.pendientes;
+            document.getElementById('totalValidados').textContent = data.estadisticas.validados;
+            document.getElementById('totalRechazados').textContent = data.estadisticas.rechazados;
+            document.getElementById('totalAvances').textContent = data.estadisticas.total;
+            document.getElementById('estadisticas').style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas:', error);
+    }
+}
+
+async function cargarFiltrosProyectos() {
+    try {
+        const response = await fetch('/validar-avances/proyectos');
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('filtroProyecto');
+            data.proyectos.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.codigo} - ${p.nombre}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar proyectos:', error);
+    }
+}
+
+async function cargarFiltrosTrabajadores() {
+    try {
+        const response = await fetch('/validar-avances/trabajadores');
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('filtroTrabajador');
+            data.trabajadores.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.id;
+                option.textContent = t.nombre;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar trabajadores:', error);
+    }
+}
+
+async function cargarAvances() {
+    try {
+        console.log('🔄 Cargando avances...');
+        
+        // Mostrar loading
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('avancesContainer').style.display = 'none';
+        document.getElementById('noAvances').style.display = 'none';
+        
+        // Obtener filtros
+        const proyectoId = document.getElementById('filtroProyecto').value;
+        const trabajadorId = document.getElementById('filtroTrabajador').value;
+        const estado = document.getElementById('filtroEstado').value;
+        
+        const params = new URLSearchParams();
+        if (proyectoId) params.append('proyecto_id', proyectoId);
+        if (trabajadorId) params.append('trabajador_id', trabajadorId);
+        if (estado) params.append('estado', estado);
+        
+        const response = await fetch(`/validar-avances/listar?${params}`);
+        const data = await response.json();
+        
+        if (data.success && data.avances.length > 0) {
+            avancesData = data.avances;
+            mostrarAvances(avancesData);
+        } else {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('noAvances').style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar avances:', error);
+        alert('Error al cargar los avances');
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+}
+
+function mostrarAvances(avances) {
+    const tbody = document.getElementById('avancesTableBody');
+    tbody.innerHTML = '';
+    
+    avances.forEach(avance => {
+        const tr = document.createElement('tr');
+        
+        // Badge de estado
+        let estadoBadge = '';
+        if (avance.estado_visual === 'Pendiente') {
+            estadoBadge = '<span class="badge bg-warning">Pendiente</span>';
+        } else if (avance.estado_visual === 'Validado') {
+            estadoBadge = '<span class="badge bg-success">Validado</span>';
+        } else {
+            estadoBadge = '<span class="badge bg-danger">Rechazado</span>';
+        }
+        
+        tr.innerHTML = `
+            <td>${estadoBadge}</td>
+            <td><small>${avance.proyecto_nombre}</small></td>
+            <td><small>${avance.actividad_nombre}</small></td>
+            <td><code>${avance.actividad_edt}</code></td>
+            <td><small>${avance.trabajador_nombre}</small></td>
+            <td class="text-center">${avance.progreso_anterior.toFixed(1)}%</td>
+            <td class="text-center"><strong>${avance.progreso_nuevo.toFixed(1)}%</strong></td>
+            <td class="text-center"><span class="badge bg-info">${avance.porcentaje_validado_actual.toFixed(1)}%</span></td>
+            <td><small>${new Date(avance.fecha_cambio).toLocaleDateString('es-CL')}</small></td>
+            <td>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-sm btn-outline-info" onclick="verDetalle(${avance.id})" title="Ver detalle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${avance.estado_visual === 'Pendiente' ? `
+                    <button class="btn btn-sm btn-outline-success" onclick="abrirModalValidar(${avance.id})" title="Validar">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="abrirModalCorregir(${avance.id})" title="Corregir">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="abrirModalRechazar(${avance.id})" title="Rechazar">
+                        <i class="fas fa-ban"></i>
+                    </button>
+                    ` : ''}
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('avancesContainer').style.display = 'block';
+}
+
+function verDetalle(avanceId) {
+    const avance = avancesData.find(a => a.id === avanceId);
+    if (!avance) return;
+    
+    document.getElementById('detalleProyecto').textContent = avance.proyecto_nombre;
+    document.getElementById('detalleActividad').textContent = avance.actividad_nombre;
+    document.getElementById('detalleEDT').textContent = avance.actividad_edt;
+    document.getElementById('detalleTrabajador').textContent = avance.trabajador_nombre;
+    document.getElementById('detalleAnterior').textContent = `${avance.progreso_anterior.toFixed(1)}%`;
+    document.getElementById('detalleNuevo').textContent = `${avance.progreso_nuevo.toFixed(1)}%`;
+    document.getElementById('detalleDiferencia').textContent = `${avance.diferencia > 0 ? '+' : ''}${avance.diferencia.toFixed(1)}%`;
+    document.getElementById('detalleComentarios').textContent = avance.comentarios || 'Sin comentarios';
+    document.getElementById('detalleFecha').textContent = new Date(avance.fecha_cambio).toLocaleString('es-CL');
+    
+    // Información de validación
+    if (avance.validado) {
+        document.getElementById('detalleValidacionDiv').style.display = 'block';
+        document.getElementById('detalleValidadoPor').textContent = avance.validado_por_nombre || 'N/A';
+        document.getElementById('detalleFechaValidacion').textContent = avance.fecha_validacion ? new Date(avance.fecha_validacion).toLocaleString('es-CL') : 'N/A';
+        document.getElementById('detalleComentarioValidacion').textContent = avance.comentario_validacion || 'Sin comentarios';
+    } else {
+        document.getElementById('detalleValidacionDiv').style.display = 'none';
+    }
+    
+    new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+}
+
+function abrirModalValidar(avanceId) {
+    const avance = avancesData.find(a => a.id === avanceId);
+    if (!avance) return;
+    
+    document.getElementById('validarHistorialId').value = avance.id;
+    document.getElementById('validarActividad').textContent = `${avance.actividad_edt} - ${avance.actividad_nombre}`;
+    document.getElementById('validarPorcentaje').textContent = `${avance.progreso_nuevo.toFixed(1)}%`;
+    document.getElementById('validarTrabajador').textContent = avance.trabajador_nombre;
+    document.getElementById('validarComentario').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalValidar')).show();
+}
+
+function abrirModalCorregir(avanceId) {
+    const avance = avancesData.find(a => a.id === avanceId);
+    if (!avance) return;
+    
+    document.getElementById('corregirHistorialId').value = avance.id;
+    document.getElementById('corregirActividad').textContent = `${avance.actividad_edt} - ${avance.actividad_nombre}`;
+    document.getElementById('corregirPorcentajeOriginal').textContent = `${avance.progreso_nuevo.toFixed(1)}%`;
+    document.getElementById('corregirTrabajador').textContent = avance.trabajador_nombre;
+    document.getElementById('corregirPorcentajeNuevo').value = avance.progreso_nuevo.toFixed(1);
+    document.getElementById('corregirComentario').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalCorregir')).show();
+}
+
+function abrirModalRechazar(avanceId) {
+    const avance = avancesData.find(a => a.id === avanceId);
+    if (!avance) return;
+    
+    document.getElementById('rechazarHistorialId').value = avance.id;
+    document.getElementById('rechazarActividad').textContent = `${avance.actividad_edt} - ${avance.actividad_nombre}`;
+    document.getElementById('rechazarPorcentaje').textContent = `${avance.progreso_nuevo.toFixed(1)}%`;
+    document.getElementById('rechazarTrabajador').textContent = avance.trabajador_nombre;
+    document.getElementById('rechazarMotivo').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalRechazar')).show();
+}
+
+async function confirmarValidacion() {
+    const historialId = document.getElementById('validarHistorialId').value;
+    const comentario = document.getElementById('validarComentario').value;
+    
+    try {
+        const response = await fetch('/validar-avances/validar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({historial_id: historialId, comentario: comentario})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalValidar')).hide();
+            alert('✅ Avance validado exitosamente');
+            await cargarEstadisticas();
+            await cargarAvances();
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error al validar el avance');
+    }
+}
+
+async function confirmarCorreccion() {
+    const historialId = document.getElementById('corregirHistorialId').value;
+    const porcentaje = document.getElementById('corregirPorcentajeNuevo').value;
+    const comentario = document.getElementById('corregirComentario').value;
+    
+    if (!porcentaje || !comentario) {
+        alert('⚠️ Complete todos los campos requeridos');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/validar-avances/corregir', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                historial_id: historialId,
+                porcentaje_corregido: parseFloat(porcentaje),
+                comentario: comentario
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalCorregir')).hide();
+            alert('✅ Avance corregido y validado exitosamente');
+            await cargarEstadisticas();
+            await cargarAvances();
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error al corregir el avance');
+    }
+}
+
+async function confirmarRechazo() {
+    const historialId = document.getElementById('rechazarHistorialId').value;
+    const motivo = document.getElementById('rechazarMotivo').value;
+    
+    if (!motivo) {
+        alert('⚠️ Debe especificar el motivo del rechazo');
+        return;
+    }
+    
+    if (!confirm('¿Está seguro de rechazar este avance?')) return;
+    
+    try {
+        const response = await fetch('/validar-avances/rechazar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({historial_id: historialId, motivo: motivo})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalRechazar')).hide();
+            alert('✅ Avance rechazado exitosamente');
+            await cargarEstadisticas();
+            await cargarAvances();
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error al rechazar el avance');
+    }
+}
+
+function aplicarFiltros() {
+    cargarAvances();
+}
+
+function limpiarFiltros() {
+    document.getElementById('filtroProyecto').value = '';
+    document.getElementById('filtroTrabajador').value = '';
+    document.getElementById('filtroEstado').value = 'pendiente';
+    cargarAvances();
+}
+
+function exportarExcel() {
+    alert('Funcionalidad de exportación próximamente disponible');
+}
+</script>
+
+{% endblock %}

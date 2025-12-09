@@ -307,10 +307,37 @@ const updateTipologiaBaseUrl = '{{ url_for("controllers.update_tipologia", id=0)
 
 // Inicialización optimizada
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Inicializando tipologías...');
+    
+    // Verificar que Bootstrap esté cargado
+    if (typeof bootstrap === 'undefined') {
+        console.error('❌ Bootstrap no está cargado');
+        return;
+    }
+    
     // Inicializar modales una sola vez
-    modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
-    modalEdicion = new bootstrap.Modal(document.getElementById('modalEdicion'));
-    modalEliminar = new bootstrap.Modal(document.getElementById('deleteModal'));
+    try {
+        const modalDetalleEl = document.getElementById('modalDetalle');
+        const modalEdicionEl = document.getElementById('modalEdicion');
+        const modalEliminarEl = document.getElementById('deleteModal');
+        
+        if (modalDetalleEl) {
+            modalDetalle = new bootstrap.Modal(modalDetalleEl);
+            console.log('✅ Modal detalle inicializado');
+        }
+        
+        if (modalEdicionEl) {
+            modalEdicion = new bootstrap.Modal(modalEdicionEl);
+            console.log('✅ Modal edición inicializado');
+        }
+        
+        if (modalEliminarEl) {
+            modalEliminar = new bootstrap.Modal(modalEliminarEl);
+            console.log('✅ Modal eliminar inicializado');
+        }
+    } catch (error) {
+        console.error('❌ Error inicializando modales:', error);
+    }
     
     // Generar token para formulario de creación
     document.getElementById('add_form_token').value = generateUniqueToken();
@@ -354,102 +381,151 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Función optimizada para abrir modal de detalle
 function abrirModalDetalle(id, nombre, nombreCorto, fase) {
+    console.log('👁️ Abriendo modal detalle:', { id, nombre, nombreCorto, fase });
+    
+    if (!modalDetalle) {
+        console.error('❌ Modal de detalle no inicializado');
+        mostrarAlerta('Error: Modal no está disponible. Recarga la página.', 'danger');
+        return;
+    }
+    
     requestAnimationFrame(() => {
-        const contenido = `
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-primary"><i class="fas fa-tag me-2"></i>Información General</h6>
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <td class="fw-semibold">ID:</td>
-                                    <td><span class="badge bg-light text-dark">${id}</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-semibold">Nombre:</td>
-                                    <td class="fw-bold">${nombre}</td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-semibold">Nombre Corto:</td>
-                                    <td><span class="badge bg-secondary">${nombreCorto || 'N/A'}</span></td>
-                                </tr>
-                            </table>
+        try {
+            const contenido = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="text-primary"><i class="fas fa-tag me-2"></i>Información General</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-semibold">ID:</td>
+                                        <td><span class="badge bg-light text-dark">${id}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-semibold">Nombre:</td>
+                                        <td class="fw-bold">${nombre}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-semibold">Nombre Corto:</td>
+                                        <td><span class="badge bg-secondary">${nombreCorto || 'N/A'}</span></td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body">
-                            <h6 class="text-primary"><i class="fas fa-layer-group me-2"></i>Información de Fase</h6>
-                            <div class="text-center py-3">
-                                <div class="mb-2">
-                                    <span class="badge bg-primary fs-6">${fase}</span>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="text-primary"><i class="fas fa-layer-group me-2"></i>Información de Fase</h6>
+                                <div class="text-center py-3">
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary fs-6">${fase}</span>
+                                    </div>
+                                    <p class="text-muted mb-0">Fase asociada a la tipología</p>
                                 </div>
-                                <p class="text-muted mb-0">Fase asociada a la tipología</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-        
-        document.getElementById('detalleContent').innerHTML = contenido;
-        modalDetalle.show();
+            `;
+            
+            document.getElementById('detalleContent').innerHTML = contenido;
+            modalDetalle.show();
+            console.log('✅ Modal detalle abierto');
+        } catch (error) {
+            console.error('❌ Error abriendo modal detalle:', error);
+            mostrarAlerta('Error al abrir el modal de detalle', 'danger');
+        }
     });
 }
 
 // Función optimizada para abrir modal de edición
 function abrirModalEdicion(id, nombre, nombreCorto, idFase) {
+    console.log('📝 Abriendo modal edición:', { id, nombre, nombreCorto, idFase });
+    
+    if (!modalEdicion) {
+        console.error('❌ Modal de edición no inicializado');
+        mostrarAlerta('Error: Modal no está disponible. Recarga la página.', 'danger');
+        return;
+    }
+    
     requestAnimationFrame(() => {
-        document.getElementById('editNombre').value = nombre;
-        document.getElementById('editNombreCorto').value = nombreCorto || '';
-        document.getElementById('editFase').value = idFase;
-        
-        document.getElementById('formEdicion').action = updateTipologiaBaseUrl + '/' + id;
-        document.getElementById('formEdicion').method = 'POST';
-        
-        // Generar nuevo token para edición
-        document.getElementById('edit_form_token').value = generateUniqueToken();
-        
-        // Agregar evento de submit
-        const form = document.getElementById('formEdicion');
-        form.onsubmit = function(e) {
-            const nombre = document.getElementById('editNombre');
-            const fase = document.getElementById('editFase');
+        try {
+            document.getElementById('editNombre').value = nombre || '';
+            document.getElementById('editNombreCorto').value = nombreCorto || '';
             
-            if (!nombre.value.trim()) {
-                e.preventDefault();
-                mostrarAlerta('El nombre no puede estar vacío', 'warning');
-                nombre.focus();
-                return false;
+            // Manejar caso cuando idFase es null o undefined
+            const selectFase = document.getElementById('editFase');
+            if (idFase) {
+                selectFase.value = idFase;
+            } else {
+                selectFase.selectedIndex = 0; // Seleccionar primera opción
             }
             
-            if (!fase.value) {
-                e.preventDefault();
-                mostrarAlerta('Debe seleccionar una fase', 'warning');
-                fase.focus();
-                return false;
-            }
-        };
-        
-        modalEdicion.show();
-        
-        // Enfocar y seleccionar texto después de que se muestre el modal
-        setTimeout(() => {
-            const input = document.getElementById('editNombre');
-            input.focus();
-            input.select();
-        }, 150);
+            document.getElementById('formEdicion').action = updateTipologiaBaseUrl + '/' + id;
+            document.getElementById('formEdicion').method = 'POST';
+            
+            // Generar nuevo token para edición
+            document.getElementById('edit_form_token').value = generateUniqueToken();
+            
+            // Agregar evento de submit
+            const form = document.getElementById('formEdicion');
+            form.onsubmit = function(e) {
+                const nombre = document.getElementById('editNombre');
+                const fase = document.getElementById('editFase');
+                
+                if (!nombre.value.trim()) {
+                    e.preventDefault();
+                    mostrarAlerta('El nombre no puede estar vacío', 'warning');
+                    nombre.focus();
+                    return false;
+                }
+                
+                if (!fase.value) {
+                    e.preventDefault();
+                    mostrarAlerta('Debe seleccionar una fase', 'warning');
+                    fase.focus();
+                    return false;
+                }
+            };
+            
+            modalEdicion.show();
+            console.log('✅ Modal edición abierto');
+            
+            // Enfocar y seleccionar texto después de que se muestre el modal
+            setTimeout(() => {
+                const input = document.getElementById('editNombre');
+                input.focus();
+                input.select();
+            }, 150);
+        } catch (error) {
+            console.error('❌ Error abriendo modal:', error);
+            mostrarAlerta('Error al abrir el modal de edición', 'danger');
+        }
     });
 }
 
 // Función para confirmar eliminación (usando modal estático mejorado)
 function confirmarEliminacion(id, nombre) {
-    document.getElementById('tipologiaNombre').textContent = nombre;
-    document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_tipologia', id=0) }}".replace('0', id);
+    console.log('🗑️ Confirmando eliminación:', { id, nombre });
     
-    modalEliminar.show();
+    if (!modalEliminar) {
+        console.error('❌ Modal de eliminar no inicializado');
+        mostrarAlerta('Error: Modal no está disponible. Recarga la página.', 'danger');
+        return;
+    }
+    
+    try {
+        document.getElementById('tipologiaNombre').textContent = nombre;
+        document.getElementById('deleteForm').action = "{{ url_for('controllers.eliminar_tipologia', id=0) }}".replace('0', id);
+        
+        modalEliminar.show();
+        console.log('✅ Modal eliminar abierto');
+    } catch (error) {
+        console.error('❌ Error abriendo modal eliminar:', error);
+        mostrarAlerta('Error al abrir el modal de confirmación', 'danger');
+    }
 }
 
 // Función auxiliar para mostrar alertas

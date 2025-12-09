@@ -4256,6 +4256,136 @@ def calcular_progreso_actividad(actividad_id):
         print(f"📋 Traceback: {traceback.format_exc()}")
         return 0.0
 
+def calcular_progreso_jerarquico(actividad_id):
+    """
+    Calcula el progreso de una actividad considerando la jerarquía EDT.
+    
+    - Si la actividad tiene hijas (es un nodo padre), calcula el promedio ponderado 
+      por duración de sus hijas directas.
+    - Si la actividad NO tiene hijas (es una hoja), calcula el progreso basado en 
+      trabajadores asignados usando calcular_progreso_actividad().
+    
+    Estructura EDT: 1 → 1.1 → 1.1.1 → 1.1.4.1
+    Ejemplo: EDT '1.1' tiene hijas directas '1.1.1', '1.1.2', '1.1.3', '1.1.4'
+             (NO incluye '1.1.4.1' que es hija de '1.1.4')
+    
+    Args:
+        actividad_id: ID de la actividad a calcular
+        
+    Returns:
+        float: Progreso calculado (0-100)
+    """
+    try:
+        from app.models import ActividadProyecto
+        
+        actividad = ActividadProyecto.query.get(actividad_id)
+        if not actividad:
+            print(f"⚠️ Actividad {actividad_id} no encontrada")
+            return 0.0
+        
+        print(f"\n🔍 Calculando progreso jerárquico para actividad {actividad.edt} (ID: {actividad_id})")
+        
+        # Obtener hijas directas usando patrón EDT
+        # Ejemplo: Si EDT es '1.1', buscar '1.1.%' pero excluir '1.1.%.%'
+        edt_pattern = f"{actividad.edt}.%"
+        edt_pattern_excluir = f"{actividad.edt}.%.%"
+        
+        hijas = ActividadProyecto.query.filter(
+            ActividadProyecto.edt.like(edt_pattern),
+            ~ActividadProyecto.edt.like(edt_pattern_excluir),
+            ActividadProyecto.requerimiento_id == actividad.requerimiento_id
+        ).all()
+        
+        if not hijas:
+            # Es una hoja (sin hijas), calcular por trabajadores asignados
+            print(f"   📄 Es hoja (sin hijas) - calculando por trabajadores")
+            progreso = calcular_progreso_actividad(actividad_id)
+            print(f"   ✅ Progreso calculado: {progreso:.2f}%")
+            return progreso
+        
+        # Es un nodo padre, calcular promedio ponderado de hijas
+        print(f"   🌳 Es nodo padre - calculando promedio ponderado de {len(hijas)} hijas")
+        
+        total_peso = sum(float(h.duracion or 0) for h in hijas)
+        if total_peso == 0:
+            print(f"   ⚠️ Peso total es 0, retornando 0%")
+            return 0.0
+        
+        progreso_ponderado = 0.0
+        for hija in hijas:
+            peso_hija = float(hija.duracion or 0)
+            progreso_hija = float(hija.progreso or 0)
+            contribucion = progreso_hija * peso_hija / total_peso
+            progreso_ponderado += contribucion
+            print(f"      - {hija.edt}: {progreso_hija:.1f}% × {peso_hija}h = {contribucion:.2f}% contribución")
+        
+        print(f"   ✅ Progreso ponderado calculado: {progreso_ponderado:.2f}%")
+        return progreso_ponderado
+        
+    except Exception as e:
+        print(f"❌ Error calculando progreso jerárquico de actividad {actividad_id}: {str(e)}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
+        return 0.0
+
+def recalcular_padres_recursivo(edt_hijo, requerimiento_id):
+    """
+    Recalcula recursivamente el progreso de todos los padres en la jerarquía EDT.
+    Propaga los cambios desde una tarea hija hacia arriba hasta la raíz.
+    
+    Ejemplo: Si se actualiza '1.1.1', recalcula '1.1' y luego '1'
+    
+    Args:
+        edt_hijo: EDT de la tarea que cambió (ej: '1.1.1')
+        requerimiento_id: ID del requerimiento al que pertenece
+        
+    Returns:
+        None
+    """
+    try:
+        from app.models import ActividadProyecto
+        
+        print(f"\n🔄 Recalculando padres desde {edt_hijo}")
+        
+        # Obtener partes del EDT para navegar hacia arriba
+        partes = edt_hijo.split('.')
+        
+        # Recorrer desde el hijo hacia arriba (1.1.1 → 1.1 → 1)
+        while len(partes) > 1:
+            # Eliminar último nivel para obtener EDT padre
+            partes.pop()
+            edt_padre = '.'.join(partes)
+            
+            # Buscar actividad padre
+            padre = ActividadProyecto.query.filter_by(
+                edt=edt_padre,
+                requerimiento_id=requerimiento_id
+            ).first()
+            
+            if not padre:
+                print(f"   ⚠️ Padre {edt_padre} no encontrado")
+                continue
+            
+            # Recalcular progreso del padre usando lógica jerárquica
+            nuevo_progreso = calcular_progreso_jerarquico(padre.id)
+            progreso_anterior = float(padre.progreso or 0)
+            
+            # Actualizar solo si cambió
+            if abs(nuevo_progreso - progreso_anterior) > 0.01:  # Tolerancia 0.01%
+                padre.progreso = nuevo_progreso
+                db.session.commit()
+                print(f"   ✅ Actualizado {edt_padre}: {progreso_anterior:.2f}% → {nuevo_progreso:.2f}%")
+            else:
+                print(f"   ℹ️ {edt_padre} sin cambios ({progreso_anterior:.2f}%)")
+        
+        print(f"✅ Recalculación completada")
+        
+    except Exception as e:
+        print(f"❌ Error recalculando padres desde {edt_hijo}: {str(e)}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
+        db.session.rollback()
+
 @controllers_bp.route('/guardar_avances_trabajador', methods=['POST'])
 def guardar_avances_trabajador():
     """Guardar los avances de actividades registrados por un trabajador"""
@@ -4419,6 +4549,10 @@ def guardar_avances_trabajador():
                     actividad.fecha_actualizacion = datetime.now()
                     
                     print(f"✅ Progreso de actividad {edt} actualizado: {progreso_actividad_calculado:.1f}%")
+                    
+                    # **NUEVO: Recalcular todos los padres en la jerarquía**
+                    print(f"🌳 Recalculando progreso de padres en jerarquía...")
+                    recalcular_padres_recursivo(edt, proyecto_id)
                     
                     avances_guardados += 1
                     print(f"✅ Avance procesado exitosamente para EDT {edt}")

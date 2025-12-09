@@ -969,7 +969,7 @@ def procesar_proyecto_xlsx():
         return jsonify({
             'success': True, 
             'message': f'Archivo Excel procesado correctamente. {total_actividades} actividades encontradas. No hay proyectos nuevos para asignar.',
-            'proyectos_detectados': [],  # Usar nomenclatura consistente
+            'proyectos_nuevos': [],  # CORREGIDO: usar proyectos_nuevos para consistencia con frontend
             'actividades_procesadas': total_actividades
         })
         

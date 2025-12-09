@@ -990,35 +990,14 @@ def restore_backup_file():
         
         backup_logger.info(f"🧵 Hilo de restauración iniciado: {thread.name}")
         
-        # Esperar resultado con timeout de 20 minutos (backups grandes)
-        try:
-            status, result = result_queue.get(timeout=1200)  # 20 minutos
-            
-            if status == 'success':
-                backup_logger.info(f"🎉 Resultado de restauración EXITOSA: {result}")
-                
-                # FIX #8: Commit explícito de SQLAlchemy para evitar rollback posterior
-                try:
-                    from app import db
-                    db.session.commit()
-                    backup_logger.info("✅ SQLAlchemy session commited después de restauración")
-                except Exception as commit_err:
-                    backup_logger.warning(f"⚠️ No se pudo hacer commit SQLAlchemy: {str(commit_err)}")
-                
-                return jsonify(result)
-            else:
-                backup_logger.error(f"❌ Error en restauración: {result}")
-                return jsonify({
-                    'success': False,
-                    'message': f'Error en restauración: {result}'
-                }), 500
-                
-        except queue.Empty:
-            backup_logger.error("⏰ Timeout en restauración después de 20 minutos")
-            return jsonify({
-                'success': False,
-                'message': 'La restauración está tomando demasiado tiempo (>20min). Revise los logs del servidor para más detalles.'
-            }), 408
+        # FIX #10: Devolver respuesta INMEDIATAMENTE para que el frontend inicie polling
+        # El frontend consultará el progreso con /admin/backup/progress
+        return jsonify({
+            'success': True,
+            'message': 'Restauración iniciada en segundo plano',
+            'thread_name': thread.name,
+            'filename': filename
+        })
         
     except Exception as e:
         backup_logger.error(f"💥 Error en restore_backup_file endpoint MEJORADO: {str(e)}")

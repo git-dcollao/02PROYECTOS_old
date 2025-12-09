@@ -1,0 +1,13 @@
+{
+  "filename": "Backup_Control-_V1_-_OK_-_20251209_153818.sql.gz",
+  "name": "Backup_Control- V1 - OK -",
+  "original_name": "Backup_Control- V1 - OK -",
+  "description": null,
+  "created_at": "2025-12-09T15:38:18.502956",
+  "created_by": "Admin Sistema",
+  "user_id": 1,
+  "size": 10113,
+  "compressed": true,
+  "include_data": true,
+  "status": "success"
+}

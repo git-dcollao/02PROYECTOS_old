@@ -59,7 +59,6 @@
                                 <tr>
                                     <th class="border-0 px-4 py-3">ID</th>
                                     <th class="border-0 px-4 py-3">Nombre de la Fase</th>
-                                    <th class="border-0 px-4 py-3">Descripción</th>
                                     <th class="border-0 px-4 py-3 text-end">Acciones</th>
                                 </tr>
                             </thead>
@@ -71,9 +70,6 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="fw-semibold text-dark">{{ fase.nombre }}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span class="text-muted">Etapa del ciclo de vida del proyecto</span>
                                     </td>
                                     <td class="px-4 py-3 text-end">
                                         <div class="btn-group" role="group">
@@ -357,6 +353,12 @@ function abrirModalEdicion(id, nombre) {
         document.getElementById('formEdicion').action = updateFaseBaseUrl + '/' + id;
         document.getElementById('formEdicion').method = 'POST';
         
+        // Generar nuevo token para el formulario de edición
+        const editTokenField = document.getElementById('edit_form_token');
+        if (editTokenField) {
+            editTokenField.value = generateUniqueToken();
+        }
+        
         // Agregar evento de submit
         const form = document.getElementById('formEdicion');
         form.onsubmit = function(e) {
@@ -420,21 +422,5 @@ document.addEventListener('DOMContentLoaded', function() {
         addTokenField.value = generateUniqueToken();
     }
 });
-
-// Configurar token para formulario de edición cuando se abre el modal
-function abrirModalEdicion(id, nombre, descripcion, activo) {
-    document.getElementById('editNombre').value = nombre;
-    document.getElementById('editDescripcion').value = descripcion || '';
-    document.getElementById('editActivo').checked = activo;
-    document.getElementById('formEdicion').action = `{{ url_for('controllers.update_fase', id=0) }}`.replace('0', id);
-    
-    // Generar nuevo token para el formulario de edición
-    const editTokenField = document.getElementById('edit_form_token');
-    if (editTokenField) {
-        editTokenField.value = generateUniqueToken();
-    }
-    
-    modalEdicion.show();
-}
 </script>
 {% endblock %}

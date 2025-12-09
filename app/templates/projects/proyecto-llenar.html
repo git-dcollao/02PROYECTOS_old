@@ -321,14 +321,15 @@ function procesarArchivo() {
                 proyectosNuevos = data.proyectos_nuevos;
                 mostrarModalAsignacion(data.proyectos_nuevos, data.requerimientos_disponibles);
             } else {
-                console.log('⚠️ DEBUG: No hay proyectos_nuevos, recargando página');
-                console.log('🔍 DEBUG: Verificación - ¿Existe proyectos_nuevos?', !!data.proyectos_nuevos);
-                console.log('🔍 DEBUG: Verificación - ¿Length > 0?', data.proyectos_nuevos?.length > 0);
-                console.log('❌ DEBUG CRITICAL: ENTRANDO EN RELOAD - ESTO ES EL PROBLEMA');
+                console.log('ℹ️ No hay proyectos nuevos para asignar');
+                console.log('📊 Actividades procesadas:', data.actividades_procesadas);
                 
-                // TEMPORAL: No recargar inmediatamente, mostrar error para debugging
-                alert('ERROR: No se detectaron proyectos válidos. Ver consola para detalles.');
-                // location.reload(); // Recargar si no hay proyectos nuevos para asignar
+                // Mostrar mensaje informativo sin recargar
+                toast.info(data.message || 'Archivo procesado correctamente. No hay proyectos nuevos para asignar.');
+                
+                // Restaurar botón
+                button.innerHTML = originalText;
+                button.disabled = false;
             }
         } else {
             // Mostrar error más detallado

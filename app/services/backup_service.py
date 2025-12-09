@@ -121,6 +121,9 @@ class EnhancedBackupManager:
                 'database': config.get('DB_NAME', 'proyectos_db')
             }
             
+            # Guardar db_name para uso en métodos de limpieza
+            self.db_name = self.db_config['database']
+            
             self.logger.info(f"🔧 Configuración DB cargada | Host: {self.db_config['host']}:{self.db_config['port']} | DB: {self.db_config['database']}")
             return self.db_config
             
@@ -877,9 +880,23 @@ class EnhancedBackupManager:
             # Estadísticas finales
             self.progress_tracker.update("Restauración completada exitosamente", 100)
             
+            # FIX #11: Invalidar sesiones después de restauración exitosa
+            try:
+                from flask import session
+                from flask_login import logout_user, current_user
+                
+                session.clear()
+                if current_user.is_authenticated:
+                    logout_user()
+                
+                logger.info("🔓 Sesiones invalidadas - usuarios deben volver a iniciar sesión")
+            except Exception as session_err:
+                logger.warning(f"⚠️ No se pudieron invalidar sesiones: {str(session_err)}")
+            
             final_stats = {
                 'success': True,
-                'message': 'Backup restaurado exitosamente',
+                'message': 'Backup restaurado exitosamente - Por favor, vuelva a iniciar sesión.',
+                'session_cleared': True,
                 'stats': {
                     'total_time': f"{total_time:.2f}s",
                     'statements_executed': execution_stats['executed'],

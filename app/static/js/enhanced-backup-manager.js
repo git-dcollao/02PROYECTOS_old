@@ -180,6 +180,7 @@ class EnhancedBackupManager {
                 console.log('✅ [EnhancedBackupManager] Restauración exitosa:', result);
                 
                 this.addToActivityLog('✅ Restauración completada exitosamente');
+                this.addToActivityLog('🔄 Cerrando sesión para actualizar permisos...');
                 
                 // Mostrar estadísticas si están disponibles
                 if (result.stats) {
@@ -200,21 +201,20 @@ class EnhancedBackupManager {
                     console.log('✅ [Manual] Progreso fijado a 100%');
                 }
                 if (currentOperation) {
-                    currentOperation.textContent = 'Restauración completada';
+                    currentOperation.textContent = 'Restauración completada - Cerrando sesión...';
                     console.log('✅ [Manual] Operación actualizada: Completada');
                 }
                 
                 var self = this;
-                // Esperar un momento para que el usuario vea el resultado
-                setTimeout(async function() {
+                // Redirigir al login después de 3 segundos
+                setTimeout(function() {
                     self.hideProgressModal();
-                    self.showAlert('Backup restaurado exitosamente', 'success');
+                    self.showAlert('Backup restaurado exitosamente - Volviendo al login...', 'success');
                     
-                    // Verificar estado final de la BD
-                    console.log('🔍 [Debug] Verificando estado final de la BD...');
-                    await self.debugDatabaseStatus('DESPUÉS de la restauración');
-                    
-                    self.loadBackups(); // Recargar lista
+                    // Redirigir al login para forzar nueva sesión con permisos actualizados
+                    setTimeout(function() {
+                        window.location.href = '/auth/logout?next=/auth/login';
+                    }, 1500);
                 }, 3000);
                 
             } else {

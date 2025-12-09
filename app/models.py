@@ -942,7 +942,8 @@ class ActividadProyecto(db.Model, TimestampMixin):
     recursos = db.Column(db.Text, nullable=True)  # Recursos asignados
     
     # Progreso
-    progreso = db.Column(db.Numeric(5,2), default=0.00, nullable=False)  # Progreso en %
+    progreso = db.Column(db.Numeric(5,2), default=0.00, nullable=False)  # Progreso en % (registrado)
+    porcentaje_avance_validado = db.Column(db.Numeric(5,2), default=0.00, nullable=False)  # Progreso validado por supervisor
     
     # Datos adicionales del archivo
     datos_adicionales = db.Column(db.JSON, nullable=True)  # Columnas adicionales del XLSX
@@ -1073,9 +1074,16 @@ class HistorialAvanceActividad(db.Model):
     # Información de sesión de guardado (para agrupar cambios del mismo "Guardar todos")
     sesion_guardado = db.Column(db.String(50))  # UUID o timestamp para agrupar cambios de la misma sesión
     
+    # Campos de validación
+    validado = db.Column(db.Boolean, default=False, nullable=False)  # Si el avance ha sido validado
+    validado_por_id = db.Column(db.Integer, db.ForeignKey('trabajador.id'), nullable=True)  # Supervisor que validó
+    fecha_validacion = db.Column(db.DateTime, nullable=True)  # Fecha de validación
+    comentario_validacion = db.Column(db.Text)  # Comentarios del supervisor al validar
+    
     # Relaciones
     requerimiento = db.relationship('Requerimiento')
-    trabajador = db.relationship('Trabajador')
+    trabajador = db.relationship('Trabajador', foreign_keys=[trabajador_id])
+    validado_por = db.relationship('Trabajador', foreign_keys=[validado_por_id])
     actividad = db.relationship('ActividadProyecto')
     
     def to_dict(self):
@@ -1093,7 +1101,12 @@ class HistorialAvanceActividad(db.Model):
             'diferencia': self.diferencia,
             'comentarios': self.comentarios,
             'fecha_cambio': self.fecha_cambio.isoformat() if self.fecha_cambio else None,
-            'sesion_guardado': self.sesion_guardado
+            'sesion_guardado': self.sesion_guardado,
+            'validado': self.validado,
+            'validado_por_id': self.validado_por_id,
+            'validado_por_nombre': self.validado_por.nombre if self.validado_por else None,
+            'fecha_validacion': self.fecha_validacion.isoformat() if self.fecha_validacion else None,
+            'comentario_validacion': self.comentario_validacion
         }
     
     def __repr__(self):

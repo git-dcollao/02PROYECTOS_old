@@ -44,7 +44,7 @@ class MenuService:
         if not user_role and not custom_role_id:
             return self._get_public_menu()
         
-        # Obtener páginas permitidas para este usuario
+        # Obtener páginas permitidas para este usuario desde page_permissions
         allowed_pages = self._get_user_allowed_pages(user_role, custom_role_id)
         
         # Agrupar por categorías

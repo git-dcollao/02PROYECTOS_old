@@ -308,10 +308,7 @@ class BackupManagerV2 {
         
         return `
             <tr class="fade-in">
-                <td>
-                    <input type="checkbox" class="form-check-input" data-filename="${backup.filename}">
-                </td>
-                <td>
+                <td class="px-4 py-3">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-file-archive text-primary me-2"></i>
                         <div>
@@ -320,30 +317,27 @@ class BackupManagerV2 {
                         </div>
                     </div>
                 </td>
-                <td>
+                <td class="px-4 py-3">
                     <i class="fas fa-calendar-alt text-muted me-1"></i>
                     ${date}
                 </td>
-                <td>
+                <td class="px-4 py-3">
                     <span class="badge bg-secondary">${size}</span>
                 </td>
-                <td>
-                    <small class="text-muted">${backup.description || '-'}</small>
-                </td>
-                <td>
+                <td class="px-4 py-3">
                     <span class="badge bg-${statusClass}">
                         <i class="fas fa-${statusIcon}"></i> ${backup.status}
                     </span>
                 </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-success" onclick="backupManager.restoreBackup('${backup.filename}')" title="Restaurar">
-                            <i class="fas fa-sync-alt"></i>
+                <td class="text-end px-4 py-3">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-success" onclick="backupManager.restoreBackup('${backup.filename}')" title="Restaurar">
+                            <i class="fas fa-sync-alt"></i> Restaurar
                         </button>
-                        <button class="btn btn-sm btn-primary" onclick="backupManager.downloadBackup('${backup.filename}')" title="Descargar">
+                        <button class="btn btn-outline-primary" onclick="backupManager.downloadBackup('${backup.filename}')" title="Descargar">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="backupManager.deleteBackup('${backup.filename}')" title="Eliminar">
+                        <button class="btn btn-outline-danger" onclick="backupManager.deleteBackup('${backup.filename}')" title="Eliminar">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -356,7 +350,7 @@ class BackupManagerV2 {
         const tbody = document.getElementById('backupsList');
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-5">
+                <td colspan="5" class="text-center py-5">
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                     <p class="text-muted">${message}</p>
                     <button class="btn btn-primary" onclick="backupManager.showCreateBackupModal()">
@@ -665,17 +659,21 @@ class BackupManagerV2 {
             phaseDiv.className = 'alert alert-success mb-0';
             phaseDiv.innerHTML = `
                 <i class="fas fa-check-circle"></i> 
-                <strong>¡Restauración completada exitosamente!</strong>
+                <strong>¡Restauración completada exitosamente!</strong><br>
+                <small class="text-muted">Redirigiendo al login en 3 segundos...</small>
             `;
-            this.showNotification('Backup restaurado correctamente', 'success');
+            this.showNotification('Backup restaurado correctamente - Volviendo al login...', 'success');
             
-            // Cerrar modal automáticamente después de 3 segundos
+            // Cerrar modal y redirigir al login después de 3 segundos
             setTimeout(() => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalRestoreProgress'));
                 if (modal) {
                     modal.hide();
-                    console.log('✅ Modal cerrado automáticamente');
+                    console.log('✅ Modal cerrado - Redirigiendo al login');
                 }
+                
+                // Redirigir al login para forzar nueva sesión
+                window.location.href = '/auth/logout?next=/auth/login';
             }, 3000);
         } else {
             phaseDiv.className = 'alert alert-danger mb-0';
@@ -687,11 +685,7 @@ class BackupManagerV2 {
             this.showNotification('Error al restaurar backup', 'error');
         }
         
-        // Recargar backups después de 2 segundos
-        setTimeout(() => {
-            this.loadBackups();
-            this.loadSystemStatus();
-        }, 2000);
+        // NO recargar backups aquí - el usuario será redirigido
     }
 
     // ==========================================
