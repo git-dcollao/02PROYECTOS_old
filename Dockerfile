@@ -4,7 +4,7 @@ FROM python:3.11-slim AS base
 # Metadatos
 LABEL maintainer="Proyectos DCV"
 LABEL version="1.0"
-LABEL description="Flask Proyectos Application"
+LABEL description="Proyecto de control de avances de proyectos"
 
 # Variables de construcción
 ARG FLASK_ENV=production

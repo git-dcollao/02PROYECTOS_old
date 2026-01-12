@@ -4549,10 +4549,7 @@ def guardar_avances_trabajador():
                     actividad.fecha_actualizacion = datetime.now()
                     
                     print(f"✅ Progreso de actividad {edt} actualizado: {progreso_actividad_calculado:.1f}%")
-                    
-                    # **NUEVO: Recalcular todos los padres en la jerarquía**
-                    print(f"🌳 Recalculando progreso de padres en jerarquía...")
-                    recalcular_padres_recursivo(edt, proyecto_id)
+                    print(f"ℹ️  Esperando validación de supervisor para recalcular jerarquía")
                     
                     avances_guardados += 1
                     print(f"✅ Avance procesado exitosamente para EDT {edt}")
@@ -4673,22 +4670,26 @@ def exportar_avances_trabajador(trabajador_id, proyecto_id):
         return redirect(url_for('controllers.avance_actividades'))
 
 @controllers_bp.route('/proyectos_estado_4')
+@login_required
 def proyectos_estado_4():
-    """Obtener todos los proyectos (requerimientos) con estado = 5 (Desarrollo Completado)
+    """Obtener proyectos en estado 4 (Desarrollo Aceptado) y 5 (Desarrollo Completado)
+    para control y seguimiento de actividades.
     
-    Nota: Endpoint se mantiene como 'proyectos_estado_4' por compatibilidad con el frontend,
-    pero ahora filtra por estado 5 (Desarrollo Completado) que es cuando la carta Gantt
-    está lista y completa para control y seguimiento.
+    Filtra por recinto del usuario (excepto superadmin que ve todos).
     """
     try:
         grupo_id = request.args.get('grupo_id', type=int)
         
-        # Construir la consulta base - CAMBIO: ahora busca estado 5 (Desarrollo Completado)
+        # Construir la consulta base - Estados 4 y 5
         query = db.session.query(Requerimiento)\
             .join(Sector)\
             .join(Estado)\
-            .filter(Requerimiento.id_estado == 5)\
+            .filter(Requerimiento.id_estado.in_([4, 5]))\
             .filter(Requerimiento.activo == True)
+        
+        # Filtrar por recinto del usuario (excepto superadmin)
+        if not current_user.is_superadmin():
+            query = query.filter(Requerimiento.id_recinto == current_user.recinto_id)
         
         # Aplicar filtro por grupo si se proporciona
         if grupo_id:

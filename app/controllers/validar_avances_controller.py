@@ -24,6 +24,7 @@ Date: Diciembre 2025
 
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
+from app import csrf
 from app.models import (
     HistorialAvanceActividad, ActividadProyecto, Requerimiento, 
     Trabajador, db
@@ -104,7 +105,7 @@ def listar_avances():
         
         # Filtrar según nivel de acceso
         if not current_user.is_superadmin():
-            query = query.filter(Requerimiento.recinto_id == current_user.recinto_id)
+            query = query.filter(Requerimiento.id_recinto == current_user.recinto_id)
         
         # Aplicar filtros
         if proyecto_id:
@@ -140,7 +141,7 @@ def listar_avances():
                 'id': historial.id,
                 'proyecto_id': proyecto.id,
                 'proyecto_nombre': proyecto.nombre,
-                'proyecto_edt': proyecto.codigo,
+                'proyecto_edt': proyecto.id,  # Usar id en lugar de codigo que no existe
                 'actividad_id': actividad.id,
                 'actividad_nombre': actividad.nombre_tarea,
                 'actividad_edt': actividad.edt,
@@ -177,6 +178,7 @@ def listar_avances():
 
 
 @validar_avances_bp.route('/validar', methods=['POST'])
+@csrf.exempt
 @login_required
 def validar_avance():
     """
@@ -205,7 +207,7 @@ def validar_avance():
         # Verificar permisos de acceso al proyecto
         if not current_user.is_superadmin():
             proyecto = Requerimiento.query.get(historial.requerimiento_id)
-            if proyecto.recinto_id != current_user.recinto_id:
+            if proyecto.id_recinto != current_user.recinto_id:
                 return jsonify({'success': False, 'message': 'Sin permisos para este proyecto'}), 403
         
         # Actualizar historial
@@ -218,6 +220,19 @@ def validar_avance():
         actividad = ActividadProyecto.query.get(historial.actividad_id)
         if actividad:
             actividad.porcentaje_avance_validado = historial.progreso_nuevo
+            
+            # **NUEVO: Recalcular progreso jerárquico tras validación**
+            print(f"🌳 Recalculando progreso jerárquico tras validación de {actividad.edt}...")
+            from app.controllers_main import calcular_progreso_actividad, recalcular_padres_recursivo
+            
+            # 1. Recalcular progreso de la actividad (promedio trabajadores)
+            progreso_calculado = calcular_progreso_actividad(actividad.id)
+            actividad.progreso = progreso_calculado
+            print(f"   📊 Progreso actividad {actividad.edt}: {progreso_calculado:.2f}%")
+            
+            # 2. Recalcular todos los padres en la jerarquía
+            recalcular_padres_recursivo(actividad.edt, historial.requerimiento_id)
+            print(f"   ✅ Jerarquía recalculada desde {actividad.edt}")
         
         db.session.commit()
         
@@ -238,6 +253,7 @@ def validar_avance():
 
 
 @validar_avances_bp.route('/corregir', methods=['POST'])
+@csrf.exempt
 @login_required
 def corregir_avance():
     """
@@ -275,7 +291,7 @@ def corregir_avance():
         # Verificar permisos de acceso al proyecto
         if not current_user.is_superadmin():
             proyecto = Requerimiento.query.get(historial.requerimiento_id)
-            if proyecto.recinto_id != current_user.recinto_id:
+            if proyecto.id_recinto != current_user.recinto_id:
                 return jsonify({'success': False, 'message': 'Sin permisos para este proyecto'}), 403
         
         # Actualizar historial con corrección
@@ -310,6 +326,7 @@ def corregir_avance():
 
 
 @validar_avances_bp.route('/rechazar', methods=['POST'])
+@csrf.exempt
 @login_required
 def rechazar_avance():
     """
@@ -338,7 +355,7 @@ def rechazar_avance():
         # Verificar permisos de acceso al proyecto
         if not current_user.is_superadmin():
             proyecto = Requerimiento.query.get(historial.requerimiento_id)
-            if proyecto.recinto_id != current_user.recinto_id:
+            if proyecto.id_recinto != current_user.recinto_id:
                 return jsonify({'success': False, 'message': 'Sin permisos para este proyecto'}), 403
         
         # Actualizar historial con rechazo
@@ -385,7 +402,7 @@ def estadisticas():
         
         # Filtrar según nivel de acceso
         if not current_user.is_superadmin():
-            query = query.join(Requerimiento).filter(Requerimiento.recinto_id == current_user.recinto_id)
+            query = query.join(Requerimiento).filter(Requerimiento.id_recinto == current_user.recinto_id)
         
         # Contar estados
         total = query.count()
@@ -425,28 +442,22 @@ def estadisticas():
 @login_required
 def listar_proyectos():
     """
-    API: Listar proyectos con avances pendientes
-    Para filtro de selección
+    API: Listar proyectos en estado 'Desarrollo Aceptado' (4) o 'En Ejecución' (6)
+    Para filtro de selección en validación de avances
     """
     try:
         # VERIFICAR PERMISOS
         if not (current_user.is_superadmin() or current_user.has_page_permission('/validar-avances')):
             return jsonify({'success': False, 'message': 'Sin permisos'}), 403
         
-        # Query base
-        query = db.session.query(
-            Requerimiento.id,
-            Requerimiento.nombre,
-            Requerimiento.codigo
-        ).join(
-            HistorialAvanceActividad, HistorialAvanceActividad.requerimiento_id == Requerimiento.id
-        ).filter(
-            HistorialAvanceActividad.validado == False
-        ).distinct()
+        # Listar proyectos en estado 4 (Desarrollo Aceptado) o 6 (En Ejecución)
+        query = Requerimiento.query.filter(
+            Requerimiento.id_estado.in_([4, 6])
+        )
         
         # Filtrar según nivel de acceso
         if not current_user.is_superadmin():
-            query = query.filter(Requerimiento.recinto_id == current_user.recinto_id)
+            query = query.filter(Requerimiento.id_recinto == current_user.recinto_id)
         
         proyectos = query.all()
         
@@ -454,7 +465,7 @@ def listar_proyectos():
             {
                 'id': p.id,
                 'nombre': p.nombre,
-                'codigo': p.codigo
+                'estado': p.estado.nombre if p.estado else 'Sin estado'
             }
             for p in proyectos
         ]
@@ -496,7 +507,7 @@ def listar_trabajadores():
         if not current_user.is_superadmin():
             query = query.join(
                 Requerimiento, HistorialAvanceActividad.requerimiento_id == Requerimiento.id
-            ).filter(Requerimiento.recinto_id == current_user.recinto_id)
+            ).filter(Requerimiento.id_recinto == current_user.recinto_id)
         
         trabajadores = query.all()
         
