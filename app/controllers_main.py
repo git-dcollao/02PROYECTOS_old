@@ -249,29 +249,38 @@ def eliminar_recinto(id):
 @controllers_bp.route('/tiposrecintos', endpoint='ruta_tiposrecintos')
 @login_required
 def tiposrecintos():
-    # Filtrar tipos de recinto por sector del usuario actual
-    user_sector_id = current_user.sector_id
-    if user_sector_id:
-        tiposrecintos = TipoRecinto.query.filter_by(id_sector=user_sector_id).all()
-        # Solo mostrar el sector del usuario
-        sectores = Sector.query.filter_by(id=user_sector_id).all()
-    else:
-        # Si el usuario no tiene sector, mostrar todos (para SUPERADMIN)
+    # SUPERADMIN ve todos los tipos de recinto y sectores
+    if current_user.is_superadmin():
         tiposrecintos = TipoRecinto.query.all()
         sectores = Sector.query.all()
+    else:
+        # Filtrar tipos de recinto por sector del usuario actual
+        user_sector_id = current_user.sector_id
+        if user_sector_id:
+            tiposrecintos = TipoRecinto.query.filter_by(id_sector=user_sector_id).all()
+            # Solo mostrar el sector del usuario
+            sectores = Sector.query.filter_by(id=user_sector_id).all()
+        else:
+            # Si el usuario no tiene sector, no mostrar nada
+            tiposrecintos = []
+            sectores = []
     return render_template('tiposrecintos.html', tiposrecintos=tiposrecintos, sectores=sectores)
 
 # Agregar endpoint para obtener tipos de recinto en formato JSON filtrados por sector
 @controllers_bp.route('/get_tiposrecintos', methods=['GET'])
 @login_required
 def get_tiposrecintos():
-    # Filtrar tipos de recinto por sector del usuario actual
-    user_sector_id = current_user.sector_id
-    if user_sector_id:
-        tiposrecintos = TipoRecinto.query.filter_by(id_sector=user_sector_id).all()
-    else:
-        # Si el usuario no tiene sector, mostrar todos (para SUPERADMIN)
+    # SUPERADMIN ve todos los tipos de recinto
+    if current_user.is_superadmin():
         tiposrecintos = TipoRecinto.query.all()
+    else:
+        # Filtrar tipos de recinto por sector del usuario actual
+        user_sector_id = current_user.sector_id
+        if user_sector_id:
+            tiposrecintos = TipoRecinto.query.filter_by(id_sector=user_sector_id).all()
+        else:
+            # Si el usuario no tiene sector, no mostrar nada
+            tiposrecintos = []
     return jsonify([{'id': e.id, 'nombre': e.nombre} for e in tiposrecintos])
 
 # Agregar esta nueva ruta para obtener tipos de recinto por sector
