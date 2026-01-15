@@ -1,0 +1,13 @@
+{
+  "filename": "Backup_01-2026_20260115_204222.sql.gz",
+  "name": "Backup 01-2026",
+  "original_name": "Backup 01-2026",
+  "description": "Backup limpio sin requerimiento",
+  "created_at": "2026-01-15T20:42:22.175333",
+  "created_by": "Admin Sistema",
+  "user_id": 1,
+  "size": 9972,
+  "compressed": true,
+  "include_data": true,
+  "status": "success"
+}

@@ -1,0 +1,13 @@
+{
+  "filename": "Backup_01-2026_-_V3_20260115_205626.sql.gz",
+  "name": "Backup 01-2026 - V3",
+  "original_name": "Backup 01-2026 - V3",
+  "description": "Backup con 2 requerimientos por completar",
+  "created_at": "2026-01-15T20:56:26.973967",
+  "created_by": "Admin Sistema",
+  "user_id": 1,
+  "size": 10242,
+  "compressed": true,
+  "include_data": true,
+  "status": "success"
+}

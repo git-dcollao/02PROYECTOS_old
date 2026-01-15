@@ -476,16 +476,32 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('formNuevoRequerimiento').addEventListener('submit', function(e) {
         e.preventDefault();
         
+        console.log('🚀 Formulario enviado');
+        
         const formData = new FormData(this);
-        // Agregar token CSRF al FormData
-        formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+        
+        // Verificar que el token CSRF exista
+        const csrfToken = document.querySelector('input[name="csrf_token"]');
+        if (!csrfToken) {
+            console.error('❌ No se encontró el token CSRF en el formulario');
+            alert('Error: Token CSRF no encontrado. Recarga la página.');
+            return;
+        }
+        console.log('✅ Token CSRF encontrado');
         
         fetch('/add_requerimiento', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('📡 Respuesta recibida:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('✅ Datos procesados:', data);
             if (data.success) {
                 // Agregar nueva fila a la tabla CON el formato correcto al INICIO
                 const tablaElement = document.getElementById('tablarequerimiento');
@@ -608,8 +624,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Error al procesar la solicitud');
+            console.error('❌ Error completo:', error);
+            console.error('Stack trace:', error.stack);
+            alert('Error al procesar la solicitud: ' + error.message);
         });
     });
 

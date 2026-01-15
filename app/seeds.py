@@ -463,6 +463,12 @@ def crear_recintos_iniciales():
 
 def crear_requerimientos_iniciales():
     try:
+        # DESHABILITADO: No crear requerimientos de prueba automáticamente
+        print("⚠️ Creación de requerimientos de prueba DESHABILITADA para producción")
+        return True
+        
+        # CÓDIGO ORIGINAL COMENTADO ABAJO
+        """
         if Requerimiento.query.first():
             print("✅ Los requerimientos ya existen, saltando creación...")
             return True
@@ -546,6 +552,7 @@ def crear_requerimientos_iniciales():
 
         db.session.commit()
         print("✅ Requerimientos iniciales creados exitosamente")
+        """  # FIN CÓDIGO COMENTADO
         return True
 
     except Exception as e:

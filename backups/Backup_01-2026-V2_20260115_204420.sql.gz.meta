@@ -1,0 +1,13 @@
+{
+  "filename": "Backup_01-2026-V2_20260115_204420.sql.gz",
+  "name": "Backup_01-2026-V2",
+  "original_name": "Backup_01-2026-V2",
+  "description": "Backup limpio sin requerimiento\r\nCon permisos totales de superadmin",
+  "created_at": "2026-01-15T20:44:20.237232",
+  "created_by": "Admin Sistema",
+  "user_id": 1,
+  "size": 10054,
+  "compressed": true,
+  "include_data": true,
+  "status": "success"
+}
