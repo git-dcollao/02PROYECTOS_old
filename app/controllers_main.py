@@ -6748,26 +6748,28 @@ def asignar_recinto_usuario():
         if not trabajador_id or not recinto_id:
             return jsonify({'success': False, 'error': 'Faltan datos requeridos'}), 400
         
-        # Verificar que el administrador tiene acceso a gestionar este recinto
-        if not AdministradorRecinto.tiene_acceso_recinto(current_user.id, recinto_id):
-            return jsonify({'success': False, 'error': 'No tiene permisos para gestionar este recinto'}), 403
-        
-        # Verificar que el trabajador existe y pertenece a uno de los recintos gestionados
+        # Verificar que el trabajador existe
         trabajador = Trabajador.query.get(trabajador_id)
         if not trabajador:
             return jsonify({'success': False, 'error': 'Trabajador no encontrado'}), 404
-        
-        # Verificar que el trabajador pertenece a un recinto gestionado por este admin
-        recintos_admin = AdministradorRecinto.obtener_recintos_administrador(current_user.id)
-        recinto_ids_admin = [asignacion.recinto_id for asignacion in recintos_admin]
-        
-        if trabajador.recinto_id not in recinto_ids_admin:
-            return jsonify({'success': False, 'error': 'No puede gestionar trabajadores de este recinto'}), 403
         
         # Verificar que el recinto existe
         recinto = Recinto.query.filter_by(id=recinto_id, activo=True).first()
         if not recinto:
             return jsonify({'success': False, 'error': 'Recinto no encontrado'}), 404
+        
+        # Validaciones de permisos solo para administradores normales (NO para SUPERADMIN)
+        if not current_user.is_superadmin():
+            # Verificar que el administrador tiene acceso a gestionar este recinto
+            if not AdministradorRecinto.tiene_acceso_recinto(current_user.id, recinto_id):
+                return jsonify({'success': False, 'error': 'No tiene permisos para gestionar este recinto'}), 403
+            
+            # Verificar que el trabajador pertenece a un recinto gestionado por este admin
+            recintos_admin = AdministradorRecinto.obtener_recintos_administrador(current_user.id)
+            recinto_ids_admin = [asignacion.recinto_id for asignacion in recintos_admin]
+            
+            if trabajador.recinto_id not in recinto_ids_admin:
+                return jsonify({'success': False, 'error': 'No puede gestionar trabajadores de este recinto'}), 403
         
         # Realizar la asignación o desasignación
         if asignar:
