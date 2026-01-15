@@ -379,6 +379,12 @@ function toggleAsignacionCheckbox(trabajadorId, recintoId, isChecked) {
     new bootstrap.Modal(document.getElementById('confirmModal')).show();
 }
 
+// Función para obtener el CSRF token
+function getCsrfToken() {
+    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    return tokenMeta ? tokenMeta.content : '';
+}
+
 document.getElementById('confirmBtn').addEventListener('click', function() {
     if (!pendingAction) return;
     
@@ -391,7 +397,8 @@ document.getElementById('confirmBtn').addEventListener('click', function() {
     fetch('{{ url_for("controllers.asignar_recinto_usuario") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
         },
         body: JSON.stringify({
             trabajador_id: trabajadorId,
