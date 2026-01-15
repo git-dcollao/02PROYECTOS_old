@@ -33,14 +33,18 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Configuraciones de seguridad
+    # Leer SESSION_COOKIE_SECURE desde .env, por defecto False para desarrollo
+    session_cookie_secure = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+    
     app.config.update(
         SECRET_KEY=os.getenv('SECRET_KEY', 'dev-key-change-in-production'),
-        SESSION_COOKIE_SECURE=os.getenv('FLASK_ENV') == 'production',
+        SESSION_COOKIE_SECURE=session_cookie_secure,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=3600,  # 1 hora
+        PERMANENT_SESSION_LIFETIME=int(os.getenv('SESSION_LIFETIME_HOURS', '1')) * 3600,  # Configurable desde .env
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB max upload
         WTF_CSRF_TIME_LIMIT=None,
+        WTF_CSRF_SSL_STRICT=os.getenv('WTF_CSRF_SSL_STRICT', 'False').lower() == 'true',
         JSON_SORT_KEYS=False
     )
 

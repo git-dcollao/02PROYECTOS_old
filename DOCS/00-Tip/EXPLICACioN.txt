@@ -1,0 +1,23 @@
+- Nivel de esquema 
+
+
+- EDT
+
+
+- Nombre de tarea
+
+
+- %completado
+   es el % de avance programado a la fecha de control
+
+- Real Anterior
+   es el % real avanzado en el control anterior
+
+- programado
+   es el % programado al control (%completado se iguala al %programado al momento del control)
+
+- %Real
+   es el % declarado por cada usuario
+
+- Decimales
+   el %completado pero en decimales

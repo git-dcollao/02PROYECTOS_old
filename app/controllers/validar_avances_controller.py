@@ -259,10 +259,16 @@ def corregir_avance():
     """
     API: Corregir porcentaje antes de validar
     Permite al supervisor ajustar el % reportado
+    
+    IMPORTANTE: Crea un NUEVO registro en historial_avance_actividad con el valor corregido,
+    manteniendo el registro original del trabajador intacto para trazabilidad completa.
     """
     print(f"🔍 API validar_avances.corregir_avance llamado por {current_user.email}")
     
     try:
+        import uuid
+        from app.models import AvanceActividad
+        
         # VERIFICAR PERMISOS
         if not (current_user.is_superadmin() or current_user.has_page_permission('/validar-avances')):
             return jsonify({'success': False, 'message': 'Sin permisos'}), 403
@@ -283,38 +289,97 @@ def corregir_avance():
         except ValueError:
             return jsonify({'success': False, 'message': 'Porcentaje inválido'}), 400
         
-        # Buscar registro de historial
-        historial = HistorialAvanceActividad.query.get(historial_id)
-        if not historial:
+        # Buscar registro de historial ORIGINAL del trabajador
+        historial_original = HistorialAvanceActividad.query.get(historial_id)
+        if not historial_original:
             return jsonify({'success': False, 'message': 'Registro no encontrado'}), 404
         
         # Verificar permisos de acceso al proyecto
         if not current_user.is_superadmin():
-            proyecto = Requerimiento.query.get(historial.requerimiento_id)
+            proyecto = Requerimiento.query.get(historial_original.requerimiento_id)
             if proyecto.id_recinto != current_user.recinto_id:
                 return jsonify({'success': False, 'message': 'Sin permisos para este proyecto'}), 403
         
-        # Actualizar historial con corrección
-        historial.progreso_nuevo = porcentaje_corregido
-        historial.diferencia = porcentaje_corregido - historial.progreso_anterior
-        historial.validado = True
-        historial.validado_por_id = current_user.id
-        historial.fecha_validacion = datetime.utcnow()
-        historial.comentario_validacion = f"Corregido a {porcentaje_corregido}%. {comentario}"
+        # 1. Marcar el registro original como "corregido" sin modificar sus valores
+        historial_original.validado = True
+        historial_original.validado_por_id = current_user.id
+        historial_original.fecha_validacion = datetime.utcnow()
+        historial_original.comentario_validacion = f"CORREGIDO por supervisor de {historial_original.progreso_nuevo}% a {porcentaje_corregido}%"
         
-        # Actualizar porcentaje_avance_validado en actividad_proyecto
-        actividad = ActividadProyecto.query.get(historial.actividad_id)
+        print(f"📝 Registro original {historial_id} marcado como corregido")
+        print(f"   Valor reportado por trabajador: {historial_original.progreso_nuevo}%")
+        print(f"   Valor corregido por supervisor: {porcentaje_corregido}%")
+        
+        # 2. Crear NUEVO registro con el valor corregido
+        sesion_correccion = f"CORRECCION_{uuid.uuid4().hex[:8]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        nuevo_historial = HistorialAvanceActividad(
+            requerimiento_id=historial_original.requerimiento_id,
+            trabajador_id=historial_original.trabajador_id,
+            actividad_id=historial_original.actividad_id,
+            progreso_anterior=historial_original.progreso_nuevo,  # El valor reportado por trabajador
+            progreso_nuevo=porcentaje_corregido,  # El valor corregido
+            diferencia=porcentaje_corregido - historial_original.progreso_nuevo,
+            comentarios=f"Corrección supervisada: {comentario}" if comentario else "Corrección supervisada",
+            fecha_cambio=datetime.utcnow(),
+            sesion_guardado=sesion_correccion,
+            validado=True,  # Ya viene validado
+            validado_por_id=current_user.id,
+            fecha_validacion=datetime.utcnow(),
+            comentario_validacion=f"Corregido de {historial_original.progreso_nuevo}% a {porcentaje_corregido}%. {comentario}"
+        )
+        db.session.add(nuevo_historial)
+        
+        print(f"✅ Nuevo registro de corrección creado:")
+        print(f"   Sesión: {sesion_correccion}")
+        print(f"   Diferencia: {nuevo_historial.diferencia:+.1f}%")
+        
+        # 3. Actualizar tabla avance_actividad con el valor corregido
+        avance_actividad = AvanceActividad.query.filter_by(
+            requerimiento_id=historial_original.requerimiento_id,
+            trabajador_id=historial_original.trabajador_id,
+            actividad_id=historial_original.actividad_id
+        ).first()
+        
+        if avance_actividad:
+            avance_actividad.progreso_anterior = avance_actividad.progreso_actual
+            avance_actividad.progreso_actual = porcentaje_corregido
+            avance_actividad.fecha_actualizacion = datetime.utcnow()
+            avance_actividad.observaciones = f"Corregido por supervisor {current_user.nombre}: {historial_original.progreso_nuevo}% → {porcentaje_corregido}%"
+            print(f"📊 Tabla avance_actividad actualizada con valor corregido")
+        
+        # 4. Actualizar porcentaje_avance_validado en actividad_proyecto
+        actividad = ActividadProyecto.query.get(historial_original.actividad_id)
         if actividad:
             actividad.porcentaje_avance_validado = porcentaje_corregido
+            
+            # 5. Recalcular progreso jerárquico tras corrección
+            print(f"🌳 Recalculando progreso jerárquico tras corrección de {actividad.edt}...")
+            from app.controllers_main import calcular_progreso_actividad, recalcular_padres_recursivo
+            
+            # Recalcular progreso de la actividad (promedio trabajadores)
+            progreso_calculado = calcular_progreso_actividad(actividad.id)
+            actividad.progreso = progreso_calculado
+            print(f"   📊 Progreso actividad {actividad.edt}: {progreso_calculado:.2f}%")
+            
+            # Recalcular todos los padres en la jerarquía
+            recalcular_padres_recursivo(actividad.edt, historial_original.requerimiento_id)
+            print(f"   ✅ Jerarquía recalculada desde {actividad.edt}")
         
         db.session.commit()
         
-        print(f"✅ Avance corregido: Historial {historial_id}, Actividad {actividad.edt}, {porcentaje_corregido}%")
+        print(f"✅ Avance corregido exitosamente:")
+        print(f"   Historial original: {historial_id} (conservado para auditoría)")
+        print(f"   Nuevo historial: {nuevo_historial.id}")
+        print(f"   Actividad: {actividad.edt}")
+        print(f"   Porcentaje final: {porcentaje_corregido}%")
         
         return jsonify({
             'success': True,
             'message': 'Avance corregido y validado exitosamente',
-            'porcentaje_validado': float(porcentaje_corregido)
+            'porcentaje_validado': float(porcentaje_corregido),
+            'historial_original_id': historial_id,
+            'nuevo_historial_id': nuevo_historial.id
         })
         
     except Exception as e:

@@ -858,6 +858,25 @@ class EnhancedBackupManager:
                 skipped=execution_stats['skipped'],
                 batches=execution_stats['batches'])
             
+            # === COMMIT FINAL CRÍTICO ===
+            # 🔥 FIX: Asegurar que TODOS los cambios estén persistidos antes de cerrar
+            logger.info("💾 === COMMIT FINAL DE TODOS LOS CAMBIOS ===")
+            try:
+                if connection and connection.open:
+                    connection.commit()
+                    logger.info("✅ COMMIT FINAL EXITOSO - Todos los cambios persistidos en disco")
+                else:
+                    logger.warning("⚠️ Conexión cerrada antes de COMMIT FINAL - cambios pueden perderse")
+            except Exception as commit_error:
+                logger.error(f"❌ ERROR CRÍTICO en COMMIT FINAL: {str(commit_error)}")
+                logger.error("⚠️ Intentando rollback para evitar corrupción...")
+                try:
+                    connection.rollback()
+                    logger.info("🔄 Rollback ejecutado - restauración FALLÓ")
+                except Exception as rb_error:
+                    logger.error(f"💥 Error en rollback de emergencia: {str(rb_error)}")
+                raise Exception(f"Error al persistir cambios: {str(commit_error)}")
+            
             # === FASE 6: FINALIZACIÓN Y CLEANUP ===
             logger.info("🔄 === FASE 6: FINALIZACIÓN ===")
             total_time = time.time() - start_time
