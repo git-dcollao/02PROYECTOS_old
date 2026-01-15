@@ -4713,12 +4713,22 @@ def proyectos_estado_4():
             total_actividades = len(actividades_proyecto)
             actividades_completadas = len([act for act in actividades_proyecto if act.progreso and act.progreso >= 100])
             
-            # Calcular progreso promedio
-            if total_actividades > 0:
-                progreso_total = sum([float(act.progreso) for act in actividades_proyecto if act.progreso is not None])
-                progreso_promedio = round(progreso_total / total_actividades, 1)
+            # Obtener progreso del proyecto desde la actividad raíz (EDT nivel 1)
+            # En lugar de calcular el promedio, usar el valor ya calculado y propagado
+            actividad_raiz = next(
+                (act for act in actividades_proyecto if act.nivel_esquema == 1),
+                None
+            )
+            
+            if actividad_raiz and actividad_raiz.progreso is not None:
+                progreso_promedio = round(float(actividad_raiz.progreso), 1)
             else:
-                progreso_promedio = 0
+                # Fallback: si no hay actividad raíz, calcular promedio (casos legacy)
+                if total_actividades > 0:
+                    progreso_total = sum([float(act.progreso) for act in actividades_proyecto if act.progreso is not None])
+                    progreso_promedio = round(progreso_total / total_actividades, 1)
+                else:
+                    progreso_promedio = 0
             
             # Calcular progreso esperado y estado del cronograma
             from datetime import date
@@ -4893,9 +4903,10 @@ def proyecto_detalle(proyecto_id):
                 'error': f'Proyecto con ID {proyecto_id} no encontrado. IDs disponibles: {proyectos_ids}'
             }), 404
         
-        # Obtener actividades del proyecto desde la tabla ActividadProyecto
+        # Obtener actividades del proyecto desde la tabla ActividadProyecto (solo activas)
         actividades = db.session.query(ActividadProyecto)\
             .filter(ActividadProyecto.requerimiento_id == proyecto_id)\
+            .filter(ActividadProyecto.activo == True)\
             .all()
         
         # Preparar lista detallada de actividades
@@ -4928,12 +4939,24 @@ def proyecto_detalle(proyecto_id):
         actividades_en_progreso = len([act for act in actividades if act.progreso and 0 < float(act.progreso) < 100])
         actividades_pendientes = len([act for act in actividades if not act.progreso or float(act.progreso) == 0])
         
-        # Calcular progreso promedio
-        if total_actividades > 0:
-            progreso_total = sum([float(act.progreso) for act in actividades if act.progreso is not None])
-            progreso_promedio = round(progreso_total / total_actividades, 1)
+        # Obtener progreso del proyecto desde la actividad raíz (EDT nivel 1)
+        # Este valor ya está calculado y propagado por la jerarquía
+        actividad_raiz = next(
+            (act for act in actividades if act.nivel_esquema == 1),
+            None
+        )
+        
+        if actividad_raiz and actividad_raiz.progreso is not None:
+            progreso_promedio = round(float(actividad_raiz.progreso), 1)
+            print(f"✅ Progreso obtenido de actividad raíz (EDT: {actividad_raiz.edt}): {progreso_promedio}%")
         else:
-            progreso_promedio = 0
+            # Fallback: si no hay actividad raíz, calcular promedio (casos legacy)
+            print(f"⚠️ No se encontró actividad raíz para proyecto {proyecto_id}, calculando promedio")
+            if total_actividades > 0:
+                progreso_total = sum([float(act.progreso) for act in actividades if act.progreso is not None])
+                progreso_promedio = round(progreso_total / total_actividades, 1)
+            else:
+                progreso_promedio = 0
         
         # Calcular progreso esperado basado en fechas
         from datetime import date

@@ -44,6 +44,9 @@ Proceso paso a paso:
         progreso_total = (suma_horas_completadas / suma_horas_totales) * 100
         """
     ```
+ las 8 horas es el promedio diario de trabajo en funcion del trabajo semanal que debe realizar el trabajador 
+    EJ: (40/5 de lunes a viernes = 8 hrs diarias) 
+
 Ejemplo práctico:
     * Actividad de 10 días
     * Trabajador 1: Asignado al 50%, reporta 40% de avance
