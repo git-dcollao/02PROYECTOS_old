@@ -29,6 +29,7 @@ from app.models import (
     EquipoTrabajo, ObservacionRequerimiento, CustomRole, AdministradorRecinto,
     ActividadProyecto, AvanceActividad, db
 )
+from app.controllers_main import limpiar_trabajadores_huerfanos
 from datetime import datetime, timedelta
 from sqlalchemy import func, or_, and_
 import pandas as pd
@@ -1159,9 +1160,7 @@ def guardar_asignaciones_proyecto():
             db.session.commit()
             
             # Limpiar trabajadores huérfanos después del procesamiento exitoso
-            # TEMPORALMENTE DESHABILITADO POR ERROR
-            # trabajadores_eliminados = limpiar_trabajadores_huerfanos()
-            trabajadores_eliminados = 0
+            trabajadores_eliminados = limpiar_trabajadores_huerfanos()
             
             logger.info(f"Procesamiento completado. Actividades creadas: {actividades_creadas}, Actividades actualizadas: {actividades_actualizadas}")
             

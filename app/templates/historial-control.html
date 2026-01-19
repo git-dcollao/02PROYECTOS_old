@@ -1,0 +1,471 @@
+{% extends 'bases/base.html' %}
+
+{% block title %}Historial de Control{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal-styles.css') }}">
+<style>
+    .timeline-item {
+        border-left: 3px solid #007bff;
+        padding-left: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 10px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #007bff;
+    }
+    
+    .timeline-item.update::before { background: #28a745; }
+    .timeline-item.reasignacion::before { background: #ffc107; }
+    .timeline-item.limpieza::before { background: #dc3545; }
+    .timeline-item.auditoria::before { background: #6f42c1; }
+    
+    .historial-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .badge-operacion {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    
+    .datos-detalle {
+        background: #ffffff;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 10px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .filtros-panel {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="h3 mb-3">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Historial de Control
+                </h1>
+                <p class="text-muted">
+                    Registro completo de todas las operaciones realizadas en el sistema de control de actividades
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Filtros -->
+    <div class="row">
+        <div class="col-12">
+            <div class="filtros-panel">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+                </h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filtroTipo" class="form-label">Tipo de Operación</label>
+                        <select class="form-select" id="filtroTipo">
+                            <option value="">Todos los tipos</option>
+                            <option value="UPDATE">Actualizaciones</option>
+                            <option value="REASIGNACION_TRABAJADOR">Reasignaciones</option>
+                            <option value="LIMPIEZA_TRABAJADORES">Limpieza</option>
+                            <option value="SUBIDA_ARCHIVO_COMPLETA">Subida Completa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtroFechaDesde" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="filtroFechaDesde">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtroFechaHasta" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="filtroFechaHasta">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtroProyecto" class="form-label">Proyecto</label>
+                        <select class="form-select" id="filtroProyecto">
+                            <option value="">Todos los proyectos</option>
+                            <!-- Se llenará dinámicamente -->
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" onclick="buscarHistorial()">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary ms-2" onclick="limpiarFiltros()">
+                            <i class="fas fa-eraser me-2"></i>Limpiar
+                        </button>
+                        <button type="button" class="btn btn-info ms-2" onclick="mostrarResumen()">
+                            <i class="fas fa-chart-bar me-2"></i>Resumen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Estadísticas (Oculto por defecto) -->
+    <div class="row" id="panelEstadisticas" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas del Historial
+                    </h5>
+                </div>
+                <div class="card-body" id="contenidoEstadisticas">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline de Historial -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-timeline me-2"></i>Registro de Operaciones
+                    </h5>
+                    <div id="infoResultados" class="text-muted">
+                        <!-- Información de resultados -->
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="loadingSpinner" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Consultando historial...</p>
+                    </div>
+                    
+                    <div id="contenidoHistorial">
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <p>Haz clic en "Buscar" para consultar el historial</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalles -->
+<div class="modal fade modal-app modal-size-large modal-auto-height" id="modalDetalles" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-app">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>Detalles de la Operación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-app">
+                <div id="contenidoDetalles">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let historialActual = [];
+
+// Cargar datos iniciales
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar fechas por defecto (últimos 30 días)
+    const hoy = new Date();
+    const hace30Dias = new Date();
+    hace30Dias.setDate(hoy.getDate() - 30);
+    
+    document.getElementById('filtroFechaDesde').value = hace30Dias.toISOString().split('T')[0];
+    document.getElementById('filtroFechaHasta').value = hoy.toISOString().split('T')[0];
+    
+    // Cargar automáticamente el historial reciente
+    buscarHistorial();
+});
+
+async function buscarHistorial() {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const contenidoHistorial = document.getElementById('contenidoHistorial');
+    const infoResultados = document.getElementById('infoResultados');
+    
+    try {
+        // Mostrar loading
+        loadingSpinner.style.display = 'block';
+        contenidoHistorial.innerHTML = '';
+        
+        // Construir parámetros de consulta
+        const params = new URLSearchParams();
+        
+        const filtroTipo = document.getElementById('filtroTipo').value;
+        const filtroFechaDesde = document.getElementById('filtroFechaDesde').value;
+        const filtroFechaHasta = document.getElementById('filtroFechaHasta').value;
+        const filtroProyecto = document.getElementById('filtroProyecto').value;
+        
+        if (filtroTipo) params.append('tipo_operacion', filtroTipo);
+        if (filtroFechaDesde) params.append('fecha_desde', filtroFechaDesde);
+        if (filtroFechaHasta) params.append('fecha_hasta', filtroFechaHasta);
+        if (filtroProyecto) params.append('requerimiento_id', filtroProyecto);
+        
+        params.append('limit', '100');
+        
+        console.log('🔍 Consultando historial con parámetros:', params.toString());
+        
+        const response = await fetch(`/historial-control?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            historialActual = data.historial;
+            mostrarHistorial(data.historial);
+            
+            // Actualizar información de resultados
+            infoResultados.innerHTML = `
+                <span class="badge bg-primary">${data.total_encontrados} registros</span>
+                ${data.total_encontrados >= data.limit_aplicado ? 
+                    `<span class="badge bg-warning ms-1">Limitado a ${data.limit_aplicado}</span>` : ''}
+            `;
+        } else {
+            throw new Error(data.error || 'Error consultando historial');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        contenidoHistorial.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error consultando historial: ${error.message}
+            </div>
+        `;
+    } finally {
+        loadingSpinner.style.display = 'none';
+    }
+}
+
+function mostrarHistorial(historial) {
+    const contenido = document.getElementById('contenidoHistorial');
+    
+    if (historial.length === 0) {
+        contenido.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-inbox fa-2x mb-3"></i>
+                <p>No se encontraron registros con los filtros aplicados</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const timelineHTML = historial.map(entry => {
+        const fecha = new Date(entry.fecha_operacion);
+        const tipoClass = entry.tipo_operacion.toLowerCase().replace('_', '-');
+        
+        return `
+            <div class="timeline-item ${tipoClass}">
+                <div class="historial-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge badge-operacion bg-${getBadgeColor(entry.tipo_operacion)} me-2">
+                                    ${entry.tipo_operacion}
+                                </span>
+                                <small class="text-muted">
+                                    ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}
+                                </small>
+                            </div>
+                            <h6 class="mb-1">${entry.actividad_nombre || 'Operación general'}</h6>
+                            <p class="text-muted mb-2">
+                                <strong>Proyecto:</strong> ${entry.proyecto_nombre || 'N/A'} | 
+                                <strong>Usuario:</strong> ${entry.usuario_responsable || 'Sistema'}
+                            </p>
+                            ${entry.comentarios ? `<p class="small text-secondary mb-0">${entry.comentarios}</p>` : ''}
+                        </div>
+                        <button class="btn btn-sm btn-outline-info" onclick="verDetalles(${entry.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    contenido.innerHTML = timelineHTML;
+}
+
+function getBadgeColor(tipo) {
+    const colores = {
+        'UPDATE': 'success',
+        'REASIGNACION_TRABAJADOR': 'warning',
+        'LIMPIEZA_TRABAJADORES': 'danger',
+        'SUBIDA_ARCHIVO_COMPLETA': 'info',
+        'INSERT': 'primary'
+    };
+    return colores[tipo] || 'secondary';
+}
+
+function verDetalles(entryId) {
+    const entry = historialActual.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    const contenido = document.getElementById('contenidoDetalles');
+    
+    contenido.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Información General</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>ID:</strong></td><td>${entry.id}</td></tr>
+                    <tr><td><strong>Sesión:</strong></td><td>${entry.sesion_subida}</td></tr>
+                    <tr><td><strong>Fecha:</strong></td><td>${new Date(entry.fecha_operacion).toLocaleString()}</td></tr>
+                    <tr><td><strong>Tipo:</strong></td><td><span class="badge bg-${getBadgeColor(entry.tipo_operacion)}">${entry.tipo_operacion}</span></td></tr>
+                    <tr><td><strong>Archivo:</strong></td><td>${entry.nombre_archivo}</td></tr>
+                    <tr><td><strong>Actividad:</strong></td><td>${entry.actividad_nombre} (${entry.actividad_edt})</td></tr>
+                    <tr><td><strong>Proyecto:</strong></td><td>${entry.proyecto_nombre}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Datos Anteriores</h6>
+                <div class="datos-detalle">
+                    <pre>${JSON.stringify(entry.datos_anteriores, null, 2)}</pre>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Datos Nuevos</h6>
+                <div class="datos-detalle">
+                    <pre>${JSON.stringify(entry.datos_nuevos, null, 2)}</pre>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalles'));
+    modal.show();
+}
+
+async function mostrarResumen() {
+    const panelEstadisticas = document.getElementById('panelEstadisticas');
+    const contenidoEstadisticas = document.getElementById('contenidoEstadisticas');
+    
+    try {
+        contenidoEstadisticas.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
+        panelEstadisticas.style.display = 'block';
+        
+        const response = await fetch('/historial-control/resumen');
+        const data = await response.json();
+        
+        if (data.success) {
+            contenidoEstadisticas.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-primary">Total Operaciones</h5>
+                                <h2 class="text-primary">${data.estadisticas_generales.total_operaciones}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-success">Últimos 30 días</h5>
+                                <h2 class="text-success">${data.estadisticas_generales.operaciones_ultimos_30_dias}</h2>
+                                <small class="text-muted">${data.estadisticas_generales.porcentaje_actividad_reciente}% del total</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-info">Tipos de Operación</h5>
+                                <h2 class="text-info">${data.operaciones_por_tipo.length}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6>Operaciones por Tipo</h6>
+                        <div class="list-group">
+                            ${data.operaciones_por_tipo.map(op => `
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span class="badge bg-${getBadgeColor(op.tipo)}">${op.tipo}</span>
+                                    <span class="badge bg-secondary">${op.cantidad}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Últimas Operaciones</h6>
+                        <div class="list-group">
+                            ${data.ultimas_operaciones.slice(0, 5).map(op => `
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="badge bg-${getBadgeColor(op.tipo)}">${op.tipo}</span>
+                                        <small>${new Date(op.fecha).toLocaleDateString()}</small>
+                                    </div>
+                                    <small class="text-muted">${op.descripcion}</small><br>
+                                    <small class="text-secondary">${op.usuario}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            throw new Error(data.error);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        contenidoEstadisticas.innerHTML = `
+            <div class="alert alert-danger">
+                Error cargando estadísticas: ${error.message}
+            </div>
+        `;
+    }
+}
+
+function limpiarFiltros() {
+    document.getElementById('filtroTipo').value = '';
+    document.getElementById('filtroFechaDesde').value = '';
+    document.getElementById('filtroFechaHasta').value = '';
+    document.getElementById('filtroProyecto').value = '';
+    document.getElementById('panelEstadisticas').style.display = 'none';
+}
+</script>
+{% endblock %}

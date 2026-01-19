@@ -1286,6 +1286,25 @@ def crear_datos_iniciales():
     """Función principal que ejecuta todas las creaciones de datos iniciales"""
     print("🚀 Iniciando creación de datos iniciales...")
     
+    # === VERIFICACIÓN GLOBAL: NO SOBRESCRIBIR DATOS EXISTENTES ===
+    # Verificar si ya hay datos importantes en la BD (más allá de los por defecto)
+    trabajador_count = Trabajador.query.count()
+    requerimiento_count = Requerimiento.query.count()
+    
+    print(f"🔍 Verificación de datos existentes:")
+    print(f"   📊 Trabajadores: {trabajador_count}")
+    print(f"   📊 Requerimientos: {requerimiento_count}")
+    
+    # Si hay más de 6 trabajadores (los por defecto) o hay requerimientos, 
+    # es probable que sea una BD con datos reales - NO SOBRESCRIBIR
+    if trabajador_count > 6 or requerimiento_count > 0:
+        print("⚠️  DATOS EXISTENTES DETECTADOS - SALTANDO CREACIÓN DE SEEDS")
+        print("🔒 La base de datos parece tener datos reales, no se ejecutarán los seeds")
+        print("✅ Para forzar la creación de seeds, elimine todos los datos primero")
+        return True  # Retornar éxito para no bloquear la aplicación
+    
+    print("📋 Base de datos vacía o con datos mínimos - Procediendo con seeds...")
+    
     # Lista de funciones de creación en orden de dependencia
     funciones_creacion = [
         ("Estados", crear_estados_iniciales),

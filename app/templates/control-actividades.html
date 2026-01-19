@@ -1094,8 +1094,20 @@ async function exportarActividadesXLSX() {
         btnExport.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
         btnExport.disabled = true;
         
+        // Obtener el grupo seleccionado
+        const grupoSeleccionado = document.getElementById('filtroGrupo').value;
+        
+        // Construir URL con parámetros
+        let url = '/exportar_actividades_xlsx';
+        if (grupoSeleccionado) {
+            url += `?grupo_id=${encodeURIComponent(grupoSeleccionado)}`;
+            console.log(`📋 Exportando solo proyectos del grupo: ${grupoSeleccionado}`);
+        } else {
+            console.log('📋 Exportando todos los proyectos (sin filtro de grupo)');
+        }
+        
         // Realizar petición al servidor
-        const response = await fetch('/exportar_actividades_xlsx', {
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -1108,9 +1120,9 @@ async function exportarActividadesXLSX() {
         
         // Descargar el archivo
         const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
+        const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = downloadUrl;
         
         // Generar nombre de archivo con fecha
         const fecha = new Date().toISOString().split('T')[0];
@@ -1119,7 +1131,7 @@ async function exportarActividadesXLSX() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(downloadUrl);
         
         console.log('✅ Exportación completada exitosamente');
         mostrarAlerta('✅ Archivo Excel exportado exitosamente', 'success');
@@ -1159,6 +1171,10 @@ async function subirArchivoControl(event) {
         
         formData.append('archivo', archivo);
         
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        formData.append('csrf_token', csrfToken);
+        
         // Mostrar indicador de carga
         const btnSubir = document.getElementById('btnSubirArchivo');
         const spinner = document.getElementById('spinnerSubida');
@@ -1171,6 +1187,9 @@ async function subirArchivoControl(event) {
         // Realizar petición al servidor
         const response = await fetch('/subir_control_actividades', {
             method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
             body: formData
         });
         

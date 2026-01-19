@@ -21,15 +21,7 @@
                         <div class="col">
                             <h2 class="mb-0"><i class="fas fa-check-double"></i> Validación de Avances</h2>
                             <p class="mb-0">Revisión y aprobación de avances reportados por trabajadores</p>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-light" onclick="cargarAvances()">
-                                <i class="fas fa-sync-alt"></i> Actualizar
-                            </button>
-                            <button class="btn btn-success" onclick="exportarExcel()">
-                                <i class="fas fa-file-excel"></i> Exportar
-                            </button>
-                        </div>
+</div>
                     </div>
                 </div>
             </div>
@@ -633,7 +625,23 @@ async function confirmarValidacion() {
         
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('modalValidar')).hide();
-            alert('✅ Avance validado exitosamente');
+            
+            // Mostrar indicación visual suave de éxito
+            const button = document.querySelector('.btn-outline-success');
+            if (button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> ✅';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-outline-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-success');
+                }, 1000);
+            }
+            
+            // Recargar datos sin mensaje molesto
             await cargarEstadisticas();
             await cargarAvances();
         } else {
@@ -670,7 +678,7 @@ async function confirmarCorreccion() {
         
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('modalCorregir')).hide();
-            alert('✅ Avance corregido y validado exitosamente');
+            // Recargar datos sin mensaje molesto
             await cargarEstadisticas();
             await cargarAvances();
         } else {
@@ -704,7 +712,7 @@ async function confirmarRechazo() {
         
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('modalRechazar')).hide();
-            alert('✅ Avance rechazado exitosamente');
+            // Recargar datos sin mensaje molesto
             await cargarEstadisticas();
             await cargarAvances();
         } else {

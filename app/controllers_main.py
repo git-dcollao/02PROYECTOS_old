@@ -5393,6 +5393,147 @@ def extraer_y_crear_trabajadores_desde_recursos_MIGRADO():
 
 def crear_avances_actividad_MIGRADO():
     """FUNCIÓN MIGRADA - NO USAR"""
+
+def limpiar_trabajadores_huerfanos():
+    """
+    VERSIÓN SEGURA: Identifica trabajadores sin asignaciones pero NO los elimina automáticamente.
+    
+    En lugar de eliminar trabajadores, esta función:
+    1. Identifica trabajadores candidatos para revisión
+    2. Verifica si tienen actividades asignadas (activas o con progreso)
+    3. Genera un reporte para revisión manual
+    
+    CASO DE USO: Trabajador removido/desvinculado
+    - ¿Qué hacer con sus actividades asignadas?
+    - ¿Reasignar a otro trabajador?
+    - ¿Continuar con el % actual o reiniciar desde 0%?
+    
+    Returns:
+        dict: Reporte detallado de trabajadores para revisión
+    """
+    try:
+        from app.models import (Trabajador, RecursoTrabajador, AvanceActividad, 
+                               HistorialAvanceActividad, ActividadProyecto)
+        
+        print(f"🧹 Analizando trabajadores para revisión...")
+        
+        # Trabajadores candidatos (excluyendo usuarios del sistema)
+        todos_trabajadores = Trabajador.query.filter(
+            Trabajador.email.notlike('%admin%'),
+            Trabajador.email.notlike('%superadmin%'),
+            ~Trabajador.nombrecorto.in_(['admin', 'superadmin', 'sistema'])
+        ).all()
+        
+        trabajadores_sin_asignaciones = []
+        trabajadores_con_actividades_activas = []
+        trabajadores_con_progreso_historico = []
+        
+        for trabajador in todos_trabajadores:
+            # Verificar recursos asignados actualmente
+            recursos_actuales = RecursoTrabajador.query.filter_by(trabajador_id=trabajador.id).count()
+            
+            # Verificar avances activos
+            avances_actuales = AvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
+            
+            # Verificar historial de avances (trabajo ya realizado)
+            historial_avances = HistorialAvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
+            
+            # Verificar actividades de proyecto asignadas
+            from sqlalchemy import text
+            requerimientos_count = db.session.execute(
+                text("SELECT COUNT(*) FROM requerimiento_trabajador_especialidad WHERE trabajador_id = :tid"),
+                {'tid': trabajador.id}
+            ).scalar() or 0
+            
+            # Clasificar trabajador según sus asignaciones
+            if (recursos_actuales == 0 and avances_actuales == 0 and 
+                historial_avances == 0 and requerimientos_count == 0):
+                # Trabajador completamente sin asignaciones - CANDIDATO SEGURO para eliminación
+                trabajadores_sin_asignaciones.append({
+                    'id': trabajador.id,
+                    'nombre': trabajador.nombre,
+                    'nombrecorto': trabajador.nombrecorto,
+                    'email': trabajador.email,
+                    'estado': 'SIN_ASIGNACIONES',
+                    'accion_recomendada': 'ELIMINAR_SEGURO'
+                })
+                
+            elif (recursos_actuales > 0 or avances_actuales > 0 or requerimientos_count > 0):
+                # Trabajador con asignaciones activas - REQUIERE REVISIÓN MANUAL
+                trabajadores_con_actividades_activas.append({
+                    'id': trabajador.id,
+                    'nombre': trabajador.nombre,
+                    'nombrecorto': trabajador.nombrecorto,
+                    'email': trabajador.email,
+                    'recursos_asignados': recursos_actuales,
+                    'avances_pendientes': avances_actuales,
+                    'requerimientos_asignados': requerimientos_count,
+                    'estado': 'ACTIVO_CON_ASIGNACIONES',
+                    'accion_recomendada': 'REVISAR_REASIGNACION'
+                })
+                
+            elif historial_avances > 0:
+                # Trabajador sin asignaciones actuales pero con historial - MANTENER PARA TRAZABILIDAD
+                trabajadores_con_progreso_historico.append({
+                    'id': trabajador.id,
+                    'nombre': trabajador.nombre,
+                    'nombrecorto': trabajador.nombrecorto,
+                    'email': trabajador.email,
+                    'avances_historicos': historial_avances,
+                    'estado': 'HISTORICO_SIN_ASIGNACIONES',
+                    'accion_recomendada': 'MANTENER_TRAZABILIDAD'
+                })
+        
+        # SOLO eliminamos trabajadores completamente sin asignaciones (seguros)
+        eliminados_seguros = 0
+        for trabajador_data in trabajadores_sin_asignaciones:
+            try:
+                trabajador = Trabajador.query.get(trabajador_data['id'])
+                if trabajador:
+                    print(f"   🗑️ Eliminando trabajador seguro: {trabajador.nombre}")
+                    db.session.delete(trabajador)
+                    eliminados_seguros += 1
+            except Exception as e:
+                print(f"   ❌ Error eliminando trabajador {trabajador_data['id']}: {str(e)}")
+                continue
+        
+        if eliminados_seguros > 0:
+            db.session.commit()
+            
+            # Registrar auditoría de eliminación de trabajadores
+            registrar_auditoria(
+                tipo_operacion='LIMPIEZA_TRABAJADORES',
+                descripcion=f'Eliminación automática de {eliminados_seguros} trabajadores sin asignaciones',
+                datos_nuevos={
+                    'trabajadores_eliminados': eliminados_seguros,
+                    'trabajadores_eliminados_ids': [t['id'] for t in trabajadores_sin_asignaciones],
+                    'criterio': 'Sin recursos, avances, historial ni requerimientos asignados'
+                }
+            )
+        
+        # Generar reporte completo
+        reporte = {
+            'eliminados_automaticamente': eliminados_seguros,
+            'trabajadores_sin_asignaciones': trabajadores_sin_asignaciones,
+            'trabajadores_requieren_revision': trabajadores_con_actividades_activas,
+            'trabajadores_historicos': trabajadores_con_progreso_historico,
+            'total_revisados': len(todos_trabajadores),
+            'mensaje': f'Limpieza segura completada. {eliminados_seguros} trabajadores eliminados. {len(trabajadores_con_actividades_activas)} requieren revisión manual.'
+        }
+        
+        print(f"✅ Análisis completado:")
+        print(f"   🗑️ Eliminados seguros: {eliminados_seguros}")
+        print(f"   ⚠️ Requieren revisión manual: {len(trabajadores_con_actividades_activas)}")
+        print(f"   📋 Con historial a mantener: {len(trabajadores_con_progreso_historico)}")
+        
+        return eliminados_seguros  # Mantener compatibilidad con código existente
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error en análisis de trabajadores: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return 0
     pass
 
 def procesar_recursos_actividad_MIGRADO():
@@ -5558,12 +5699,15 @@ def obtener_detalle_proyecto(requerimiento_id):
 
 @controllers_bp.route('/exportar_actividades_xlsx', methods=['GET'])
 def exportar_actividades_xlsx():
-    """Exportar todas las actividades de proyectos a un archivo Excel"""
+    """Exportar actividades de proyectos a un archivo Excel, filtrando por grupo si se especifica"""
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill, Alignment
         from flask import make_response
         import io
+        
+        # Obtener el filtro de grupo si se proporciona
+        grupo_id = request.args.get('grupo_id', None)
         
         # Crear un nuevo workbook
         wb = Workbook()
@@ -5596,8 +5740,20 @@ def exportar_actividades_xlsx():
             cell.fill = header_fill
             cell.alignment = header_alignment
         
-        # Obtener todas las actividades de proyectos activos ordenadas por fecha de registro del requerimiento
-        actividades = ActividadProyecto.query.join(Requerimiento).filter(
+        # Construir consulta base
+        query = ActividadProyecto.query.join(Requerimiento)
+        
+        # Aplicar filtro de grupo si se especifica
+        if grupo_id:
+            query = query.filter(Requerimiento.id_grupo == grupo_id)
+            grupo = Grupo.query.get(grupo_id)
+            grupo_nombre = grupo.nombre if grupo else f"Grupo {grupo_id}"
+            print(f"📊 Filtrando por grupo: {grupo_nombre} (ID: {grupo_id})")
+        else:
+            print("📊 Exportando todos los grupos")
+        
+        # Obtener actividades filtradas
+        actividades = query.filter(
             ActividadProyecto.activo == True
         ).order_by(
             Requerimiento.created_at.asc(),
@@ -5613,7 +5769,15 @@ def exportar_actividades_xlsx():
             fecha_fin = actividad.fecha_fin.strftime('%d/%m/%Y') if actividad.fecha_fin else ''
             
             # Obtener progreso directamente de la tabla actividad_proyecto
-            progreso = float(actividad.progreso) if actividad.progreso else 0.0
+            progreso_raw = float(actividad.progreso) if actividad.progreso else 0.0
+            
+            # Formatear progreso como porcentaje
+            # Si el valor está entre 0 y 1, multiplicar por 100 (ej: 0.85 -> 85%)
+            # Si el valor es mayor a 1, asumir que ya está en porcentaje (ej: 85 -> 85%)
+            if progreso_raw <= 1.0:
+                progreso = progreso_raw * 100
+            else:
+                progreso = progreso_raw
             
             # Datos de la fila
             datos_fila = [
@@ -5631,7 +5795,11 @@ def exportar_actividades_xlsx():
             
             # Escribir datos en las celdas
             for col_num, valor in enumerate(datos_fila, 1):
-                ws.cell(row=row_num, column=col_num, value=valor)
+                cell = ws.cell(row=row_num, column=col_num, value=valor)
+                
+                # Aplicar formato de porcentaje a la columna de progreso (columna 10)
+                if col_num == 10:  # Columna "Progreso (%)"
+                    cell.number_format = '0.0"%"'
         
         # Ajustar ancho de columnas
         column_widths = [8, 15, 12, 40, 12, 12, 12, 15, 30, 15]
@@ -5643,10 +5811,15 @@ def exportar_actividades_xlsx():
         wb.save(output)
         output.seek(0)
         
-        # Generar nombre de archivo con fecha
+        # Generar nombre de archivo con fecha y grupo
         from datetime import datetime
         fecha_actual = datetime.now().strftime('%Y%m%d_%H%M%S')
-        nombre_archivo = f'actividades_proyecto_{fecha_actual}.xlsx'
+        if grupo_id:
+            grupo = Grupo.query.get(grupo_id)
+            grupo_nombre = grupo.nombre.replace(' ', '_') if grupo else f"Grupo_{grupo_id}"
+            nombre_archivo = f'actividades_{grupo_nombre}_{fecha_actual}.xlsx'
+        else:
+            nombre_archivo = f'actividades_todos_grupos_{fecha_actual}.xlsx'
         
         # Crear respuesta
         response = make_response(output.getvalue())
@@ -5733,15 +5906,571 @@ def consultar_trabajadores():
             'message': f'Error al consultar trabajadores: {str(e)}'
         }), 500
 
-@controllers_bp.route('/limpiar-trabajadores', methods=['POST'])
+def reasignar_actividades_trabajador(trabajador_origen_id, trabajador_destino_id, mantener_progreso=True):
+    """
+    Reasigna todas las actividades de un trabajador a otro.
+    
+    CASO DE USO: Trabajador removido/desvinculado del proyecto
+    
+    Args:
+        trabajador_origen_id (int): ID del trabajador que se va
+        trabajador_destino_id (int): ID del trabajador que toma las actividades  
+        mantener_progreso (bool): Si True, mantiene el % de avance actual.
+                                 Si False, reinicia el progreso a 0%
+    
+    Returns:
+        dict: Resultado de la reasignación
+    """
+    try:
+        from app.models import (Trabajador, RecursoTrabajador, AvanceActividad, 
+                               HistorialAvanceActividad, ActividadProyecto)
+        
+        # Verificar que ambos trabajadores existen
+        trabajador_origen = Trabajador.query.get(trabajador_origen_id)
+        trabajador_destino = Trabajador.query.get(trabajador_destino_id)
+        
+        if not trabajador_origen:
+            return {'success': False, 'error': f'Trabajador origen {trabajador_origen_id} no encontrado'}
+        
+        if not trabajador_destino:
+            return {'success': False, 'error': f'Trabajador destino {trabajador_destino_id} no encontrado'}
+        
+        print(f"🔄 Reasignando actividades:")
+        print(f"   📤 Origen: {trabajador_origen.nombre} ({trabajador_origen.nombrecorto})")
+        print(f"   📥 Destino: {trabajador_destino.nombre} ({trabajador_destino.nombrecorto})")
+        print(f"   📊 Mantener progreso: {'SÍ' if mantener_progreso else 'NO (reiniciar)'}")
+        
+        actividades_reasignadas = 0
+        recursos_reasignados = 0
+        avances_actualizados = 0
+        
+        # 1. Reasignar recursos de trabajador
+        recursos = RecursoTrabajador.query.filter_by(trabajador_id=trabajador_origen_id).all()
+        for recurso in recursos:
+            recurso.trabajador_id = trabajador_destino_id
+            recursos_reasignados += 1
+            print(f"   🔧 Recurso reasignado: Actividad {recurso.actividad_gantt_id}")
+        
+        # 2. Reasignar avances activos
+        avances = AvanceActividad.query.filter_by(trabajador_id=trabajador_origen_id).all()
+        for avance in avances:
+            avance.trabajador_id = trabajador_destino_id
+            
+            if not mantener_progreso:
+                # Reiniciar progreso
+                avance.porcentaje_avance = 0.0
+                avance.fecha_actualizacion = datetime.now()
+                print(f"   📊 Progreso reiniciado para actividad {avance.actividad_proyecto_id}")
+            else:
+                print(f"   📈 Progreso mantenido: {avance.porcentaje_avance}% en actividad {avance.actividad_proyecto_id}")
+            
+            avances_actualizados += 1
+        
+        # 3. Actualizar historial de avances (para trazabilidad)
+        historial_avances = HistorialAvanceActividad.query.filter_by(trabajador_id=trabajador_origen_id).all()
+        for historial in historial_avances:
+            # Crear entrada en historial explicando la reasignación
+            nuevo_historial = HistorialAvanceActividad(
+                actividad_proyecto_id=historial.actividad_proyecto_id,
+                requerimiento_id=historial.requerimiento_id,
+                trabajador_id=trabajador_destino_id,
+                porcentaje_anterior=historial.porcentaje_avance if mantener_progreso else 0.0,
+                porcentaje_avance=historial.porcentaje_avance if mantener_progreso else 0.0,
+                fecha_avance=datetime.now(),
+                observaciones=f"Actividad reasignada desde {trabajador_origen.nombre} ({trabajador_origen.nombrecorto}). Progreso {'mantenido' if mantener_progreso else 'reiniciado'}.",
+                validado=False
+            )
+            db.session.add(nuevo_historial)
+        
+        # 4. Reasignar en tabla de requerimientos-trabajadores-especialidades
+        from sqlalchemy import text
+        result = db.session.execute(
+            text("""
+                UPDATE requerimiento_trabajador_especialidad 
+                SET trabajador_id = :nuevo_id 
+                WHERE trabajador_id = :viejo_id
+            """),
+            {'nuevo_id': trabajador_destino_id, 'viejo_id': trabajador_origen_id}
+        )
+        requerimientos_reasignados = result.rowcount
+        
+        # Confirmar cambios
+        db.session.commit()
+        
+        # Registrar auditoría de la reasignación
+        auditoria_descripcion = f"Reasignación de actividades: {trabajador_origen.nombre} → {trabajador_destino.nombre}"
+        registrar_auditoria(
+            tipo_operacion='REASIGNACION_TRABAJADOR',
+            descripcion=auditoria_descripcion,
+            datos_anteriores={
+                'trabajador_origen_id': trabajador_origen_id,
+                'trabajador_origen_nombre': trabajador_origen.nombre,
+                'trabajador_origen_nombrecorto': trabajador_origen.nombrecorto
+            },
+            datos_nuevos={
+                'trabajador_destino_id': trabajador_destino_id,
+                'trabajador_destino_nombre': trabajador_destino.nombre,
+                'trabajador_destino_nombrecorto': trabajador_destino.nombrecorto,
+                'mantener_progreso': mantener_progreso,
+                'recursos_reasignados': recursos_reasignados,
+                'avances_actualizados': avances_actualizados,
+                'requerimientos_reasignados': requerimientos_reasignados
+            },
+            trabajador_afectado_id=trabajador_destino_id
+        )
+        
+        resultado = {
+            'success': True,
+            'trabajador_origen': f"{trabajador_origen.nombre} ({trabajador_origen.nombrecorto})",
+            'trabajador_destino': f"{trabajador_destino.nombre} ({trabajador_destino.nombrecorto})",
+            'mantener_progreso': mantener_progreso,
+            'recursos_reasignados': recursos_reasignados,
+            'avances_actualizados': avances_actualizados,
+            'requerimientos_reasignados': requerimientos_reasignados,
+            'mensaje': f'Reasignación completada: {recursos_reasignados} recursos, {avances_actualizados} avances, {requerimientos_reasignados} requerimientos'
+        }
+        
+        print(f"✅ Reasignación completada:")
+        print(f"   📋 Recursos: {recursos_reasignados}")
+        print(f"   📊 Avances: {avances_actualizados}")
+        print(f"   📄 Requerimientos: {requerimientos_reasignados}")
+        
+        return resultado
+        
+    except Exception as e:
+        db.session.rollback()
+        error_msg = f"Error en reasignación de actividades: {str(e)}"
+        print(f"❌ {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return {'success': False, 'error': error_msg}
+
+def registrar_auditoria(tipo_operacion, descripcion, datos_anteriores=None, datos_nuevos=None, 
+                       trabajador_afectado_id=None, requerimiento_id=None, actividad_id=None,
+                       archivo_relacionado=None, usuario_id=None):
+    """
+    Registra operaciones de auditoría en el sistema para trazabilidad completa
+    
+    Args:
+        tipo_operacion (str): Tipo de operación (REASIGNACION, SUBIDA_ARCHIVO, ELIMINACION, etc.)
+        descripcion (str): Descripción detallada de la operación
+        datos_anteriores (dict): Estado anterior (opcional)
+        datos_nuevos (dict): Estado posterior (opcional)
+        trabajador_afectado_id (int): ID del trabajador involucrado (opcional)
+        requerimiento_id (int): ID del requerimiento involucrado (opcional)
+        actividad_id (int): ID de la actividad involucrada (opcional)
+        archivo_relacionado (str): Nombre del archivo relacionado (opcional)
+        usuario_id (int): ID del usuario que realizó la operación (opcional)
+        
+    Returns:
+        str: ID de la entrada de auditoría creada
+    """
+    try:
+        from app.models import HistorialControl
+        import uuid
+        
+        # Generar ID único para la sesión de auditoría
+        sesion_id = str(uuid.uuid4())[:8]
+        
+        # Crear entrada en HistorialControl (reutilizamos la tabla existente de manera inteligente)
+        entrada_auditoria = HistorialControl(
+            sesion_subida=sesion_id,
+            fecha_operacion=datetime.now(),
+            nombre_archivo=archivo_relacionado or f'AUDITORIA_{tipo_operacion}',
+            actividad_id=actividad_id or 1,  # ID por defecto si no hay actividad específica
+            requerimiento_id=requerimiento_id or 1,  # ID por defecto si no hay requerimiento específico
+            tipo_operacion=tipo_operacion,
+            datos_anteriores=datos_anteriores,
+            datos_nuevos={
+                'descripcion': descripcion,
+                'usuario_id': usuario_id or (current_user.id if current_user.is_authenticated else None),
+                'usuario_email': current_user.email if current_user.is_authenticated else 'Sistema',
+                'trabajador_afectado_id': trabajador_afectado_id,
+                'timestamp': datetime.now().isoformat(),
+                **( datos_nuevos or {})
+            },
+            fila_excel=0,  # No aplica para auditoría manual
+            comentarios=f'[AUDITORÍA] {descripcion}'
+        )
+        
+        db.session.add(entrada_auditoria)
+        db.session.commit()
+        
+        print(f"📝 Auditoría registrada: {tipo_operacion} - {descripcion}")
+        return sesion_id
+        
+    except Exception as e:
+        print(f"❌ Error registrando auditoría: {str(e)}")
+        return None
+
+@controllers_bp.route('/reasignar-trabajador', methods=['POST'])
+@login_required
+def endpoint_reasignar_trabajador():
+    """
+    Endpoint para reasignar actividades de un trabajador a otro
+    
+    Body JSON:
+    {
+        "trabajador_origen_id": 123,
+        "trabajador_destino_id": 456,  
+        "mantener_progreso": true/false
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No se recibieron datos'}), 400
+        
+        origen_id = data.get('trabajador_origen_id')
+        destino_id = data.get('trabajador_destino_id')
+        mantener_progreso = data.get('mantener_progreso', True)
+        
+        if not origen_id or not destino_id:
+            return jsonify({
+                'success': False, 
+                'error': 'Se requieren trabajador_origen_id y trabajador_destino_id'
+            }), 400
+        
+        if origen_id == destino_id:
+            return jsonify({
+                'success': False,
+                'error': 'El trabajador origen y destino no pueden ser el mismo'
+            }), 400
+        
+        # Verificar permisos
+        if not (current_user.is_superadmin() or current_user.has_page_permission('/trabajadores')):
+            return jsonify({'success': False, 'error': 'No tiene permisos para esta acción'}), 403
+        
+        print(f"🔄 Reasignación solicitada por {current_user.email}:")
+        print(f"   Origen: {origen_id} → Destino: {destino_id}")
+        print(f"   Mantener progreso: {mantener_progreso}")
+        
+        resultado = reasignar_actividades_trabajador(origen_id, destino_id, mantener_progreso)
+        
+        if resultado['success']:
+            return jsonify(resultado)
+        else:
+            return jsonify(resultado), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error procesando reasignación: {str(e)}'
+        }), 500
+
+@controllers_bp.route('/revisar-trabajadores', methods=['GET'])
+@login_required
+def revisar_trabajadores():
+    """
+    Endpoint para obtener reporte detallado de trabajadores que requieren revisión
+    cuando van a ser removidos del proyecto
+    """
+    try:
+        # Verificar permisos
+        if not (current_user.is_superadmin() or current_user.has_page_permission('/trabajadores')):
+            return jsonify({'success': False, 'error': 'No tiene permisos para esta acción'}), 403
+        
+        from app.models import (Trabajador, RecursoTrabajador, AvanceActividad, 
+                               HistorialAvanceActividad, ActividadProyecto)
+        
+        print(f"📋 Generando reporte de trabajadores para revisión...")
+        
+        # Usar la misma lógica de análisis que limpiar_trabajadores_huerfanos
+        # pero devolver el reporte completo
+        
+        todos_trabajadores = Trabajador.query.filter(
+            Trabajador.email.notlike('%admin%'),
+            Trabajador.email.notlike('%superadmin%'),
+            ~Trabajador.nombrecorto.in_(['admin', 'superadmin', 'sistema'])
+        ).all()
+        
+        trabajadores_sin_asignaciones = []
+        trabajadores_con_actividades_activas = []
+        trabajadores_con_progreso_historico = []
+        
+        for trabajador in todos_trabajadores:
+            # Análisis detallado de asignaciones
+            recursos_actuales = RecursoTrabajador.query.filter_by(trabajador_id=trabajador.id).count()
+            avances_actuales = AvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
+            historial_avances = HistorialAvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
+            
+            from sqlalchemy import text
+            requerimientos_count = db.session.execute(
+                text("SELECT COUNT(*) FROM requerimiento_trabajador_especialidad WHERE trabajador_id = :tid"),
+                {'tid': trabajador.id}
+            ).scalar() or 0
+            
+            # Obtener detalles de actividades activas para trabajadores con asignaciones
+            actividades_detalle = []
+            if recursos_actuales > 0 or avances_actuales > 0:
+                # Obtener actividades específicas asignadas
+                actividades_query = db.session.query(
+                    ActividadProyecto.id,
+                    ActividadProyecto.nombre_tarea,
+                    ActividadProyecto.porcentaje_avance,
+                    ActividadProyecto.fecha_inicio,
+                    ActividadProyecto.fecha_fin
+                ).join(
+                    AvanceActividad, ActividadProyecto.id == AvanceActividad.actividad_proyecto_id
+                ).filter(
+                    AvanceActividad.trabajador_id == trabajador.id
+                ).all()
+                
+                for actividad in actividades_query:
+                    actividades_detalle.append({
+                        'id': actividad.id,
+                        'nombre': actividad.nombre_tarea,
+                        'progreso': actividad.porcentaje_avance,
+                        'fecha_inicio': actividad.fecha_inicio.isoformat() if actividad.fecha_inicio else None,
+                        'fecha_fin': actividad.fecha_fin.isoformat() if actividad.fecha_fin else None
+                    })
+            
+            # Clasificar trabajador
+            trabajador_info = {
+                'id': trabajador.id,
+                'nombre': trabajador.nombre,
+                'nombrecorto': trabajador.nombrecorto,
+                'email': trabajador.email,
+                'profesion': trabajador.profesion,
+                'sector': trabajador.sector.nombre if trabajador.sector else 'Sin sector',
+                'recinto': trabajador.recinto.nombre if trabajador.recinto else 'Sin recinto',
+                'recursos_asignados': recursos_actuales,
+                'avances_pendientes': avances_actuales,
+                'avances_historicos': historial_avances,
+                'requerimientos_asignados': requerimientos_count,
+                'actividades_detalle': actividades_detalle
+            }
+            
+            if (recursos_actuales == 0 and avances_actuales == 0 and 
+                historial_avances == 0 and requerimientos_count == 0):
+                trabajador_info['estado'] = 'SIN_ASIGNACIONES'
+                trabajador_info['accion_recomendada'] = 'ELIMINAR_SEGURO'
+                trabajadores_sin_asignaciones.append(trabajador_info)
+                
+            elif (recursos_actuales > 0 or avances_actuales > 0 or requerimientos_count > 0):
+                trabajador_info['estado'] = 'ACTIVO_CON_ASIGNACIONES'
+                trabajador_info['accion_recomendada'] = 'REVISAR_REASIGNACION'
+                trabajadores_con_actividades_activas.append(trabajador_info)
+                
+            elif historial_avances > 0:
+                trabajador_info['estado'] = 'HISTORICO_SIN_ASIGNACIONES'
+                trabajador_info['accion_recomendada'] = 'MANTENER_TRAZABILIDAD'
+                trabajadores_con_progreso_historico.append(trabajador_info)
+        
+        reporte_completo = {
+            'success': True,
+            'total_trabajadores': len(todos_trabajadores),
+            'sin_asignaciones': {
+                'count': len(trabajadores_sin_asignaciones),
+                'trabajadores': trabajadores_sin_asignaciones
+            },
+            'requieren_revision': {
+                'count': len(trabajadores_con_actividades_activas),
+                'trabajadores': trabajadores_con_actividades_activas
+            },
+            'solo_historicos': {
+                'count': len(trabajadores_con_progreso_historico), 
+                'trabajadores': trabajadores_con_progreso_historico
+            },
+            'resumen': {
+                'eliminables_seguros': len(trabajadores_sin_asignaciones),
+                'requieren_atencion': len(trabajadores_con_actividades_activas),
+                'mantener_por_historial': len(trabajadores_con_progreso_historico)
+            }
+        }
+        
+        print(f"📊 Reporte generado:")
+        print(f"   🟢 Eliminables seguros: {len(trabajadores_sin_asignaciones)}")
+        print(f"   🟡 Requieren revisión: {len(trabajadores_con_actividades_activas)}")
+        print(f"   🔵 Solo históricos: {len(trabajadores_con_progreso_historico)}")
+        
+        return jsonify(reporte_completo)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error generando reporte: {str(e)}'
+        }), 500
+
+@controllers_bp.route('/historial-control-page')
+@login_required
+def historial_control_page():
+    """
+    Página web para consultar el historial de control
+    """
+    try:
+        # Verificar permisos
+        if not (current_user.is_superadmin() or current_user.has_page_permission('/control-actividades')):
+            flash('No tiene permisos para consultar el historial de control', 'error')
+            return redirect(url_for('main.dashboard'))
+        
+        return render_template('historial-control.html')
+        
+    except Exception as e:
+        flash(f'Error cargando página de historial: {str(e)}', 'error')
+        return redirect(url_for('main.dashboard'))
+
+@controllers_bp.route('/historial-control', methods=['GET'])
+@login_required
+def consultar_historial_control():
+    """
+    Endpoint para consultar el historial completo de cambios en el sistema de control
+    
+    Query params:
+    - sesion_subida: Filtrar por sesión específica
+    - fecha_desde: Filtrar desde fecha (YYYY-MM-DD)  
+    - fecha_hasta: Filtrar hasta fecha (YYYY-MM-DD)
+    - tipo_operacion: Filtrar por tipo (REASIGNACION_TRABAJADOR, LIMPIEZA_TRABAJADORES, INSERT, UPDATE, etc.)
+    - requerimiento_id: Filtrar por proyecto específico
+    - trabajador_id: Filtrar por trabajador específico
+    - limit: Número máximo de resultados (default 100)
+    """
+    try:
+        # Verificar permisos
+        if not (current_user.is_superadmin() or current_user.has_page_permission('/control-actividades')):
+            return jsonify({'success': False, 'error': 'No tiene permisos para consultar historial'}), 403
+        
+        from app.models import HistorialControl
+        from sqlalchemy import desc, and_
+        from datetime import datetime as dt
+        
+        # Parámetros de filtro
+        sesion_subida = request.args.get('sesion_subida')
+        fecha_desde = request.args.get('fecha_desde')
+        fecha_hasta = request.args.get('fecha_hasta')
+        tipo_operacion = request.args.get('tipo_operacion')
+        requerimiento_id = request.args.get('requerimiento_id')
+        trabajador_id = request.args.get('trabajador_id')
+        limit = min(int(request.args.get('limit', 100)), 500)  # Máximo 500
+        
+        print(f"📋 Consultando historial de control con filtros:")
+        print(f"   Sesión: {sesion_subida or 'Todas'}")
+        print(f"   Tipo: {tipo_operacion or 'Todos'}")
+        print(f"   Proyecto: {requerimiento_id or 'Todos'}")
+        print(f"   Limit: {limit}")
+        
+        # Query base
+        query = HistorialControl.query
+        
+        # Aplicar filtros
+        filtros = []
+        
+        if sesion_subida:
+            filtros.append(HistorialControl.sesion_subida == sesion_subida)
+        
+        if fecha_desde:
+            try:
+                fecha_desde_dt = dt.strptime(fecha_desde, '%Y-%m-%d')
+                filtros.append(HistorialControl.fecha_operacion >= fecha_desde_dt)
+            except ValueError:
+                return jsonify({'success': False, 'error': 'Formato de fecha_desde inválido (usar YYYY-MM-DD)'}), 400
+        
+        if fecha_hasta:
+            try:
+                fecha_hasta_dt = dt.strptime(fecha_hasta, '%Y-%m-%d')
+                filtros.append(HistorialControl.fecha_operacion <= fecha_hasta_dt)
+            except ValueError:
+                return jsonify({'success': False, 'error': 'Formato de fecha_hasta inválido (usar YYYY-MM-DD)'}), 400
+        
+        if tipo_operacion:
+            filtros.append(HistorialControl.tipo_operacion == tipo_operacion)
+            
+        if requerimiento_id:
+            filtros.append(HistorialControl.requerimiento_id == int(requerimiento_id))
+        
+        # Filtro por trabajador (buscar en datos_nuevos JSON)
+        if trabajador_id:
+            filtros.append(HistorialControl.datos_nuevos.contains({'trabajador_afectado_id': int(trabajador_id)}))
+        
+        # Aplicar todos los filtros
+        if filtros:
+            query = query.filter(and_(*filtros))
+        
+        # Ordenar por fecha descendente y limitar
+        historial = query.order_by(desc(HistorialControl.fecha_operacion)).limit(limit).all()
+        
+        # Convertir a JSON
+        historial_json = []
+        for entrada in historial:
+            entrada_dict = entrada.to_dict()
+            
+            # Agregar información adicional de usuario si existe
+            if entrada.datos_nuevos and 'usuario_email' in entrada.datos_nuevos:
+                entrada_dict['usuario_responsable'] = entrada.datos_nuevos['usuario_email']
+            else:
+                entrada_dict['usuario_responsable'] = 'Sistema'
+            
+            historial_json.append(entrada_dict)
+        
+        resultado = {
+            'success': True,
+            'total_encontrados': len(historial_json),
+            'limit_aplicado': limit,
+            'filtros_aplicados': {
+                'sesion_subida': sesion_subida,
+                'fecha_desde': fecha_desde,
+                'fecha_hasta': fecha_hasta,
+                'tipo_operacion': tipo_operacion,
+                'requerimiento_id': requerimiento_id,
+                'trabajador_id': trabajador_id
+            },
+            'historial': historial_json
+        }
+        
+        print(f"✅ Historial consultado: {len(historial_json)} entradas encontradas")
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error consultando historial: {str(e)}'
+        }), 500
+
+@controllers_bp.route('/historial-control/resumen', methods=['GET'])
+@login_required
+def resumen_historial_control():
+    """
+    Endpoint para obtener resumen estadístico del historial de control
+    """
+    try:
+        # Verificar permisos
+        if not (current_user.is_superadmin() or current_user.has_page_permission('/control-actividades')):
+            return jsonify({'success': False, 'error': 'No tiene permisos para consultar historial'}), 403
+        
+        from app.models import HistorialControl
+        from sqlalchemy import func, desc
+        from datetime import datetime as dt, timedelta
+        
+        print(f"📊 Generando resumen de historial de control...")
+        
+        # Estadísticas generales
+        total_operaciones = HistorialControl.query.count()
+        
+        # Operaciones por tipo
+        operaciones_por_tipo = db.session.query(\n            HistorialControl.tipo_operacion,\n            func.count(HistorialControl.id).label('cantidad')\n        ).group_by(HistorialControl.tipo_operacion).order_by(desc('cantidad')).all()
+        
+        # Operaciones de los últimos 30 días
+        hace_30_dias = dt.now() - timedelta(days=30)
+        operaciones_recientes = HistorialControl.query.filter(\n            HistorialControl.fecha_operacion >= hace_30_dias\n        ).count()
+        
+        # Top 5 proyectos con más cambios
+        proyectos_mas_activos = db.session.query(\n            HistorialControl.requerimiento_id,\n            func.count(HistorialControl.id).label('cambios')\n        ).group_by(HistorialControl.requerimiento_id).order_by(desc('cambios')).limit(5).all()
+        
+        # Últimas 10 operaciones
+        ultimas_operaciones = HistorialControl.query.order_by(\n            desc(HistorialControl.fecha_operacion)\n        ).limit(10).all()
+        
+        resultado = {\n            'success': True,\n            'estadisticas_generales': {\n                'total_operaciones': total_operaciones,\n                'operaciones_ultimos_30_dias': operaciones_recientes,\n                'porcentaje_actividad_reciente': round((operaciones_recientes / total_operaciones * 100), 2) if total_operaciones > 0 else 0\n            },\n            'operaciones_por_tipo': [\n                {'tipo': op[0], 'cantidad': op[1]} \n                for op in operaciones_por_tipo\n            ],\n            'proyectos_mas_activos': [\n                {\n                    'requerimiento_id': proyecto[0], \n                    'cambios': proyecto[1]\n                }\n                for proyecto in proyectos_mas_activos\n            ],\n            'ultimas_operaciones': [\n                {\n                    'id': op.id,\n                    'fecha': op.fecha_operacion.isoformat(),\n                    'tipo': op.tipo_operacion,\n                    'descripcion': op.datos_nuevos.get('descripcion', 'N/A') if op.datos_nuevos else 'N/A',\n                    'usuario': op.datos_nuevos.get('usuario_email', 'Sistema') if op.datos_nuevos else 'Sistema'\n                }\n                for op in ultimas_operaciones\n            ]\n        }\n        \n        print(f\"✅ Resumen generado: {total_operaciones} operaciones totales, {operaciones_recientes} recientes\")\n        \n        return jsonify(resultado)\n        \n    except Exception as e:\n        return jsonify({\n            'success': False,\n            'error': f'Error generando resumen: {str(e)}'\n        }), 500\n\n@controllers_bp.route('/limpiar-trabajadores', methods=['POST'])"
 def limpiar_trabajadores():
     """Endpoint para limpiar trabajadores que no están asignados a ninguna actividad"""
     try:
+        print(f"🔍 Ejecutando limpieza de trabajadores huérfanos...")
         count_eliminados = limpiar_trabajadores_huerfanos()
         
         return jsonify({
             'success': True,
-            'message': f'Se eliminaron {count_eliminados} trabajadores sin asignaciones',
+            'message': f'Limpieza completada. Se eliminaron {count_eliminados} trabajadores sin asignaciones',
             'count_eliminados': count_eliminados
         })
         
@@ -6029,7 +6758,7 @@ def subir_control_actividades():
                     
                     actividad_existente.updated_at = datetime.utcnow()
                     
-                    # Crear registro de historial
+                    # Crear registro de historial con información completa de auditoría
                     historial = HistorialControl(
                         sesion_subida=sesion_subida,
                         nombre_archivo=nombre_archivo,
@@ -6045,9 +6774,17 @@ def subir_control_actividades():
                             'duracion': int(actividad_existente.duracion) if actividad_existente.duracion else None,
                             'progreso': float(actividad_existente.progreso) if actividad_existente.progreso else 0.0,
                             'recursos': actividad_existente.recursos,
-                            'predecesoras': actividad_existente.predecesoras
+                            'predecesoras': actividad_existente.predecesoras,
+                            # Información de auditoría mejorada
+                            'usuario_id': current_user.id if current_user.is_authenticated else None,
+                            'usuario_email': current_user.email if current_user.is_authenticated else 'Sistema',
+                            'usuario_nombre': current_user.nombre if current_user.is_authenticated else 'Sistema',
+                            'timestamp_operacion': datetime.now().isoformat(),
+                            'tipo_cambio': 'SUBIDA_ARCHIVO_CONTROL',
+                            'sesion_navegador': request.headers.get('User-Agent', 'No disponible')[:200]
                         },
-                        fila_excel=num_fila
+                        fila_excel=num_fila,
+                        comentarios=f'Actualización vía archivo Excel por {current_user.email if current_user.is_authenticated else "Sistema"} - Sesión: {sesion_subida}'
                     )
                     
                     db.session.add(historial)
@@ -6077,6 +6814,23 @@ def subir_control_actividades():
             
             # Limpiar trabajadores huérfanos después del procesamiento exitoso
             trabajadores_eliminados = limpiar_trabajadores_huerfanos()
+            
+            # Registrar auditoría del procesamiento completo
+            registrar_auditoria(
+                tipo_operacion='SUBIDA_ARCHIVO_COMPLETA',
+                descripcion=f'Procesamiento completo del archivo {nombre_archivo}',
+                datos_nuevos={
+                    'actividades_procesadas': actividades_procesadas,
+                    'actividades_actualizadas': actividades_actualizadas,
+                    'actividades_nuevas': actividades_nuevas,
+                    'trabajadores_eliminados': trabajadores_eliminados,
+                    'errores_count': len(errores),
+                    'sesion_subida': sesion_subida,
+                    'nombre_archivo': nombre_archivo,
+                    'errores_detalle': errores[:5] if errores else []  # Máximo 5 errores para no saturar
+                },
+                archivo_relacionado=nombre_archivo
+            )
             
             print(f"✅ Procesamiento completado:")
             print(f"   📊 Total procesadas: {actividades_procesadas}")

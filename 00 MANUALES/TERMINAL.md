@@ -1,7 +1,7 @@
 # Crear entorno virtual
     ' python -m venv venv '
 # Activar entorno virtual
-    ' ./venv/Scripts/activate ' 
+    ' ./venv/Scripts/Activate ' 
 # Desactivar entorno
     ' ./venv/Scripts/deactivate '
 # Eliminar entorno virtual llamado "venv"
