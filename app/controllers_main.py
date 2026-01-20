@@ -6449,19 +6449,69 @@ def resumen_historial_control():
         total_operaciones = HistorialControl.query.count()
         
         # Operaciones por tipo
-        operaciones_por_tipo = db.session.query(\n            HistorialControl.tipo_operacion,\n            func.count(HistorialControl.id).label('cantidad')\n        ).group_by(HistorialControl.tipo_operacion).order_by(desc('cantidad')).all()
+        operaciones_por_tipo = db.session.query(
+            HistorialControl.tipo_operacion,
+            func.count(HistorialControl.id).label('cantidad')
+        ).group_by(HistorialControl.tipo_operacion).order_by(desc('cantidad')).all()
         
         # Operaciones de los últimos 30 días
         hace_30_dias = dt.now() - timedelta(days=30)
-        operaciones_recientes = HistorialControl.query.filter(\n            HistorialControl.fecha_operacion >= hace_30_dias\n        ).count()
+        operaciones_recientes = HistorialControl.query.filter(
+            HistorialControl.fecha_operacion >= hace_30_dias
+        ).count()
         
         # Top 5 proyectos con más cambios
-        proyectos_mas_activos = db.session.query(\n            HistorialControl.requerimiento_id,\n            func.count(HistorialControl.id).label('cambios')\n        ).group_by(HistorialControl.requerimiento_id).order_by(desc('cambios')).limit(5).all()
+        proyectos_mas_activos = db.session.query(
+            HistorialControl.requerimiento_id,
+            func.count(HistorialControl.id).label('cambios')
+        ).group_by(HistorialControl.requerimiento_id).order_by(desc('cambios')).limit(5).all()
         
         # Últimas 10 operaciones
-        ultimas_operaciones = HistorialControl.query.order_by(\n            desc(HistorialControl.fecha_operacion)\n        ).limit(10).all()
+        ultimas_operaciones = HistorialControl.query.order_by(
+            desc(HistorialControl.fecha_operacion)
+        ).limit(10).all()
         
-        resultado = {\n            'success': True,\n            'estadisticas_generales': {\n                'total_operaciones': total_operaciones,\n                'operaciones_ultimos_30_dias': operaciones_recientes,\n                'porcentaje_actividad_reciente': round((operaciones_recientes / total_operaciones * 100), 2) if total_operaciones > 0 else 0\n            },\n            'operaciones_por_tipo': [\n                {'tipo': op[0], 'cantidad': op[1]} \n                for op in operaciones_por_tipo\n            ],\n            'proyectos_mas_activos': [\n                {\n                    'requerimiento_id': proyecto[0], \n                    'cambios': proyecto[1]\n                }\n                for proyecto in proyectos_mas_activos\n            ],\n            'ultimas_operaciones': [\n                {\n                    'id': op.id,\n                    'fecha': op.fecha_operacion.isoformat(),\n                    'tipo': op.tipo_operacion,\n                    'descripcion': op.datos_nuevos.get('descripcion', 'N/A') if op.datos_nuevos else 'N/A',\n                    'usuario': op.datos_nuevos.get('usuario_email', 'Sistema') if op.datos_nuevos else 'Sistema'\n                }\n                for op in ultimas_operaciones\n            ]\n        }\n        \n        print(f\"✅ Resumen generado: {total_operaciones} operaciones totales, {operaciones_recientes} recientes\")\n        \n        return jsonify(resultado)\n        \n    except Exception as e:\n        return jsonify({\n            'success': False,\n            'error': f'Error generando resumen: {str(e)}'\n        }), 500\n\n@controllers_bp.route('/limpiar-trabajadores', methods=['POST'])"
+        resultado = {
+            'success': True,
+            'estadisticas_generales': {
+                'total_operaciones': total_operaciones,
+                'operaciones_ultimos_30_dias': operaciones_recientes,
+                'porcentaje_actividad_reciente': round((operaciones_recientes / total_operaciones * 100), 2) if total_operaciones > 0 else 0
+            },
+            'operaciones_por_tipo': [
+                {'tipo': op[0], 'cantidad': op[1]} 
+                for op in operaciones_por_tipo
+            ],
+            'proyectos_mas_activos': [
+                {
+                    'requerimiento_id': proyecto[0], 
+                    'cambios': proyecto[1]
+                }
+                for proyecto in proyectos_mas_activos
+            ],
+            'ultimas_operaciones': [
+                {
+                    'id': op.id,
+                    'fecha': op.fecha_operacion.isoformat(),
+                    'tipo': op.tipo_operacion,
+                    'descripcion': op.datos_nuevos.get('descripcion', 'N/A') if op.datos_nuevos else 'N/A',
+                    'usuario': op.datos_nuevos.get('usuario_email', 'Sistema') if op.datos_nuevos else 'Sistema'
+                }
+                for op in ultimas_operaciones
+            ]
+        }
+        
+        print(f"✅ Resumen generado: {total_operaciones} operaciones totales, {operaciones_recientes} recientes")
+        
+        return jsonify(resultado)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error generando resumen: {str(e)}'
+        }), 500
+
+@controllers_bp.route('/limpiar-trabajadores', methods=['POST'])
 def limpiar_trabajadores():
     """Endpoint para limpiar trabajadores que no están asignados a ninguna actividad"""
     try:
