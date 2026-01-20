@@ -70,7 +70,37 @@
             border-radius: 15px;
             padding: 40px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            position: relative;
         }
+        
+        .docs-link-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .docs-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         
         .login-card h2 {
             text-align: center;
@@ -187,8 +217,8 @@
         </div>
         
         <!-- Tarjeta de Login -->
-        <div class="login-card">
-            <h2>🔐 Iniciar Sesión</h2>
+        <div class="login-card">            <a href="/docs/info.html" class="docs-link-btn" target="_blank" title="Ver información de pruebas">📚 Información de Pruebas</a>
+                        <h2>🔐 Iniciar Sesión</h2>
             
             <form method="POST" action="{{ url_for('auth.login') }}">
                 {{ form.hidden_tag() }}

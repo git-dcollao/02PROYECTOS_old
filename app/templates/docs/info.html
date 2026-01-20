@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información de Pruebas - Sistema de Gestión de Proyectos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .section h3 {
+            color: #764ba2;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .credentials-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .credentials-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .credentials-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .credentials-table tr:hover {
+            background: #f0f0f0;
+        }
+        
+        .credentials-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .highlight strong {
+            color: #856404;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .endpoint-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .endpoint-list li {
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-left: 3px solid #764ba2;
+            border-radius: 3px;
+        }
+        
+        .endpoint-list code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .badge-superadmin {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-admin {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        .badge-control {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .badge-usuario {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-lector {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .info-box strong {
+            color: #0c5aa0;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .danger-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+        }
+        
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        ol {
+            padding-left: 20px;
+        }
+
+        ol li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Información de Pruebas</h1>
+            <p>Sistema de Gestión de Proyectos - Guía Completa para Testing</p>
+        </div>
+        
+        <div class="content">
+            <!-- ACCESO RÁPIDO -->
+            <section class="section">
+                <h2>🚀 Acceso Rápido</h2>
+                
+                <div class="grid-2">
+                    <div class="info-box">
+                        <strong>Aplicación Web:</strong><br>
+                        <code>http://10.20.10.3:5050</code>
+                    </div>
+                    <div class="info-box">
+                        <strong>Login:</strong><br>
+                        <code>http://10.20.10.3:5050/auth/login</code>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>⏱️ Estado del Sistema:</strong><br>
+                    <code>http://10.20.10.3:5050/health</code>
+                </div>
+            </section>
+
+            <!-- CREDENCIALES -->
+            <section class="section">
+                <h2>🔐 Credenciales de Prueba</h2>
+                
+                <div class="highlight">
+                    <strong>⚠️ IMPORTANTE:</strong> Estas son credenciales de desarrollo. NO usar en producción.
+                </div>
+                
+                <table class="credentials-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Contraseña</th>
+                            <th>Rol</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>admin@sistema.local</code></td>
+                            <td><code>Maho#2024</code></td>
+                            <td><span class="badge badge-superadmin">SUPERADMIN</span></td>
+                            <td>Admin Sistema</td>
+                        </tr>
+                        <tr>
+                            <td><code>administrador@sistema.local</code></td>
+                            <td><code>Admin#2024</code></td>
+                            <td><span class="badge badge-admin">ADMIN</span></td>
+                            <td>Administrador L1</td>
+                        </tr>
+                        <tr>
+                            <td><code>control@sistema.local</code></td>
+                            <td><code>Control#2024</code></td>
+                            <td><span class="badge badge-control">CONTROL</span></td>
+                            <td>Control de Proyectos</td>
+                        </tr>
+                        <tr>
+                            <td><code>- usuario@sistema.local</code></td>
+                            <td><code>Usuario#2024</code></td>
+                            <td><span class="badge badge-usuario">USUARIO</span></td>
+                            <td>Usuario Operativo</td>
+                        </tr>
+                        <tr>
+                            <td><code>- solicitante@sistema.local</code></td>
+                            <td><code>Solicit#2024</code></td>
+                            <td><span class="badge badge-admin">ADMIN</span></td>
+                            <td>Solicitante Externo</td>
+                        </tr>
+                        <tr>
+                            <td><code>- lector@sistema.local</code></td>
+                            <td><code>Lector#2024</code></td>
+                            <td><span class="badge badge-lector">LECTOR</span></td>
+                            <td>Lector del Sistema</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="credentials-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Contraseña</th>
+                            <th>Rol</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>arq01@temp.com</code></td>
+                            <td><code>Maho#2024</code></td>
+                            <td><span class="badge badge-superadmin">usuario aquitecto 01</span></td>
+                            <td>Usuario ARQ01</td>
+                        </tr>
+                        <tr>
+                            <td><code>arq02@temp.com</code></td>
+                            <td><code>Admin#2024</code></td>
+                            <td><span class="badge badge-admin">usuario aquitecto 02</span></td>
+                            <td>Usuario ARQ02</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <div class="footer">
+            <p>Sistema de Gestión de Proyectos - Documento de Información para Pruebas</p>
+            <p>Generado: 20 de enero de 2026</p>
+        </div>
+    </div>
+
+    <script>
+        // Alternar secciones
+        document.querySelectorAll('.section h2').forEach(heading => {
+            heading.style.cursor = 'pointer';
+            heading.addEventListener('click', function() {
+                const section = this.parentElement;
+                const content = section.querySelectorAll('h3, table, ul, ol, div:not(.grid-2), p');
+                let isHidden = false;
+                
+                content.forEach(el => {
+                    if (el.style.display === 'none') {
+                        isHidden = true;
+                    }
+                });
+                
+                if (isHidden) {
+                    content.forEach(el => el.style.display = '');
+                    heading.innerHTML = '▼ ' + heading.innerHTML.replace('▶ ', '');
+                } else {
+                    content.forEach(el => el.style.display = 'none');
+                    heading.innerHTML = '▶ ' + heading.innerHTML.replace('▼ ', '');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -4,6 +4,11 @@ from app.forms.auth_forms import LoginForm
 
 main_bp = Blueprint('main', __name__)
 
+@main_bp.route('/docs/info.html')
+def docs_info():
+    """Página de información para pruebas - Pública"""
+    return render_template('docs/info.html')
+
 @main_bp.route('/')
 def index():
     """Página principal - pública con login incluido"""
