@@ -20,8 +20,13 @@
 # ewvisar archivo logs con errores del docker proyectos_app
     ' docker-compose logs proyectos_app '
 
-
-
+# ============================================================
+# Para deployar en producción
+    ' git pull origin master
+     docker-compose build
+     docker-compose restart proyectos_app
+     echo "✅ Actualización completada" '
+# ============================================================
 
 # Ejecuta las migraciones dentro del contenedor:
     ' docker-compose exec proyectos_app flask db init
