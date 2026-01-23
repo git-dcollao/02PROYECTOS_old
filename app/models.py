@@ -1134,7 +1134,7 @@ class HistorialControl(db.Model):
     requerimiento_id = db.Column(db.Integer, db.ForeignKey('requerimiento.id'), nullable=False)
     
     # Tipo de operación realizada
-    tipo_operacion = db.Column(db.String(20), nullable=False)  # 'INSERT', 'UPDATE'
+    tipo_operacion = db.Column(db.String(50), nullable=False)  # 'INSERT', 'UPDATE', 'SUBIDA_ARCHIVO_COMPLETA'
     
     # Datos anteriores y nuevos (JSON para flexibilidad)
     datos_anteriores = db.Column(db.JSON, nullable=True)  # Valores antes del cambio

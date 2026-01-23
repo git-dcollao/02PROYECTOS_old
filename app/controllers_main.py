@@ -5430,7 +5430,7 @@ def limpiar_trabajadores_huerfanos():
         
         for trabajador in todos_trabajadores:
             # Verificar recursos asignados actualmente
-            recursos_actuales = RecursoTrabajador.query.filter_by(trabajador_id=trabajador.id).count()
+            recursos_actuales = RecursoTrabajador.query.filter_by(id_trabajador=trabajador.id).count()
             
             # Verificar avances activos
             avances_actuales = AvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
@@ -5945,9 +5945,9 @@ def reasignar_actividades_trabajador(trabajador_origen_id, trabajador_destino_id
         avances_actualizados = 0
         
         # 1. Reasignar recursos de trabajador
-        recursos = RecursoTrabajador.query.filter_by(trabajador_id=trabajador_origen_id).all()
+        recursos = RecursoTrabajador.query.filter_by(id_trabajador=trabajador_origen_id).all()
         for recurso in recursos:
-            recurso.trabajador_id = trabajador_destino_id
+            recurso.id_trabajador = trabajador_destino_id
             recursos_reasignados += 1
             print(f"   🔧 Recurso reasignado: Actividad {recurso.actividad_gantt_id}")
         
@@ -5967,7 +5967,7 @@ def reasignar_actividades_trabajador(trabajador_origen_id, trabajador_destino_id
             avances_actualizados += 1
         
         # 3. Actualizar historial de avances (para trazabilidad)
-        historial_avances = HistorialAvanceActividad.query.filter_by(trabajador_id=trabajador_origen_id).all()
+        historial_avances = HistorialAvanceActividad.query.filter_by(id_trabajador=trabajador_origen_id).all()
         for historial in historial_avances:
             # Crear entrada en historial explicando la reasignación
             nuevo_historial = HistorialAvanceActividad(
@@ -6191,7 +6191,7 @@ def revisar_trabajadores():
         
         for trabajador in todos_trabajadores:
             # Análisis detallado de asignaciones
-            recursos_actuales = RecursoTrabajador.query.filter_by(trabajador_id=trabajador.id).count()
+            recursos_actuales = RecursoTrabajador.query.filter_by(id_trabajador=trabajador.id).count()
             avances_actuales = AvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
             historial_avances = HistorialAvanceActividad.query.filter_by(trabajador_id=trabajador.id).count()
             
