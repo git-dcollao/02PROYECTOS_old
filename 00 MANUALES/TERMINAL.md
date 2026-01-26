@@ -17,6 +17,7 @@
     ' docker-compose down 
      docker-compose build    
      docker-compose up -d '
+     
 # ewvisar archivo logs con errores del docker proyectos_app
     ' docker-compose logs proyectos_app '
 

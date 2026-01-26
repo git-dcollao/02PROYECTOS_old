@@ -5536,6 +5536,132 @@ def limpiar_trabajadores_huerfanos():
         return 0
     pass
 
+def extraer_y_crear_trabajadores_desde_recursos(recursos_string):
+    """
+    Extrae nombres de trabajadores desde un string de recursos y verifica/crea en BD
+    
+    Acepta:
+    - Nombres separados por coma: "Juan Pérez, María García"
+    - Nombres separados por punto y coma: "ARQ01; ARQ02"
+    - Un solo nombre: "Técnico"
+    
+    Args:
+        recursos_string (str): String con nombres de trabajadores
+        
+    Returns:
+        list: Lista de IDs de trabajadores encontrados/creados
+    """
+    if not recursos_string:
+        return []
+    
+    trabajadores_ids = []
+    
+    # Determinar separador (punto y coma o coma)
+    separadores = [';', ',']
+    recursos_list = []
+    
+    for sep in separadores:
+        if sep in str(recursos_string):
+            recursos_list = str(recursos_string).split(sep)
+            break
+    
+    # Si no hay separadores, tratarlo como un solo recurso
+    if not recursos_list:
+        recursos_list = [recursos_string]
+    
+    for recurso in recursos_list:
+        recurso = str(recurso).strip()
+        if not recurso:
+            continue
+        
+        try:
+            # Buscar por nombrecorto exacto
+            trabajador = Trabajador.query.filter_by(nombrecorto=recurso).first()
+            
+            if trabajador:
+                print(f"   ✅ Trabajador encontrado: {recurso} (ID: {trabajador.id})")
+                trabajadores_ids.append(trabajador.id)
+            else:
+                print(f"   ⚠️ Trabajador '{recurso}' no encontrado en BD")
+                # Solo registrar en lista, no crear automáticamente
+                # La creación se maneja en crear_avances_actividad si es necesario
+        
+        except Exception as e:
+            print(f"   ❌ Error procesando recurso '{recurso}': {str(e)}")
+            continue
+    
+    return trabajadores_ids
+
+def crear_avances_actividad(requerimiento_id, actividad_id, recursos_string, progreso_actual=0.0):
+    """
+    Crear registros de avance para una actividad desde recursos del Excel
+    
+    Args:
+        requerimiento_id (int): ID del proyecto/requerimiento
+        actividad_id (int): ID de la actividad
+        recursos_string (str): String con nombres de trabajadores (separados por ; o ,)
+        progreso_actual (float): Progreso de la actividad (0-100)
+    """
+    if not recursos_string:
+        return
+    
+    # Procesar recursos separados por coma o punto y coma
+    separadores = [';', ',']
+    recursos_partes = []
+    
+    for sep in separadores:
+        if sep in str(recursos_string):
+            recursos_partes = str(recursos_string).split(sep)
+            break
+    
+    # Si no hay separadores, tratar como un solo recurso
+    if not recursos_partes:
+        recursos_partes = [recursos_string]
+    
+    for recurso in recursos_partes:
+        recurso = str(recurso).strip()
+        if not recurso:
+            continue
+        
+        try:
+            print(f"   🔍 Procesando recurso: '{recurso}'")
+            
+            # Buscar trabajador por nombrecorto
+            trabajador = Trabajador.query.filter_by(nombrecorto=recurso).first()
+            
+            if trabajador:
+                print(f"   ✅ Trabajador encontrado: {recurso} (ID: {trabajador.id})")
+                
+                # Verificar si ya existe un avance para esta combinación
+                avance_existente = AvanceActividad.query.filter_by(
+                    requerimiento_id=requerimiento_id,
+                    actividad_id=actividad_id,
+                    trabajador_id=trabajador.id
+                ).first()
+                
+                if avance_existente:
+                    print(f"   ⚠️ Ya existe avance para trabajador {trabajador.id} en actividad {actividad_id}")
+                else:
+                    # Crear nuevo avance
+                    avance = AvanceActividad(
+                        requerimiento_id=requerimiento_id,
+                        actividad_id=actividad_id,
+                        trabajador_id=trabajador.id,
+                        porcentaje_asignacion=100.0,
+                        progreso_actual=float(progreso_actual) if progreso_actual else 0.0,
+                        progreso_anterior=0.0,
+                        fecha_registro=datetime.now().date(),
+                        observaciones=f'Recurso asignado desde Excel: {recurso}'
+                    )
+                    db.session.add(avance)
+                    print(f"   ✅ Avance creado para trabajador '{trabajador.nombre}' (ID: {trabajador.id})")
+            else:
+                print(f"   ⚠️ Trabajador '{recurso}' no encontrado en BD - ignorando")
+        
+        except Exception as e:
+            print(f"   ❌ Error procesando recurso '{recurso}': {str(e)}")
+            continue
+
 def procesar_recursos_actividad_MIGRADO():
     """FUNCIÓN MIGRADA - NO USAR"""
     pass
@@ -6591,43 +6717,90 @@ def subir_control_actividades():
         
         # Mapear columnas esperadas
         columnas_esperadas = {
-            'edt': None,
-            'nombre_tarea': None,
-            'fecha_inicio': None,
-            'fecha_fin': None,
-            'duracion': None,
-            'progreso': None,
-            'recursos': None,
-            'predecesoras': None,
+            'EDT': None,
+            'Nombre de tarea': None,
+            'Comienzo': None,
+            'Fin': None,
+            'Duración': None,
+            '% completado': None,
+            'Nombres de los recursos': None,
+            'Predecesoras': None,
             'proyecto': None
         }
         
-        # Mapear encabezados (buscar por nombres similares)
+        # Mapear encabezados - PRIMERO por coincidencia EXACTA, LUEGO por búsqueda flexible
+        encabezados_lower = [str(enc).lower().strip() if enc else '' for enc in encabezados]
+        
+        # PASO 1: Búsqueda EXACTA de encabezados conocidos
+        mapeo_exacto = {
+            'edt': 'EDT',
+            'nombre de tarea': 'Nombre de tarea',
+            'comienzo': 'Comienzo',
+            'fin': 'Fin',
+            'duración': 'Duración',
+            '% completado': '% completado',
+            'nombres de los recursos': 'Nombres de los recursos',
+            'predecesoras': 'Predecesoras',
+        }
+        
+        for i, enc_lower in enumerate(encabezados_lower):
+            if enc_lower in mapeo_exacto:
+                columnas_esperadas[mapeo_exacto[enc_lower]] = i
+                print(f"   ✅ Mapeo EXACTO encontrado: {mapeo_exacto[enc_lower]} en columna {i}")
+        
+        # PASO 2: Búsqueda FLEXIBLE solo para columnas no encontradas aún
         for i, encabezado in enumerate(encabezados):
             if not encabezado:
                 continue
-                
+            
             encabezado_lower = str(encabezado).lower().strip()
             
-            # Mapeo de columnas con múltiples variaciones
-            if any(term in encabezado_lower for term in ['edt', 'código', 'codigo', 'wbs', 'id']):
-                columnas_esperadas['edt'] = i
-            elif any(term in encabezado_lower for term in ['nombre', 'task name', 'actividad', 'tarea', 'activity']):
-                columnas_esperadas['nombre_tarea'] = i
-            elif any(term in encabezado_lower for term in ['inicio', 'start', 'comienzo', 'fecha inicio', 'fecha_inicio', 'begin']):
-                columnas_esperadas['fecha_inicio'] = i
-            elif any(term in encabezado_lower for term in ['fin', 'end', 'finish', 'final', 'fecha fin', 'fecha_fin', 'término', 'termino']):
-                columnas_esperadas['fecha_fin'] = i
-            elif any(term in encabezado_lower for term in ['duración', 'duracion', 'duration', 'días', 'dias']):
-                columnas_esperadas['duracion'] = i
-            elif any(term in encabezado_lower for term in ['progreso', 'progress', '% complete', 'complete', 'avance', 'porcentaje']):
-                columnas_esperadas['progreso'] = i
-            elif any(term in encabezado_lower for term in ['recursos', 'resource', 'assigned', 'asignado', 'responsable']):
-                columnas_esperadas['recursos'] = i
-            elif any(term in encabezado_lower for term in ['predecesoras', 'predecessors', 'dependencias', 'dependencies']):
-                columnas_esperadas['predecesoras'] = i
-            elif any(term in encabezado_lower for term in ['proyecto', 'project', 'requerimiento']):
-                columnas_esperadas['proyecto'] = i
+            # Solo procesar si aún no está mapeada
+            
+            # EDT - muy específico
+            if columnas_esperadas['EDT'] is None:
+                if any(term in encabezado_lower for term in ['edt', 'código', 'codigo', 'wbs']) and 'nombre' not in encabezado_lower and 'recurso' not in encabezado_lower and 'días' not in encabezado_lower:
+                    columnas_esperadas['EDT'] = i
+            
+            # Nombre de tarea - específico pero genérico
+            if columnas_esperadas['Nombre de tarea'] is None:
+                if any(term in encabezado_lower for term in ['nombre de tarea', 'nombre tarea', 'task name', 'actividad', 'tarea', 'activity']) and 'recursos' not in encabezado_lower:
+                    columnas_esperadas['Nombre de tarea'] = i
+            
+            # Comienzo
+            if columnas_esperadas['Comienzo'] is None:
+                if any(term in encabezado_lower for term in ['comienzo', 'inicio', 'start', 'fecha inicio', 'fecha_inicio', 'begin']):
+                    columnas_esperadas['Comienzo'] = i
+            
+            # Fin
+            if columnas_esperadas['Fin'] is None:
+                if any(term in encabezado_lower for term in ['fin', 'end', 'finish', 'final', 'fecha fin', 'fecha_fin', 'término', 'termino']) and 'comienzo' not in encabezado_lower:
+                    columnas_esperadas['Fin'] = i
+            
+            # Duración - EVITAR confusiones con "Días Corrido"
+            if columnas_esperadas['Duración'] is None:
+                if any(term in encabezado_lower for term in ['duración', 'duracion', 'duration']) and 'nombre' not in encabezado_lower and 'corrido' not in encabezado_lower:
+                    columnas_esperadas['Duración'] = i
+            
+            # % completado
+            if columnas_esperadas['% completado'] is None:
+                if any(term in encabezado_lower for term in ['% completado', 'completado', '% complete', 'progreso', 'progress', 'avance', 'porcentaje']) and 'nombre' not in encabezado_lower and 'programado' not in encabezado_lower:
+                    columnas_esperadas['% completado'] = i
+            
+            # Nombres de los recursos
+            if columnas_esperadas['Nombres de los recursos'] is None:
+                if any(term in encabezado_lower for term in ['nombres de', 'nombres de recursos', 'recursos', 'resource', 'assigned', 'asignado', 'responsable']) and 'tarea' not in encabezado_lower:
+                    columnas_esperadas['Nombres de los recursos'] = i
+            
+            # Predecesoras
+            if columnas_esperadas['Predecesoras'] is None:
+                if any(term in encabezado_lower for term in ['predecesoras', 'predecessors', 'dependencias', 'dependencies']):
+                    columnas_esperadas['Predecesoras'] = i
+            
+            # Proyecto
+            if columnas_esperadas['proyecto'] is None:
+                if any(term in encabezado_lower for term in ['proyecto', 'project', 'requerimiento']):
+                    columnas_esperadas['proyecto'] = i
         
         print(f"🗂️ Mapeo de columnas realizado:")
         for columna, indice in columnas_esperadas.items():
@@ -6637,7 +6810,7 @@ def subir_control_actividades():
                 print(f"   ❌ {columna}: No encontrada")
         
         # Verificar columnas obligatorias
-        columnas_obligatorias = ['edt', 'nombre_tarea', 'fecha_inicio', 'fecha_fin']
+        columnas_obligatorias = ['EDT', 'Nombre de tarea', 'Comienzo', 'Fin']
         columnas_faltantes = []
         
         for columna in columnas_obligatorias:
@@ -6673,8 +6846,8 @@ def subir_control_actividades():
                 print(f"📝 Procesando fila {num_fila}...")
                 
                 # Extraer datos de la fila
-                edt = fila[columnas_esperadas['edt']] if columnas_esperadas['edt'] is not None else None
-                nombre_tarea = fila[columnas_esperadas['nombre_tarea']] if columnas_esperadas['nombre_tarea'] is not None else None
+                edt = fila[columnas_esperadas['EDT']] if columnas_esperadas['EDT'] is not None else None
+                nombre_tarea = fila[columnas_esperadas['Nombre de tarea']] if columnas_esperadas['Nombre de tarea'] is not None else None
                 
                 # Saltar filas vacías
                 if not edt or not nombre_tarea:
@@ -6685,12 +6858,12 @@ def subir_control_actividades():
                 datos_fila = {
                     'edt': str(edt).strip(),
                     'nombre_tarea': str(nombre_tarea).strip(),
-                    'fecha_inicio': fila[columnas_esperadas['fecha_inicio']] if columnas_esperadas['fecha_inicio'] is not None else None,
-                    'fecha_fin': fila[columnas_esperadas['fecha_fin']] if columnas_esperadas['fecha_fin'] is not None else None,
-                    'duracion': fila[columnas_esperadas['duracion']] if columnas_esperadas['duracion'] is not None else None,
-                    'progreso': fila[columnas_esperadas['progreso']] if columnas_esperadas['progreso'] is not None else None,
-                    'recursos': fila[columnas_esperadas['recursos']] if columnas_esperadas['recursos'] is not None else None,
-                    'predecesoras': fila[columnas_esperadas['predecesoras']] if columnas_esperadas['predecesoras'] is not None else None,
+                    'fecha_inicio': fila[columnas_esperadas['Comienzo']] if columnas_esperadas['Comienzo'] is not None else None,
+                    'fecha_fin': fila[columnas_esperadas['Fin']] if columnas_esperadas['Fin'] is not None else None,
+                    'duracion': fila[columnas_esperadas['Duración']] if columnas_esperadas['Duración'] is not None else None,
+                    'progreso': fila[columnas_esperadas['% completado']] if columnas_esperadas['% completado'] is not None else None,
+                    'recursos': fila[columnas_esperadas['Nombres de los recursos']] if columnas_esperadas['Nombres de los recursos'] is not None else None,
+                    'predecesoras': fila[columnas_esperadas['Predecesoras']] if columnas_esperadas['Predecesoras'] is not None else None,
                 }
                 
                 # Procesar duración - extraer número de texto como "5 días", "10", etc.
@@ -6865,22 +7038,27 @@ def subir_control_actividades():
             # Limpiar trabajadores huérfanos después del procesamiento exitoso
             trabajadores_eliminados = limpiar_trabajadores_huerfanos()
             
-            # Registrar auditoría del procesamiento completo
-            registrar_auditoria(
-                tipo_operacion='SUBIDA_ARCHIVO_COMPLETA',
-                descripcion=f'Procesamiento completo del archivo {nombre_archivo}',
-                datos_nuevos={
-                    'actividades_procesadas': actividades_procesadas,
-                    'actividades_actualizadas': actividades_actualizadas,
-                    'actividades_nuevas': actividades_nuevas,
-                    'trabajadores_eliminados': trabajadores_eliminados,
-                    'errores_count': len(errores),
-                    'sesion_subida': sesion_subida,
-                    'nombre_archivo': nombre_archivo,
-                    'errores_detalle': errores[:5] if errores else []  # Máximo 5 errores para no saturar
-                },
-                archivo_relacionado=nombre_archivo
-            )
+            # Registrar auditoría del procesamiento completo (SOLO si hay datos procesados)
+            try:
+                if actividades_procesadas > 0 or len(errores) > 0:
+                    registrar_auditoria(
+                        tipo_operacion='SUBIDA_ARCHIVO_COMPLETA',
+                        descripcion=f'Procesamiento completo del archivo {nombre_archivo}',
+                        datos_nuevos={
+                            'actividades_procesadas': actividades_procesadas,
+                            'actividades_actualizadas': actividades_actualizadas,
+                            'actividades_nuevas': actividades_nuevas,
+                            'trabajadores_eliminados': trabajadores_eliminados,
+                            'errores_count': len(errores),
+                            'sesion_subida': sesion_subida,
+                            'nombre_archivo': nombre_archivo,
+                            'errores_detalle': errores[:5] if errores else []  # Máximo 5 errores para no saturar
+                        },
+                        archivo_relacionado=nombre_archivo
+                    )
+            except Exception as e:
+                print(f"⚠️ Advertencia: No se pudo registrar auditoría, pero el procesamiento fue exitoso: {str(e)}")
+                # No fallar el procesamiento por problemas con auditoría
             
             print(f"✅ Procesamiento completado:")
             print(f"   📊 Total procesadas: {actividades_procesadas}")
